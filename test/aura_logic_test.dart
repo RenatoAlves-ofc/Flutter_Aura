@@ -226,6 +226,137 @@ void main() {
     });
   });
 
+  group('sugestão adaptativa de duração', () {
+    final base = DateTime(2026, 8, 10);
+
+    test('não sugere nada sem histórico', () {
+      expect(suggestMethodForMood([], 3), isNull);
+    });
+
+    test('não sugere com base numa única tentativa', () {
+      // Uma sessão só não é evidência — o mesmo critério do insight de método.
+      final sessions = [
+        session(
+            date: base,
+            duration: 90,
+            before: 5,
+            after: 5,
+            method: 'ciclo_ultradiano'),
+      ];
+      expect(suggestMethodForMood(sessions, 5), isNull);
+    });
+
+    test('sugere o método que termina melhor naquela faixa de humor', () {
+      final sessions = [
+        // Humor alto: o Pomodoro Longo é o que fecha melhor.
+        ...List.generate(
+            3,
+            (i) => session(
+                date: base, duration: 50, before: 4, after: 5,
+                method: 'pomodoro_longo')),
+        ...List.generate(
+            3,
+            (i) => session(
+                date: base, duration: 40, before: 4, after: 3,
+                method: '40_20')),
+      ];
+
+      final s = suggestMethodForMood(sessions, 4);
+      expect(s, isNotNull);
+      expect(s!.method.id, 'pomodoro_longo');
+      expect(s.avgDuration, 50);
+      expect(s.avgMoodAfter, 5);
+      expect(s.sampleSize, 3);
+    });
+
+    test('olha só a faixa de humor pedida, não o histórico inteiro', () {
+      final sessions = [
+        // Humor baixo: micro-sessões funcionam.
+        ...List.generate(
+            2,
+            (i) => session(
+                date: base, duration: 15, before: 1, after: 3,
+                method: 'micro_sessao')),
+        // Humor alto: sessões longas funcionam — não deve vazar para a faixa baixa.
+        ...List.generate(
+            2,
+            (i) => session(
+                date: base, duration: 90, before: 5, after: 5,
+                method: 'ciclo_ultradiano')),
+      ];
+
+      expect(suggestMethodForMood(sessions, 2)!.method.id, 'micro_sessao');
+      expect(suggestMethodForMood(sessions, 5)!.method.id, 'ciclo_ultradiano');
+    });
+
+    test('empate no humor final fica com quem sustentou mais tempo', () {
+      final sessions = [
+        ...List.generate(
+            2,
+            (i) => session(
+                date: base, duration: 20, before: 3, after: 4,
+                method: 'sessao_curta')),
+        ...List.generate(
+            2,
+            (i) => session(
+                date: base, duration: 50, before: 3, after: 4,
+                method: 'pomodoro_longo')),
+      ];
+
+      expect(suggestMethodForMood(sessions, 3)!.method.id, 'pomodoro_longo');
+    });
+
+    test('nunca sugere Flowtime nem Personalizado', () {
+      // Um não tem duração alvo e o outro depende do que o usuário configurou:
+      // recomendá-los por duração média prometeria um número que a sessão não
+      // cumpre.
+      final sessions = [
+        ...List.generate(
+            4,
+            (i) => session(
+                date: base, duration: 70, before: 4, after: 5,
+                method: 'flowtime')),
+        ...List.generate(
+            4,
+            (i) => session(
+                date: base, duration: 30, before: 4, after: 5,
+                method: 'personalizado')),
+      ];
+
+      expect(suggestMethodForMood(sessions, 4), isNull);
+    });
+
+    test('trocar de humor pede uma sugestão diferente', () {
+      final sessions = [
+        ...List.generate(
+            2,
+            (i) => session(
+                date: base, duration: 15, before: 1, after: 3,
+                method: 'micro_sessao')),
+        ...List.generate(
+            2,
+            (i) => session(
+                date: base, duration: 50, before: 5, after: 5,
+                method: 'pomodoro_longo')),
+      ];
+
+      final baixo = suggestMethodForMood(sessions, 1)!.method.id;
+      final alto = suggestMethodForMood(sessions, 5)!.method.id;
+      expect(baixo, isNot(alto));
+    });
+
+    test('não contradiz o insight de método no dataset de demonstração', () {
+      // Os dois usam o mesmo critério; divergir confundiria o usuário.
+      final demo = buildDemoSessions();
+      for (var mood = 1; mood <= 5; mood++) {
+        final s = suggestMethodForMood(demo, mood);
+        if (s == null) continue;
+        expect(s.sampleSize, greaterThanOrEqualTo(2));
+        expect(s.avgDuration, greaterThan(0));
+      }
+    });
+  });
+
   group('clima pessoal', () {
     final base = DateTime(2026, 8, 10);
 

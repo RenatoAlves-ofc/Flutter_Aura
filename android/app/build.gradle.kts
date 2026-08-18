@@ -35,8 +35,13 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.aura"
+        // Identidade do app na loja e no aparelho. Só o applicationId muda: o
+        // `namespace` acima segue com.example.aura de propósito, porque ele é
+        // quem resolve o `android:name=".MainActivity"` do manifesto. Trocar o
+        // namespace exigiria mover também o pacote Kotlin do MainActivity — e
+        // errar isso quebra o app na abertura, justamente o sintoma que já
+        // custou caro neste projeto.
+        applicationId = "br.com.renatoalves.aura"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

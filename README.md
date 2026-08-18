@@ -9,13 +9,31 @@ como pontos genéricos. Sua aura muda com seu estado real. Tudo local, sem login
 O diferencial não é o cronômetro: é o **motor de correlação entre humor, duração de foco
 e método utilizado**. Todo o resto do app existe para alimentar ou expor esse motor.
 
+<p align="center">
+  <img src="docs/img/01-foco.png" width="210" alt="Aba Foco">
+  <img src="docs/img/03-humor-sugestao.png" width="210" alt="Check de humor com sugestão adaptativa">
+  <img src="docs/img/05-insights.png" width="210" alt="Aba Insights">
+  <img src="docs/img/06-graficos.png" width="210" alt="Gráfico de correlação">
+</p>
+
+## Documentação
+
+| Documento | Para quê |
+|---|---|
+| [Relatório ponta a ponta](docs/RELATORIO-E2E.md) | O que foi entregue, como foi verificado e quais defeitos apareceram no caminho |
+| [Arquitetura](docs/ARQUITETURA.md) | Como o código está organizado, o modelo de dados e onde ficam as regras |
+| [Registro de decisões](docs/DECISOES.md) | Por que o código é como é — inclusive o que deu errado e foi revertido |
+| [Manual do usuário](docs/MANUAL-DO-USUARIO.md) | Como usar cada tela |
+| [Roteiro de apresentação](docs/APRESENTACAO.md) | Demonstração passo a passo e checklist de véspera |
+| [Changelog](CHANGELOG.md) | Histórico de mudanças |
+
 ---
 
 ## O que o app faz
 
 | Aba | Conteúdo |
 |---|---|
-| **Foco** | Temporizador com 11 métodos de foco, check de humor antes e depois de cada sessão, e vínculo opcional com uma tarefa |
+| **Foco** | Temporizador com 11 métodos de foco, check de humor antes e depois de cada sessão, sugestão adaptativa de método e vínculo opcional com uma tarefa |
 | **Tarefas** | Lista com prioridade (Alta/Média/Baixa), persistida localmente |
 | **Insights** | 4 descobertas desbloqueáveis + gráfico de correlação e ritmo semanal |
 | **Resumo** | Clima pessoal (a aura), sequência com perdão, pontos e minutos focados |
@@ -42,6 +60,13 @@ tem um volume mínimo de dados e aparece bloqueada até lá:
 | Diferença entre humor antes e depois | 5 sessões |
 | Melhor dia da semana | 7 sessões |
 | Método com melhor desempenho | 6 sessões, 2+ métodos repetidos |
+
+### Sugestão adaptativa de método
+
+Ao informar o humor antes da sessão, o app consulta as sessões que você começou naquele
+mesmo estado e sugere o método que historicamente termina melhor, dizendo quanto tempo você
+costuma sustentar. Exige pelo menos 2 sessões do método naquela faixa de humor: sem
+evidência, **não sugere nada** em vez de chutar.
 
 ### Sequência com perdão
 
@@ -145,7 +170,7 @@ O `pubspec.lock` versionado foi gerado no Flutter 3.32, o menor denominador comu
 ```bash
 flutter pub get
 flutter analyze     # sem issues
-flutter test        # 54 testes
+flutter test        # 65 testes
 flutter run
 ```
 
@@ -161,5 +186,8 @@ num viewport de telefone e inspecionando cada aba — foi assim que apareceram o
 
 ## Roadmap (fora do MVP)
 
-Ritual Semanal de fechamento, Modo Provas, arco fechado por temporada, sugestão adaptativa
-de duração, compartilhamento de cartões de insight e onboarding com quiz de expectativa.
+Ritual Semanal de fechamento, Modo Provas, arco fechado por temporada, compartilhamento de
+cartões de insight e onboarding com quiz de expectativa.
+
+A **sugestão adaptativa de duração** também estava nesta lista e acabou implementada: ela
+reaproveitava o motor de correlação que já existia, então saiu barata.
