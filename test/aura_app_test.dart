@@ -61,7 +61,11 @@ void main() {
     expect(habilitado.onPressed, isNotNull);
 
     await tester.tap(find.text('Confirmar'));
-    await tester.pumpAndSettle();
+    // pump com duração em vez de pumpAndSettle: com a sessão em andamento o
+    // halo do anel fica respirando, e pumpAndSettle esperaria essa animação
+    // contínua terminar — ou seja, para sempre.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
 
     // Cronômetro rodando: o botão vira Pausar.
     expect(find.text('Pausar'), findsOneWidget);
@@ -145,6 +149,56 @@ void main() {
     expect(find.text('00:00'), findsOneWidget);
   });
 
+  group('animação', () {
+    testWidgets('o halo respira durante a sessão e para ao pausar',
+        (tester) async {
+      await bootApp(tester);
+
+      // Nada animando com o app parado — é o que permite os outros testes
+      // usarem pumpAndSettle sem travar.
+      expect(tester.hasRunningAnimations, isFalse);
+
+      await tester.tap(find.text('Iniciar'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ótimo'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirmar'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(tester.hasRunningAnimations, isTrue,
+          reason: 'o halo respira enquanto a sessão roda');
+
+      await tester.tap(find.text('Pausar'));
+      await tester.pump();
+      // Generoso de propósito: o que ainda anima aqui não é o halo, é o splash
+      // de tinta do próprio botão que acabou de ser tocado.
+      await tester.pump(const Duration(seconds: 2));
+
+      expect(tester.hasRunningAnimations, isFalse,
+          reason: 'sessão pausada tem que parecer parada');
+    });
+
+    testWidgets('a tela de carregamento não deixa animação presa',
+        (tester) async {
+      // Se a abertura tivesse uma animação contínua, todo pumpAndSettle da
+      // suíte travaria — este teste é o que trava esse regresso.
+      tester.view.physicalSize = const Size(420, 940);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      // Sem pump extra: o armazenamento é mockado e resolve tão rápido que um
+      // segundo quadro já mostraria o app montado.
+      await tester.pumpWidget(const AuraApp());
+      expect(find.byType(AuraLoadingScreen), findsOneWidget);
+
+      await tester.pumpAndSettle();
+      expect(find.byType(AuraLoadingScreen), findsNothing);
+      expect(tester.hasRunningAnimations, isFalse);
+    });
+  });
+
   group('sugestão adaptativa', () {
     testWidgets('aparece no check de humor, com o histórico da demo',
         (tester) async {
@@ -181,7 +235,9 @@ void main() {
       await tester.tap(checkbox);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Confirmar'));
-      await tester.pumpAndSettle();
+      // Sessão em andamento: ver o comentário sobre o halo que respira.
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
 
       // O seletor de método passou a mostrar o método aceito.
       expect(find.textContaining(sugerido), findsWidgets);

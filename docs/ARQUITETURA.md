@@ -32,7 +32,7 @@ WIDGETS COMPARTILHADOS
 
 A faixa do meio é a mais importante: **é lógica pura, sem nenhuma dependência de Flutter**.
 Funções que recebem `List<StudySession>` e devolvem números ou objetos de dados. É por isso
-que 46 dos 65 testes conseguem rodar sem construir uma única tela.
+que 46 dos 67 testes conseguem rodar sem construir uma única tela.
 
 ---
 
@@ -218,7 +218,36 @@ o erro que veio mostrar.
 
 ---
 
-## 7. Restrições do FlutLab respeitadas pelo código
+## 7. Animação, e a restrição que ela impõe aos testes
+
+O app tem **uma única animação contínua**: o halo que respira em volta do anel, enquanto a
+sessão roda. Todas as outras são finitas — entram, terminam e param.
+
+Isso não é preferência estética, é uma restrição de teste. `pumpAndSettle()` espera **todas**
+as animações acabarem; qualquer animação que repete infinitamente faz o teste esperar para
+sempre. Como 25 chamadas da suíte usam `pumpAndSettle`, uma animação contínua mal colocada
+derruba a suíte inteira.
+
+| Onde | O quê | Duração |
+|---|---|---|
+| Abertura | tela nativa → `AuraLoadingScreen` → app | dissolvência de 450 ms |
+| Marca do Aura | entrada com escala e opacidade | 520 ms |
+| Troca de aba | dissolvência com deslize curto | 260 ms |
+| Cards de insight e gráficos | entrada escalonada, via `EntranceFade` | 620 ms, atraso por índice |
+| Gráficos `fl_chart` | barras e linha crescendo | 750 ms |
+| Anel do cronômetro | progresso suave entre segundos | 300 ms |
+| Aura (fundo) | transição entre climas | 700 ms |
+| **Halo do anel** | **respira — contínua** | 2600 ms, alternando |
+
+O escalonamento do `EntranceFade` sai de um `Interval` na curva, **não** de
+`Future.delayed`: assim continua sendo uma animação só, finita, e o `pumpAndSettle` termina.
+
+`_breath` é parado em todos os pontos onde a sessão para — pausar, reiniciar, fim de ciclo
+e fim de Flowtime. Os dois testes que rodam o cronômetro usam `pump(Duration)` no lugar de
+`pumpAndSettle`, e há um teste que verifica justamente isto: o halo anima durante a sessão
+e para ao pausar.
+
+## 8. Restrições do FlutLab respeitadas pelo código
 
 | Restrição | Como aparece no código |
 |---|---|
@@ -234,16 +263,16 @@ estar rodando.
 
 ---
 
-## 8. Testes
+## 9. Testes
 
 ```bash
-flutter test          # 65 testes
+flutter test          # 67 testes
 ```
 
 | Arquivo | Testes | Foco |
 |---|---|---|
 | `test/aura_logic_test.dart` | 46 | lógica pura: sequência, insights, sugestão, clima, dataset, serialização |
-| `test/aura_app_test.dart` | 19 | interface: navegação, fluxo de humor, gráficos, resiliência, tela de erro |
+| `test/aura_app_test.dart` | 21 | interface: navegação, fluxo de humor, gráficos, animação, resiliência, tela de erro |
 
 Os testes de interface rodam num viewport de telefone (420×940) em vez do padrão 800×600 —
 foi assim que apareceu um estouro de layout que o padrão escondia.

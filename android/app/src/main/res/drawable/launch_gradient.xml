@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fundo da tela de abertura. Mesmo degradê do ícone, para a abertura do app
+     ser contínua: o usuário toca no ícone e cai numa tela da mesma cor. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:angle="270"
+        android:startColor="#8B84FF"
+        android:endColor="#4A41C7"
+        android:type="linear" />
+</shape>

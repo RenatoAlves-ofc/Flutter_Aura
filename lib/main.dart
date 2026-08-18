@@ -1422,6 +1422,23 @@ class _HomeShellState extends State<HomeShell> {
       ),
     ];
 
+    // A abertura é contínua de propósito: a tela nativa usa o mesmo índigo da
+    // AuraLoadingScreen, que então se dissolve na cor da aura do usuário. Sem
+    // isso a sequência era flash branco, spinner e app — três telas
+    // desconexas.
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 450),
+      child: _loading
+          ? const AuraLoadingScreen()
+          : _buildShell(context, climate, pages),
+    );
+  }
+
+  Widget _buildShell(
+    BuildContext context,
+    AuraClimate climate,
+    List<Widget> pages,
+  ) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 700),
       decoration: BoxDecoration(
@@ -1481,9 +1498,33 @@ class _HomeShellState extends State<HomeShell> {
             const SizedBox(width: 4),
           ],
         ),
-        body: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : SafeArea(top: false, child: pages[_index]),
+        // Troca de aba com dissolvência e um deslize curto, para a navegação
+        // não ser um corte seco. A duração é curta de propósito: passar de aba
+        // precisa continuar parecendo instantâneo.
+        body: SafeArea(
+          top: false,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 260),
+            switchInCurve: Curves.easeOut,
+            switchOutCurve: Curves.easeIn,
+            transitionBuilder: (child, animation) => FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, 0.02),
+                  end: Offset.zero,
+                ).animate(animation),
+                child: child,
+              ),
+            ),
+            // A chave é o que faz o AnimatedSwitcher enxergar a troca: sem ela
+            // as abas são todas "o mesmo widget" e nada anima.
+            child: KeyedSubtree(
+              key: ValueKey<int>(_index),
+              child: pages[_index],
+            ),
+          ),
+        ),
         bottomNavigationBar: NavigationBar(
           backgroundColor: Colors.white.withValues(alpha: 0.85),
           indicatorColor: climate.accent.withValues(alpha: 0.18),
@@ -1539,7 +1580,16 @@ class FocusPage extends StatefulWidget {
   State<FocusPage> createState() => _FocusPageState();
 }
 
-class _FocusPageState extends State<FocusPage> {
+class _FocusPageState extends State<FocusPage>
+    with SingleTickerProviderStateMixin {
+  /// Pulsação do halo em volta do anel. Só roda com a sessão em andamento —
+  /// é a única animação contínua do app, e deixá-la ligada o tempo todo faria
+  /// o `pumpAndSettle` dos testes de interface nunca terminar.
+  late final AnimationController _breath = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 2600),
+  );
+
   String _methodId = 'pomodoro_classico';
   int _customFocus = 30;
   int _customBreak = 8;
@@ -1601,6 +1651,7 @@ class _FocusPageState extends State<FocusPage> {
   @override
   void dispose() {
     _timer?.cancel();
+    _breath.dispose();
     super.dispose();
   }
 
@@ -1641,6 +1692,7 @@ class _FocusPageState extends State<FocusPage> {
 
   void _start() {
     setState(() => _isRunning = true);
+    _breath.repeat(reverse: true);
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (_method.isFlowtime && !_isBreak) {
@@ -1657,11 +1709,14 @@ class _FocusPageState extends State<FocusPage> {
 
   void _pause() {
     _timer?.cancel();
+    // Parar em vez de só deixar rodar: sessão pausada tem que parecer parada.
+    _breath.stop();
     setState(() => _isRunning = false);
   }
 
   void _reset() {
     _timer?.cancel();
+    _breath.stop();
     setState(() {
       _isRunning = false;
       _moodBefore = null;
@@ -1673,6 +1728,7 @@ class _FocusPageState extends State<FocusPage> {
   /// Chamado quando um ciclo de duração fixa chega a zero.
   Future<void> _onCycleComplete() async {
     _timer?.cancel();
+    _breath.stop();
     if (_isBreak) {
       // Fim da pausa: volta para o foco sem registrar nada.
       setState(() {
@@ -1718,6 +1774,7 @@ class _FocusPageState extends State<FocusPage> {
   /// Flowtime não termina sozinho — o usuário decide a hora de parar.
   Future<void> _finishFlowtime() async {
     _timer?.cancel();
+    _breath.stop();
     setState(() => _isRunning = false);
 
     final minutes = _elapsedSeconds ~/ 60;
@@ -1905,13 +1962,44 @@ class _FocusPageState extends State<FocusPage> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
-                CircularPercentIndicator(
-                  radius: 108,
-                  lineWidth: 14,
-                  percent: progress,
-                  circularStrokeCap: CircularStrokeCap.round,
-                  backgroundColor: climate.accent.withValues(alpha: 0.12),
-                  progressColor: _isBreak ? const Color(0xFF4DB6AC) : climate.accent,
+                // Halo que respira enquanto a sessão roda. É a única animação
+                // contínua do app: fica só na tela onde o usuário passa mais
+                // tempo parado olhando, e some quando ele pausa.
+                AnimatedBuilder(
+                  animation: _breath,
+                  builder: (context, child) {
+                    final t = _isRunning ? _breath.value : 0.0;
+                    return Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: (_isBreak
+                                    ? const Color(0xFF4DB6AC)
+                                    : climate.accent)
+                                .withValues(alpha: 0.10 + 0.16 * t),
+                            blurRadius: 18 + 26 * t,
+                            spreadRadius: 2 + 10 * t,
+                          ),
+                        ],
+                      ),
+                      child: child,
+                    );
+                  },
+                  child: CircularPercentIndicator(
+                    radius: 108,
+                    lineWidth: 14,
+                    percent: progress,
+                    // Curto de propósito: o anel avança pouquíssimo por segundo,
+                    // e uma animação longa manteria quadros agendados o tempo
+                    // todo, travando o pumpAndSettle dos testes.
+                    animation: true,
+                    animateFromLastPercent: true,
+                    animationDuration: 300,
+                    circularStrokeCap: CircularStrokeCap.round,
+                    backgroundColor: climate.accent.withValues(alpha: 0.12),
+                    progressColor:
+                        _isBreak ? const Color(0xFF4DB6AC) : climate.accent,
                   center: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -1931,7 +2019,8 @@ class _FocusPageState extends State<FocusPage> {
                                 style: const TextStyle(fontSize: 12)),
                           ],
                         ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
                 if (linkedTask != null) ...[
@@ -2587,14 +2676,26 @@ class InsightsPage extends StatelessWidget {
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 16),
-        ...insights.map((i) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _InsightCard(insight: i),
+        // As descobertas entram uma após a outra: é a tela que carrega o
+        // argumento do app, e vê-la se montar dá mais peso do que encontrá-la
+        // pronta.
+        ...insights.indexed.map((e) => EntranceFade(
+              index: e.$1,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _InsightCard(insight: e.$2),
+              ),
             )),
         const SizedBox(height: 8),
-        _MoodDurationChart(sessions: sessions),
+        EntranceFade(
+          index: insights.length,
+          child: _MoodDurationChart(sessions: sessions),
+        ),
         const SizedBox(height: 12),
-        _WeeklyFocusChart(sessions: sessions),
+        EntranceFade(
+          index: insights.length + 1,
+          child: _WeeklyFocusChart(sessions: sessions),
+        ),
       ],
     );
   }
@@ -2721,6 +2822,11 @@ class _MoodDurationChart extends StatelessWidget {
           SizedBox(
             height: 220,
             child: BarChart(
+              // As barras crescem ao aparecer em vez de já surgirem prontas —
+              // é o gráfico que carrega a tese do app, e vê-lo se formar ajuda
+              // a lê-lo.
+              duration: const Duration(milliseconds: 750),
+              curve: Curves.easeOutCubic,
               BarChartData(
                 alignment: BarChartAlignment.spaceAround,
                 maxY: maxY,
@@ -2835,6 +2941,8 @@ class _WeeklyFocusChart extends StatelessWidget {
           SizedBox(
             height: 170,
             child: LineChart(
+              duration: const Duration(milliseconds: 750),
+              curve: Curves.easeOutCubic,
               LineChartData(
                 minY: 0,
                 maxY: maxY,
@@ -3341,6 +3449,144 @@ class _AboutPageState extends State<AboutPage> {
 // ============================================================
 // WIDGETS COMPARTILHADOS
 // ============================================================
+
+/// Índigo da tela de abertura nativa (Android e iOS). Repetido aqui para que a
+/// tela de carregamento comece exatamente na cor em que a nativa termina.
+const List<Color> kSplashGradient = [Color(0xFF8B84FF), Color(0xFF4A41C7)];
+
+/// Faz o filho entrar subindo e aparecendo, com atraso proporcional a [index].
+///
+/// O escalonamento sai de um `Interval` na curva, não de um `Future.delayed`:
+/// assim a animação continua sendo **uma só**, finita, e o `pumpAndSettle` dos
+/// testes de interface termina normalmente.
+class EntranceFade extends StatelessWidget {
+  final Widget child;
+  final int index;
+
+  const EntranceFade({super.key, required this.child, this.index = 0});
+
+  @override
+  Widget build(BuildContext context) {
+    // Teto no atraso: com muitos itens, os últimos não podem ficar esperando.
+    final atraso = (index * 0.09).clamp(0.0, 0.55);
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 620),
+      curve: Interval(atraso, 1, curve: Curves.easeOutCubic),
+      builder: (context, t, child) => Opacity(
+        opacity: t.clamp(0.0, 1.0),
+        child: Transform.translate(offset: Offset(0, 18 * (1 - t)), child: child),
+      ),
+      child: child,
+    );
+  }
+}
+
+/// A marca do Aura desenhada em widgets, não como imagem.
+///
+/// Assim ela acompanha qualquer tamanho sem perder nitidez e não custa nenhum
+/// asset no APK — o mesmo motivo pelo qual o app inteiro evita imagens.
+class AuraMark extends StatelessWidget {
+  final double size;
+
+  const AuraMark({super.key, this.size = 132});
+
+  Widget _halo(double diameter, double alpha) => Container(
+        width: diameter,
+        height: diameter,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white.withValues(alpha: alpha),
+        ),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          _halo(size, 0.14),
+          _halo(size * 0.78, 0.20),
+          _halo(size * 0.60, 0.28),
+          Container(
+            width: size * 0.53,
+            height: size * 0.53,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: const Color(0xFFFFD54F),
+                width: size * 0.022,
+              ),
+            ),
+          ),
+          Container(
+            width: size * 0.35,
+            height: size * 0.35,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Tela mostrada enquanto o app lê o armazenamento local.
+///
+/// A animação é **finita** de propósito: um pulsar contínuo faria o
+/// `pumpAndSettle` dos testes de interface esperar para sempre.
+class AuraLoadingScreen extends StatelessWidget {
+  const AuraLoadingScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: kSplashGradient,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: Center(
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: 1),
+            duration: const Duration(milliseconds: 520),
+            curve: Curves.easeOutBack,
+            builder: (context, t, child) => Opacity(
+              opacity: t.clamp(0.0, 1.0),
+              child: Transform.scale(scale: 0.86 + 0.14 * t, child: child),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const AuraMark(),
+                const SizedBox(height: 24),
+                Text(
+                  'Aura',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.95),
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 /// Cartão padrão do app.
 ///

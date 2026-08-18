@@ -20,7 +20,7 @@ Android 16.
 | | |
 |---|---|
 | Linhas em `lib/main.dart` | 3.438 |
-| Testes automatizados | 65 (46 de lógica, 19 de interface) |
+| Testes automatizados | 67 (46 de lógica, 21 de interface) |
 | `flutter analyze` | sem nenhum aviso |
 | SDKs verificados | Flutter 3.32.8 (o do FlutLab) e 3.47.0 |
 | Métodos de foco | 11, incluindo Flowtime |
@@ -46,7 +46,8 @@ ou o teste feito no aparelho.
 | 8 | Nenhuma tela vazia na primeira abertura | ✅ | Dataset de demonstração de 22 sessões semeado no primeiro uso; grupo `dataset de demonstração` (7 testes) garante volume, determinismo e variedade de métodos; conferido em todas as abas nos prints |
 
 **Além do escopo do MVP:** um item da Seção 3.1 (roadmap) foi implementado — a
-**sugestão adaptativa de duração**, descrita na Seção 5.
+**sugestão adaptativa de duração**, descrita na Seção 5 — e o app recebeu uma camada de
+animação e uma abertura própria, descritas na Seção 6.
 
 ---
 
@@ -62,7 +63,7 @@ não pegariam.
 que o FlutLab usa, e o 3.47.0. Rodar nos dois não é redundância — foi assim que apareceu
 uma asserção de layout que só a versão nova emite (Seção 4).
 
-Os 65 testes cobrem deliberadamente a lógica que **não aparece na tela** e por isso não
+Os 67 testes cobrem deliberadamente a lógica que **não aparece na tela** e por isso não
 seria pega por inspeção visual: a regra de sequência com perdão, os limiares de desbloqueio
 dos insights, o clima pessoal, a serialização retrocompatível e a resiliência a dados
 corrompidos.
@@ -182,7 +183,33 @@ Decisões que valem registro:
 
 ---
 
-## 6. O que fica fora e por quê
+## 6. Abertura e animação
+
+O app abria em três telas desconexas: flash branco da tela nativa, um `CircularProgressIndicator`
+pelado e então a interface. Nenhuma delas com a identidade do Aura.
+
+A abertura passou a ser contínua: a tela nativa (Android e iOS) usa o mesmo índigo e a mesma
+marca do ícone, a `AuraLoadingScreen` continua exatamente nessa cor, e ela se dissolve na cor
+da aura do usuário.
+
+Sobre a camada de animação, uma restrição valeu mais que qualquer escolha estética:
+`pumpAndSettle()` espera **todas** as animações terminarem, e a suíte o usa em 25 lugares.
+Uma animação que repete infinitamente trava o teste até estourar o tempo.
+
+Por isso o app tem **uma única animação contínua** — o halo respirando em volta do anel,
+restrito à sessão em andamento, que é a tela onde o usuário fica mais tempo parado olhando.
+Todo o resto é finito: entra, termina e para.
+
+Os dois testes que rodam o cronômetro passaram a usar `pump(Duration)` no lugar de
+`pumpAndSettle`, e dois testes novos travam esse comportamento: um verifica que o halo anima
+durante a sessão e para ao pausar; o outro, que a tela de carregamento não deixa animação
+presa — o que quebraria toda a suíte.
+
+Um detalhe que só apareceu ao investigar uma falha: depois de pausar, o que continuava
+animando não era o halo, era o splash de tinta do próprio botão tocado. O teste espera esse
+tempo de propósito, e diz isso no comentário.
+
+## 7. O que fica fora e por quê
 
 - **Build de APK neste repositório:** não há automação de CI. O APK é gerado no FlutLab,
   como a atividade exige.
@@ -195,7 +222,7 @@ Decisões que valem registro:
 
 ---
 
-## 7. Pendências para a entrega
+## 8. Pendências para a entrega
 
 | Item | Responsável | Observação |
 |---|---|---|
