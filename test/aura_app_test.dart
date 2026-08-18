@@ -141,4 +141,110 @@ void main() {
     expect(find.text('Sem alvo. Pare quando o foco acabar.'), findsOneWidget);
     expect(find.text('00:00'), findsOneWidget);
   });
+
+  // Regressão: um APK que instala mas quebra ao abrir não deixa rastro nenhum —
+  // o Android só diz "este app tem um bug". Estes testes garantem que dado
+  // corrompido no armazenamento local não derruba mais o app na inicialização.
+  group('resiliência da carga inicial', () {
+    testWidgets('abre normalmente com sessões corrompidas no armazenamento',
+        (tester) async {
+      SharedPreferences.setMockInitialValues({
+        'sessions': 'isto não é json {{{',
+      });
+
+      await bootApp(tester);
+
+      // Abriu na interface normal, não numa tela de erro.
+      expect(find.text('Método de foco'), findsOneWidget);
+      expect(find.textContaining('não conseguiu'), findsNothing);
+    });
+
+    testWidgets('abre normalmente com tarefas corrompidas no armazenamento',
+        (tester) async {
+      SharedPreferences.setMockInitialValues({
+        'tasks': '[{"sem_os_campos_esperados": true}]',
+      });
+
+      await bootApp(tester);
+
+      await tester.tap(find.text('Tarefas'));
+      await tester.pumpAndSettle();
+
+      // A lista volta vazia em vez de estourar na desserialização.
+      expect(find.textContaining('Nenhuma tarefa ainda'), findsOneWidget);
+    });
+
+    testWidgets('descarta o dado ilegível em vez de tropeçar nele de novo',
+        (tester) async {
+      SharedPreferences.setMockInitialValues({
+        'sessions': 'lixo',
+      });
+
+      await bootApp(tester);
+
+      final prefs = await SharedPreferences.getInstance();
+      final saved = prefs.getString('sessions');
+      // O valor inválido foi removido; o que sobrou é o dataset de demonstração,
+      // que já é JSON válido.
+      expect(saved, isNot('lixo'));
+    });
+  });
+
+  group('tela de erro', () {
+    testWidgets('mostra a mensagem e permite copiar o texto', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: AuraErrorScreen(
+            title: 'O Aura não conseguiu iniciar',
+            error: 'FormatException: teste',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('O Aura não conseguiu iniciar'), findsOneWidget);
+      // Selecionável de propósito: é como o erro sai de dentro do celular.
+      expect(find.byType(SelectableText), findsOneWidget);
+      expect(find.textContaining('FormatException: teste'), findsOneWidget);
+    });
+
+    // Ela também é usada como ErrorWidget.builder, que pode ser chamado acima do
+    // MaterialApp — sem Directionality, MediaQuery nem Material. Se ela
+    // dependesse desses ancestrais, lançaria ao desenhar e viraria um laço
+    // infinito de erro, escondendo justamente o erro que veio mostrar.
+    testWidgets('desenha sem MaterialApp em volta', (tester) async {
+      await tester.pumpWidget(
+        const AuraErrorScreen(
+          title: 'Algo quebrou ao desenhar a tela',
+          error: 'StateError: teste sem ancestrais',
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Algo quebrou ao desenhar a tela'), findsOneWidget);
+      expect(
+        find.textContaining('StateError: teste sem ancestrais'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('mostra o topo do stack quando ele existe', (tester) async {
+      await tester.pumpWidget(
+        AuraErrorScreen(
+          title: 'Falhou',
+          error: 'erro',
+          stack: StackTrace.fromString(
+            List.generate(40, (i) => '#$i  frame numero $i').join('\n'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.textContaining('#0  frame numero 0'), findsOneWidget);
+      // Só os primeiros quadros: o resto não caberia na tela de um celular.
+      expect(find.textContaining('#39  frame numero 39'), findsNothing);
+    });
+  });
 }
