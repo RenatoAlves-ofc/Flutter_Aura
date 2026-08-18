@@ -16,6 +16,16 @@ analyzer:
     - windows/**
     - macos/**
     - linux/**
+  errors:
+    # O analisador do FlutLab não reconhece duas regras que o package:lints
+    # lista (no_wildcard_variable_uses e type_literal_in_constant_pattern), e
+    # por isso enche a aba Analyzer com dois avisos sobre o arquivo incluído.
+    # Não é problema deste projeto: as regras seguem ativas no lints até a
+    # 6.1.0, e no mesmo Flutter 3.32.8 o `flutter analyze` não acusa nada.
+    # Trocar a versão do flutter_lints não resolveria — só mudaria qual pacote
+    # lista as mesmas regras. Silenciar o diagnóstico do arquivo incluído é o
+    # ajuste certo, e não desliga nenhuma verificação do nosso código.
+    included_file_warning: ignore
 include: package:flutter_lints/flutter.yaml
 
 linter:
