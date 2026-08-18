@@ -41,5 +41,7 @@ app.*.map.json
 
 # iOS
 /ios/Flutter/ephemeral/
-/ios/Flutter/Generated.xcconfig
-/ios/Flutter/flutter_export_environment.sh
+
+# Nota: ios/Flutter/Generated.xcconfig e flutter_export_environment.sh são
+# gerados, mas vieram versionados do FlutLab e seguem rastreados de propósito,
+# para o repositório continuar igual ao que o FlutLab espera ao importar.

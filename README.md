@@ -73,15 +73,21 @@ você desinstalar o app.
 
 ## Como rodar no FlutLab.io
 
-1. Acesse **flutlab.io**, faça login e crie um **New Project** com o template Flutter básico.
-2. Substitua o conteúdo de `pubspec.yaml` pelo deste projeto.
-3. Substitua o conteúdo de `lib/main.dart` pelo deste projeto.
-4. Clique em **Get Packages** (equivalente a `flutter pub get`).
-5. **Run/Build** → Web para o Hot Preview, ou gere o **APK** para testar no celular via QR Code.
+O projeto Flutter fica na **raiz do repositório** (`pubspec.yaml`, `lib/`, `android/`,
+`ios/` e `web/` no primeiro nível) — o FlutLab exige isso para importar de um repositório.
+
+**Importando do GitHub:** flutlab.io → **Import from VCS** → **From: GitHub**, com a URL
+deste repositório e a branch desejada.
+
+**Ou colando à mão:** crie um **New Project** com o template Flutter básico e substitua o
+conteúdo de `pubspec.yaml` e `lib/main.dart` pelos deste projeto.
+
+Nos dois casos: **Get Packages** (equivalente a `flutter pub get`) e então **Run/Build** →
+Web para o Hot Preview, ou gere o **APK** para testar no celular via QR Code.
 
 > O GitHub e o FlutLab **não sincronizam automaticamente**. Um push neste repositório não
-> aparece sozinho no editor do FlutLab — é preciso importar/recriar o projeto lá a partir
-> do repositório atualizado. Evite editar nos dois lugares ao mesmo tempo.
+> aparece sozinho no editor do FlutLab — é preciso reimportar o projeto lá a partir do
+> repositório atualizado. Evite editar nos dois lugares ao mesmo tempo.
 
 ### Restrições respeitadas pelo código
 
