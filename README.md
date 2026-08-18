@@ -57,7 +57,7 @@ só `Container` + `BoxDecoration` com gradiente.
 
 ### Dados de demonstração
 
-Na primeira abertura o app semeia 20 sessões fictícias dos últimos 14 dias, para que
+Na primeira abertura o app semeia 22 sessões fictícias dos últimos 14 dias, para que
 nenhuma tela apareça vazia. Elas são geradas com semente fixa (sempre iguais) e podem ser
 removidas na tela **Sobre** sem afetar suas sessões reais.
 
@@ -128,14 +128,19 @@ O `pubspec.lock` versionado foi gerado no Flutter 3.32, o menor denominador comu
 ```bash
 flutter pub get
 flutter analyze     # sem issues
-flutter test        # 39 testes
+flutter test        # 54 testes
 flutter run
 ```
 
 Os testes cobrem a lógica que não aparece na tela e não pode quebrar: a regra de sequência
 com perdão, o motor de insights e seus limiares, o clima pessoal, a serialização (incluindo
-compatibilidade com dados salvos por versões anteriores) e o dataset de demonstração. Há
-também um smoke test de interface que sobe o app e navega por todas as abas.
+compatibilidade com dados salvos por versões anteriores), a resiliência a dados corrompidos
+no armazenamento local e o dataset de demonstração. Há também um smoke test de interface
+que sobe o app e navega por todas as abas.
+
+Testes não olham para a tela, então a interface foi conferida à parte, rodando o build web
+num viewport de telefone e inspecionando cada aba — foi assim que apareceram o
+`Resumo` incoerente e as sobras de template do FlutLab.
 
 ## Roadmap (fora do MVP)
 

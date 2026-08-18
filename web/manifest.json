@@ -1,11 +1,11 @@
 {
-    "name": "hello_world",
-    "short_name": "hello_world",
+    "name": "Aura",
+    "short_name": "Aura",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Um Pomodoro que aprende com voce: cruza humor com desempenho de foco e devolve descobertas pessoais.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

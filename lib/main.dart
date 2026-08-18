@@ -636,6 +636,27 @@ int effectiveStreak(StreakState s, DateTime now) {
   return 0;
 }
 
+/// Reconstrói a sequência a partir de uma lista de sessões, aplicando dia a dia
+/// a mesma regra de [applyActivity] usada quando uma sessão real é registrada.
+///
+/// Existe para manter a tela Resumo coerente: sem isto, o app abre exibindo
+/// "0 dias de sequência" e "0 pontos" ao lado de "20 sessões totais", porque o
+/// dataset de demonstração gravava as sessões sem gravar o estado que elas
+/// implicam.
+StreakState streakFromSessions(List<StudySession> sessions) {
+  final days = sessions.map((s) => dayOf(s.date)).toSet().toList()..sort();
+  var state = const StreakState(
+      streak: 0, tokens: 0, runLength: 0, lastActiveDay: null);
+  for (final day in days) {
+    state = applyActivity(state, day);
+  }
+  return state;
+}
+
+/// Pontuação equivalente às sessões: os mesmos 10 pontos por sessão concluída
+/// que o app credita em uso normal.
+int pointsFromSessions(List<StudySession> sessions) => sessions.length * 10;
+
 // ============================================================
 // MOTOR DE INSIGHTS (Dart puro, sem IA e sem API)
 // ============================================================
@@ -991,21 +1012,29 @@ List<StudySession> buildDemoSessions() {
     5: ['pomodoro_longo', '52_17', 'ciclo_ultradiano'],
   };
 
-  // Humor de cada dia (índice = dias atrás). O dia 6 e o dia 2 ficam vazios
-  // de propósito, para a sequência ter buracos como na vida real.
+  // Humor de cada dia (índice = dias atrás). Os dias 6 e 2 ficam vazios de
+  // propósito, para a sequência ter buracos como na vida real.
+  //
+  // O humor inicial 5 aparece pouco de propósito: quem já começa no máximo não
+  // tem para onde melhorar, e a escala trunca o ganho. Com muitos 5 aqui, o
+  // insight "focar muda seu humor" ficava artificialmente fraco.
   const moodByDayAgo = <int, List<int>>{
     14: [3, 4],
     13: [4],
     12: [2, 3],
-    11: [5, 4],
+    11: [4, 4],
     10: [3],
     9: [4, 5],
     8: [2],
     7: [3, 4],
     5: [5, 4],
     4: [3],
-    3: [4, 4],
-    1: [5, 3],
+    3: [4, 3],
+    1: [4, 3],
+    // Hoje: sem isto, o app abre dizendo "0 sessões hoje" e "0 dias de
+    // sequência" logo ao lado de "20 sessões totais", e o gráfico da semana
+    // termina em zero.
+    0: [3, 4],
   };
 
   moodByDayAgo.forEach((daysAgo, moods) {
@@ -1021,8 +1050,13 @@ List<StudySession> buildDemoSessions() {
           ? math.max(10, planned - 5 - rnd.nextInt(8))
           : planned;
 
-      // O foco costuma melhorar o humor, mas nem sempre.
-      final delta = rnd.nextInt(10) < 7 ? 1 : (rnd.nextInt(2) == 0 ? 0 : -1);
+      // O foco costuma melhorar o humor, às vezes bastante, mas nem sempre.
+      final roll = rnd.nextInt(10);
+      final delta = roll < 6
+          ? 1
+          : roll < 8
+              ? 2
+              : (roll == 8 ? 0 : -1);
       final moodAfter = (mood + delta).clamp(1, 5);
 
       final date = today.subtract(Duration(days: daysAgo)).add(
@@ -1080,14 +1114,22 @@ class _HomeShellState extends State<HomeShell> {
     try {
       final tasks = await AuraStore.loadTasks();
       var sessions = await AuraStore.loadSessions();
-      final points = await AuraStore.loadPoints();
-      final streak = await AuraStore.loadStreak();
+      var points = await AuraStore.loadPoints();
+      var streak = await AuraStore.loadStreak();
       final seeded = await AuraStore.demoSeeded();
 
       // Nenhuma tela pode aparecer vazia na primeira abertura.
       if (sessions.isEmpty && !seeded) {
         sessions = buildDemoSessions();
+        // A sequência e os pontos são derivados das próprias sessões: gravar só
+        // as sessões deixaria o Resumo dizendo "0 dias de sequência" e
+        // "0 pontos" logo ao lado do total de sessões e minutos.
+        streak = streakFromSessions(sessions);
+        points = pointsFromSessions(sessions);
+
         await AuraStore.saveSessions(sessions);
+        await AuraStore.saveStreak(streak);
+        await AuraStore.savePoints(points);
         await AuraStore.setDemoSeeded(true);
       }
 
@@ -1240,17 +1282,33 @@ class _HomeShellState extends State<HomeShell> {
   }
 
   Future<void> _clearDemoData() async {
-    final updated = _sessions.where((s) => !s.isDemo).toList();
-    setState(() => _sessions = updated);
-    await AuraStore.saveSessions(updated);
+    await _applySessions(_sessions.where((s) => !s.isDemo).toList());
   }
 
   Future<void> _restoreDemoData() async {
     final real = _sessions.where((s) => !s.isDemo).toList();
-    final updated = [...buildDemoSessions(), ...real]
-      ..sort((a, b) => a.date.compareTo(b.date));
-    setState(() => _sessions = updated);
-    await AuraStore.saveSessions(updated);
+    await _applySessions([...buildDemoSessions(), ...real]
+      ..sort((a, b) => a.date.compareTo(b.date)));
+  }
+
+  /// Troca o conjunto de sessões e recalcula o que depende dele.
+  ///
+  /// Ligar ou desligar o dataset de demonstração muda quantas sessões existem,
+  /// então sequência e pontos precisam acompanhar — senão o Resumo passa a
+  /// exibir uma sequência apoiada em sessões que não estão mais lá.
+  Future<void> _applySessions(List<StudySession> sessions) async {
+    final streak = streakFromSessions(sessions);
+    final points = pointsFromSessions(sessions);
+
+    setState(() {
+      _sessions = sessions;
+      _streak = streak;
+      _points = points;
+    });
+
+    await AuraStore.saveSessions(sessions);
+    await AuraStore.saveStreak(streak);
+    await AuraStore.savePoints(points);
   }
 
   bool get _hasDemoData => _sessions.any((s) => s.isDemo);

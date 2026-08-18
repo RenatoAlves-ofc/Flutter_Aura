@@ -275,7 +275,7 @@ void main() {
 
     test('tem volume suficiente para desbloquear todos os insights', () {
       final insights = buildInsights(demo);
-      expect(demo.length, 20, reason: 'valor citado no README');
+      expect(demo.length, 22, reason: 'valor citado no README');
       expect(
         insights.where((i) => !i.unlocked).map((i) => i.title).toList(),
         isEmpty,
@@ -313,6 +313,76 @@ void main() {
     test('usa vários métodos, senão o insight de método nunca abre', () {
       expect(demo.map((s) => s.methodId).toSet().length,
           greaterThanOrEqualTo(2));
+    });
+
+    test('inclui sessões de hoje', () {
+      // Sem isto o app abre dizendo "0 sessões hoje" e "0 dias de sequência"
+      // ao lado do total de sessões, e o gráfico da semana termina em zero.
+      final hoje = dayOf(DateTime.now());
+      expect(
+        demo.any((s) => dayOf(s.date).isAtSameMomentAs(hoje)),
+        isTrue,
+      );
+    });
+
+    test('mostra o humor melhorando na maioria das sessões', () {
+      // O insight "focar muda seu humor" é uma das quatro descobertas: se o
+      // dataset não sustentar a afirmação, o card abre dizendo quase nada.
+      final melhoraram =
+          demo.where((s) => s.moodAfter > s.moodBefore).length;
+      expect(melhoraram / demo.length, greaterThan(0.6));
+
+      final delta = demo
+              .map((s) => s.moodAfter - s.moodBefore)
+              .reduce((a, b) => a + b) /
+          demo.length;
+      expect(delta, greaterThan(0.5));
+    });
+  });
+
+  group('estado derivado das sessões', () {
+    test('a sequência do dataset de demonstração está viva hoje', () {
+      final demo = buildDemoSessions();
+      final streak = streakFromSessions(demo);
+
+      // O Resumo não pode abrir com "0 dias de sequência" ao lado de
+      // "22 sessões totais".
+      expect(effectiveStreak(streak, DateTime.now()), greaterThan(0));
+    });
+
+    test('os pontos acompanham as sessões', () {
+      final demo = buildDemoSessions();
+      expect(pointsFromSessions(demo), demo.length * 10);
+    });
+
+    test('sem sessões, não há sequência nem pontos', () {
+      expect(streakFromSessions([]).streak, 0);
+      expect(streakFromSessions([]).lastActiveDay, isNull);
+      expect(pointsFromSessions([]), 0);
+    });
+
+    test('reconstrói a sequência aplicando a mesma regra de dia a dia', () {
+      final base = DateTime(2026, 8, 10);
+      final sessions = [
+        // Três dias seguidos, e duas sessões num mesmo dia não contam duas vezes.
+        session(date: base, duration: 25, before: 3, after: 4),
+        session(date: base.add(const Duration(hours: 6)),
+            duration: 25, before: 3, after: 4),
+        session(
+            date: base.add(const Duration(days: 1)),
+            duration: 25,
+            before: 3,
+            after: 4),
+        session(
+            date: base.add(const Duration(days: 2)),
+            duration: 25,
+            before: 3,
+            after: 4),
+      ];
+
+      final streak = streakFromSessions(sessions);
+      expect(streak.streak, 3);
+      expect(streak.tokens, 1, reason: 'três dias seguidos rendem uma folga');
     });
   });
 
