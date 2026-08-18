@@ -11,6 +11,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
+    // AuraCrashReport é estado global: sem limpar, o erro registrado por um
+    // teste vaza para o seguinte e o card da tela Sobre aparece onde não devia.
+    AuraCrashReport.clear();
   });
 
   /// O viewport padrão do teste (800x600) é mais baixo que qualquer celular e
@@ -187,6 +190,42 @@ void main() {
       // O valor inválido foi removido; o que sobrou é o dataset de demonstração,
       // que já é JSON válido.
       expect(saved, isNot('lixo'));
+    });
+
+    testWidgets('registra a corrupção em vez de engolir em silêncio',
+        (tester) async {
+      SharedPreferences.setMockInitialValues({
+        'sessions': 'lixo',
+      });
+
+      await bootApp(tester);
+
+      // O app abriu, mas o usuário perdeu dados: isso não pode passar batido.
+      expect(AuraCrashReport.lastError, isNotNull);
+      expect(AuraCrashReport.lastError.toString(), contains('sessions'));
+    });
+
+    testWidgets('a tela Sobre mostra o erro registrado', (tester) async {
+      SharedPreferences.setMockInitialValues({
+        'sessions': 'lixo',
+      });
+
+      await bootApp(tester);
+      await tester.tap(find.byIcon(Icons.info_outline));
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+          find.text('Último erro registrado'), 300);
+      expect(find.text('Último erro registrado'), findsOneWidget);
+    });
+
+    testWidgets('sem erro nenhum, a tela Sobre não mostra o card de erro',
+        (tester) async {
+      await bootApp(tester);
+      await tester.tap(find.byIcon(Icons.info_outline));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Último erro registrado'), findsNothing);
     });
   });
 

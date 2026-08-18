@@ -59,6 +59,13 @@ class AuraCrashReport {
     lastError = error;
     lastStack = stack;
   }
+
+  /// Usado quando o usuário apaga os dados locais: manter o erro anterior faria
+  /// a tela Sobre denunciar um problema que já não existe.
+  static void clear() {
+    lastError = null;
+    lastStack = null;
+  }
 }
 
 class AuraApp extends StatelessWidget {
@@ -439,8 +446,14 @@ class AuraStore {
       return decoded
           .map((e) => fromJson(e as Map<String, dynamic>))
           .toList();
-    } catch (_) {
-      // Dado ilegível: melhor começar vazio do que não abrir.
+    } catch (error, stack) {
+      // Dado ilegível: melhor começar vazio do que não abrir. Mas descartar em
+      // silêncio esconderia do usuário que ele acabou de perder dados — o
+      // registro faz o motivo aparecer na tela Sobre.
+      AuraCrashReport.record(
+        'Dado ilegível em "$key" foi descartado do armazenamento local: $error',
+        stack,
+      );
       await prefs.remove(key);
       return <T>[];
     }
@@ -1140,8 +1153,24 @@ class _HomeShellState extends State<HomeShell> {
 
     if (confirmed != true) return;
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    // Este é o caminho de recuperação de último recurso: se ele próprio lançar,
+    // o usuário fica preso sem nenhuma saída. Por isso a falha vira a mesma tela
+    // de erro controlada, em vez de derrubar o app ou sumir em silêncio.
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+      AuraCrashReport.clear();
+    } catch (error, stack) {
+      AuraCrashReport.record(error, stack);
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadError = error;
+        _loadStack = stack;
+      });
+      return;
+    }
+
     await _retryLoad();
   }
 
@@ -3018,6 +3047,20 @@ class _AboutPageState extends State<AboutPage> {
                       style: const TextStyle(
                           fontFamily: 'monospace', fontSize: 11, height: 1.4),
                     ),
+                    if (AuraCrashReport.lastStack != null) ...[
+                      const SizedBox(height: 8),
+                      SelectableText(
+                        // Poucos quadros: o suficiente para localizar a origem
+                        // sem transformar a tela Sobre num despejo de log.
+                        AuraCrashReport.lastStack
+                            .toString()
+                            .split('\n')
+                            .take(6)
+                            .join('\n'),
+                        style: const TextStyle(
+                            fontFamily: 'monospace', fontSize: 10, height: 1.4),
+                      ),
+                    ],
                   ],
                 ),
               ),
