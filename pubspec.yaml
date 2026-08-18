@@ -10,9 +10,22 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  shared_preferences: ^2.5.5
+  # As versões abaixo são escolhidas para o projeto rodar no Flutter 3.32
+  # (Dart 3.8.1), que é o padrão atual do FlutLab, sem impedir o 3.41.
+  #
+  # shared_preferences: a partir da 2.5.4 exige Dart >=3.9, que o 3.32 não tem.
+  # O caret deixa o pub subir sozinho para a 2.5.5 num SDK mais novo.
+  shared_preferences: ^2.5.3
+  #
+  # fl_chart: fixado na 1.0.0 de propósito, e não por faixa.
+  # A 1.1.1+ exige vector_math ^2.2.0, enquanto o flutter_test do 3.32 fixa
+  # 2.1.4. A 1.1.0 declara ^2.1.4 mas mesmo assim chama Matrix4.translateByDouble
+  # e scaleByDouble, que só existem na 2.2.0 — ou seja, ela resolve e passa no
+  # analyze, mas quebra na compilação. Como o pub não enxerga esse erro, uma
+  # faixa aberta cairia justamente nessa versão quebrada. A 1.0.0 é a mais nova
+  # que compila de verdade com vector_math 2.1.4.
+  fl_chart: 1.0.0
   percent_indicator: ^4.2.5
-  fl_chart: ^1.2.0
   cupertino_icons: ^1.0.8
 
 dev_dependencies:

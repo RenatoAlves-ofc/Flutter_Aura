@@ -102,9 +102,20 @@ Web para o Hot Preview, ou gere o **APK** para testar no celular via QR Code.
 `shared_preferences`, `percent_indicator`, `fl_chart`, `cupertino_icons` — todas gratuitas
 do pub.dev.
 
-> `fl_chart: ^1.2.0` exige Flutter ≥ 3.27.4, a mesma faixa que `.withValues(alpha:)` já
-> pressupõe. Se o SDK do FlutLab for mais antigo e o Get Packages falhar, troque para
-> `fl_chart: ^0.69.0`.
+As versões estão presas ao que roda no **Flutter 3.32**, o padrão atual do FlutLab
+(o seletor no rodapé do editor também oferece 3.41 e 3.29). Verificado nas duas pontas,
+3.32 e 3.47:
+
+- **`shared_preferences: ^2.5.3`** — da 2.5.4 em diante exige Dart ≥ 3.9, e o Flutter 3.32
+  traz Dart 3.8.1. O caret deixa o pub subir sozinho num SDK mais novo.
+- **`fl_chart: 1.0.0`** — fixado, não em faixa. A 1.1.1+ exige `vector_math ^2.2.0`,
+  enquanto o `flutter_test` do 3.32 fixa 2.1.4. A 1.1.0 *declara* `^2.1.4` mas chama
+  `Matrix4.translateByDouble`/`scaleByDouble`, que só existem na 2.2.0 — ela resolve e
+  passa no `analyze`, e só quebra na compilação. Como o pub não enxerga esse erro, uma
+  faixa aberta cairia justamente nessa versão. A 1.0.0 é a mais nova que compila de
+  verdade com `vector_math 2.1.4`.
+
+O `pubspec.lock` versionado foi gerado no Flutter 3.32, o menor denominador comum.
 
 ---
 
