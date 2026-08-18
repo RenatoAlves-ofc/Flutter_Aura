@@ -93,6 +93,23 @@ Web para o Hot Preview, ou gere o **APK** para testar no celular via QR Code.
 > aparece sozinho no editor do FlutLab — é preciso reimportar o projeto lá a partir do
 > repositório atualizado. Evite editar nos dois lugares ao mesmo tempo.
 
+### Dois avisos do FlutLab que são esperados
+
+Nenhum dos dois impede o build, e nenhum é problema deste projeto:
+
+**Na aba Build, sobre a NDK.** O FlutLab avisa que `shared_preferences_android` exige a
+NDK `27.0.12077973`, enquanto o projeto usa a `flutter.ndkVersion` (26.3.11579264 no
+Flutter 3.32). É intencional: o app não traz nenhuma dependência com código nativo
+próprio, então as únicas libs `.so` vêm da engine do Flutter, e o APK arm64 gerado assim
+instala e roda em Android 16. Fixar a 27 exigiria essa NDK instalada no ambiente de build,
+o que não dá para garantir no FlutLab.
+
+**Na aba Analyzer, sobre `no_wildcard_variable_uses` e `type_literal_in_constant_pattern`
+não serem regras reconhecidas.** Vem do analisador do FlutLab, não do projeto: as duas
+regras seguem ativas no `lints` até a 6.1.0, e aqui, no mesmo Flutter 3.32.8,
+`flutter analyze` e `dart analyze` não emitem nenhum aviso. Subir o `flutter_lints` não
+resolve — só troca a versão que lista as mesmas regras.
+
 ### Restrições respeitadas pelo código
 
 - **Arquivo único** (`lib/main.dart`), sem imports relativos
