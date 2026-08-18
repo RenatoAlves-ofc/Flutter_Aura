@@ -145,6 +145,66 @@ void main() {
     expect(find.text('00:00'), findsOneWidget);
   });
 
+  group('sugestão adaptativa', () {
+    testWidgets('aparece no check de humor, com o histórico da demo',
+        (tester) async {
+      await bootApp(tester);
+
+      await tester.tap(find.text('Iniciar'));
+      await tester.pumpAndSettle();
+
+      // Antes de escolher o humor não há o que sugerir.
+      expect(find.text('Sugestão para este humor'), findsNothing);
+
+      await tester.tap(find.text('Ótimo'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Sugestão para este humor'), findsOneWidget);
+      expect(find.textContaining('você sustentou em média'), findsOneWidget);
+    });
+
+    testWidgets('aceitar a sugestão troca o método antes de iniciar',
+        (tester) async {
+      await bootApp(tester);
+
+      await tester.tap(find.text('Iniciar'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ótimo'));
+      await tester.pumpAndSettle();
+
+      // O rótulo do checkbox nomeia o método sugerido.
+      final checkbox = find.byType(CheckboxListTile);
+      expect(checkbox, findsOneWidget);
+      final label = tester.widget<CheckboxListTile>(checkbox).title! as Text;
+      final sugerido = label.data!.replaceAll('Usar ', '');
+
+      await tester.tap(checkbox);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirmar'));
+      await tester.pumpAndSettle();
+
+      // O seletor de método passou a mostrar o método aceito.
+      expect(find.textContaining(sugerido), findsWidgets);
+      expect(find.text('Pausar'), findsOneWidget, reason: 'a sessão começou');
+    });
+
+    testWidgets('sem histórico nenhum, não sugere nada', (tester) async {
+      // Demo já semeada e removida: o app fica sem sessões de verdade.
+      SharedPreferences.setMockInitialValues({
+        'demoSeeded': true,
+        'sessions': '[]',
+      });
+      await bootApp(tester);
+
+      await tester.tap(find.text('Iniciar'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ótimo'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Sugestão para este humor'), findsNothing);
+    });
+  });
+
   // Regressão: um APK que instala mas quebra ao abrir não deixa rastro nenhum —
   // o Android só diz "este app tem um bug". Estes testes garantem que dado
   // corrompido no armazenamento local não derruba mais o app na inicialização.

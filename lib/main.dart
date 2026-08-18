@@ -901,6 +901,78 @@ Insight _insightMethod(List<StudySession> sessions) {
 }
 
 // ============================================================
+// SUGESTÃO ADAPTATIVA DE DURAÇÃO
+// ============================================================
+
+/// O que o histórico diz sobre um método, para um humor de partida específico.
+class MethodSuggestion {
+  final FocusMethod method;
+
+  /// Minutos que o usuário realmente sustentou, em média, nessas condições —
+  /// não a duração que o método promete.
+  final double avgDuration;
+  final double avgMoodAfter;
+  final int sampleSize;
+
+  const MethodSuggestion({
+    required this.method,
+    required this.avgDuration,
+    required this.avgMoodAfter,
+    required this.sampleSize,
+  });
+}
+
+/// Sugere o método que historicamente termina melhor para quem começa a sessão
+/// com [mood].
+///
+/// Devolve `null` quando não há evidência suficiente: o app prefere não sugerir
+/// nada a sugerir com base em uma tentativa isolada.
+///
+/// Aplica o mesmo mínimo de 2 sessões por método do insight "o método que mais
+/// te sustenta", mas olha só as sessões da mesma faixa de humor — é uma pergunta
+/// diferente ("o que funciona quando estou assim?" em vez de "o que funciona no
+/// geral?"). Por isso pode haver sugestão aqui enquanto aquele insight ainda
+/// está bloqueado, que exige 6 sessões no total.
+///
+/// Flowtime e Personalizado ficam de fora: um não tem duração alvo e o outro
+/// depende do que o usuário configurou, então recomendá-los por duração média
+/// prometeria um número que a sessão não vai cumprir.
+MethodSuggestion? suggestMethodForMood(List<StudySession> sessions, int mood) {
+  final bucket = _moodBucket(mood);
+
+  final byMethod = <String, List<StudySession>>{};
+  for (final s in sessions) {
+    if (_moodBucket(s.moodBefore) != bucket) continue;
+    final method = methodById(s.methodId);
+    if (method.isFlowtime || method.isCustom) continue;
+    byMethod.putIfAbsent(s.methodId, () => []).add(s);
+  }
+
+  final eligible = byMethod.entries.where((e) => e.value.length >= 2).toList();
+  if (eligible.isEmpty) return null;
+
+  double avgMoodAfter(List<StudySession> l) =>
+      l.map((s) => s.moodAfter).reduce((a, b) => a + b) / l.length;
+  double avgDuration(List<StudySession> l) =>
+      l.map((s) => s.durationMinutes).reduce((a, b) => a + b) / l.length;
+
+  eligible.sort((a, b) {
+    final byMood = avgMoodAfter(b.value).compareTo(avgMoodAfter(a.value));
+    // Empate no humor final: fica com o que sustentou mais tempo.
+    if (byMood != 0) return byMood;
+    return avgDuration(b.value).compareTo(avgDuration(a.value));
+  });
+
+  final best = eligible.first;
+  return MethodSuggestion(
+    method: methodById(best.key),
+    avgDuration: avgDuration(best.value),
+    avgMoodAfter: avgMoodAfter(best.value),
+    sampleSize: best.value.length,
+  );
+}
+
+// ============================================================
 // CLIMA PESSOAL (a "aura")
 // ============================================================
 
@@ -1332,6 +1404,7 @@ class _HomeShellState extends State<HomeShell> {
       FocusPage(
         tasks: _tasks,
         climate: climate,
+        sessions: _sessions,
         onSessionRecorded: _recordSession,
       ),
       TaskListPage(
@@ -1439,18 +1512,26 @@ class _HomeShellState extends State<HomeShell> {
 class _MoodResult {
   final int mood;
   final String? taskId;
-  const _MoodResult(this.mood, this.taskId);
+
+  /// Método que o usuário aceitou da sugestão adaptativa, se aceitou algum.
+  final String? applyMethodId;
+
+  const _MoodResult(this.mood, this.taskId, {this.applyMethodId});
 }
 
 class FocusPage extends StatefulWidget {
   final List<TaskItem> tasks;
   final AuraClimate climate;
+
+  /// Histórico, usado apenas para a sugestão adaptativa no check de humor.
+  final List<StudySession> sessions;
   final Future<void> Function(StudySession session) onSessionRecorded;
 
   const FocusPage({
     super.key,
     required this.tasks,
     required this.climate,
+    required this.sessions,
     required this.onSessionRecorded,
   });
 
@@ -1535,6 +1616,20 @@ class _FocusPageState extends State<FocusPage> {
     if (!_isBreak && _moodBefore == null) {
       final result = await _askMoodBefore();
       if (!mounted || result == null) return;
+
+      // O usuário aceitou a sugestão adaptativa: troca o método antes de
+      // iniciar. A sessão roda a duração do preset sugerido — o número que o
+      // cartão mostra é a média que ele sustentou, não uma nova duração alvo.
+      final applyId = result.applyMethodId;
+      if (applyId != null) {
+        setState(() {
+          _methodId = applyId;
+          _resetTimerValues();
+        });
+        await AuraStore.saveSelectedMethod(applyId);
+        if (!mounted) return;
+      }
+
       setState(() {
         _moodBefore = result.mood;
         _linkedTaskId = result.taskId;
@@ -1654,6 +1749,8 @@ class _FocusPageState extends State<FocusPage> {
         subtitle: 'Isso é o que permite o Aura descobrir o que realmente '
             'afeta seu foco.',
         linkableTasks: pending,
+        sessions: widget.sessions,
+        currentMethodId: _methodId,
       ),
     );
   }
@@ -2051,10 +2148,17 @@ class _MoodSheet extends StatefulWidget {
   final String subtitle;
   final List<TaskItem> linkableTasks;
 
+  /// Histórico usado para sugerir um método assim que o humor é escolhido.
+  /// Vazio no check de humor do fim da sessão, onde sugerir não faz sentido.
+  final List<StudySession> sessions;
+  final String currentMethodId;
+
   const _MoodSheet({
     required this.title,
     required this.subtitle,
     required this.linkableTasks,
+    this.sessions = const [],
+    this.currentMethodId = '',
   });
 
   @override
@@ -2064,6 +2168,21 @@ class _MoodSheet extends StatefulWidget {
 class _MoodSheetState extends State<_MoodSheet> {
   int? _selected;
   String? _taskId;
+
+  /// Marcado pelo usuário para trocar de método antes de começar. Fica desligado
+  /// por padrão: a sugestão é uma oferta, não uma imposição. Volta a desligar
+  /// sempre que o humor muda — a sugestão passa a ser outra, e manter a marca
+  /// aplicaria um método que o usuário nunca chegou a ver.
+  bool _acceptSuggestion = false;
+
+  MethodSuggestion? get _suggestion {
+    final mood = _selected;
+    if (mood == null || widget.sessions.isEmpty) return null;
+    final s = suggestMethodForMood(widget.sessions, mood);
+    // Sugerir o método que já está selecionado seria ruído.
+    if (s == null || s.method.id == widget.currentMethodId) return null;
+    return s;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -2106,7 +2225,12 @@ class _MoodSheetState extends State<_MoodSheet> {
               return Expanded(
                 child: InkWell(
                   borderRadius: BorderRadius.circular(12),
-                  onTap: () => setState(() => _selected = mood),
+                  onTap: () => setState(() {
+                    _selected = mood;
+                    // A sugestão muda junto com o humor: manter a marca faria
+                    // o Confirmar aplicar um método que o usuário não escolheu.
+                    _acceptSuggestion = false;
+                  }),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     child: Column(
@@ -2175,6 +2299,14 @@ class _MoodSheetState extends State<_MoodSheet> {
               ),
             ),
           ],
+          if (_suggestion != null) ...[
+            const SizedBox(height: 20),
+            _SuggestionCard(
+              suggestion: _suggestion!,
+              accepted: _acceptSuggestion,
+              onChanged: (v) => setState(() => _acceptSuggestion = v),
+            ),
+          ],
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
@@ -2182,8 +2314,84 @@ class _MoodSheetState extends State<_MoodSheet> {
               onPressed: _selected == null
                   ? null
                   : () => Navigator.of(context)
-                      .pop(_MoodResult(_selected!, _taskId)),
+                      .pop(_MoodResult(
+                        _selected!,
+                        _taskId,
+                        applyMethodId: _acceptSuggestion
+                            ? _suggestion?.method.id
+                            : null,
+                      )),
               child: const Text('Confirmar'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A sugestão adaptativa, mostrada dentro do check de humor.
+///
+/// Fecha o ciclo do app: o humor que o usuário acabou de informar vira uma
+/// recomendação tirada do histórico dele, e não de uma regra genérica.
+class _SuggestionCard extends StatelessWidget {
+  final MethodSuggestion suggestion;
+  final bool accepted;
+  final ValueChanged<bool> onChanged;
+
+  const _SuggestionCard({
+    required this.suggestion,
+    required this.accepted,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return AuraCard(
+      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.auto_awesome, size: 20, color: theme.colorScheme.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Sugestão para este humor',
+                  style: theme.textTheme.titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Sentindo-se assim, você sustentou em média '
+            '${fmt(suggestion.avgDuration)} min com o '
+            '${suggestion.method.name}, terminando em '
+            '${fmt(suggestion.avgMoodAfter)}/5. '
+            'Baseado em ${suggestion.sampleSize} sessões suas.',
+            style: const TextStyle(fontSize: 13, height: 1.4),
+          ),
+          const SizedBox(height: 4),
+          // O Material transparente é obrigatório aqui: o ListTile pinta fundo e
+          // splash no Material mais próximo, e o AuraCard é um Container com
+          // fundo próprio no meio do caminho — sem isto o toque não dá retorno
+          // visual nenhum.
+          Material(
+            type: MaterialType.transparency,
+            child: CheckboxListTile(
+              value: accepted,
+              onChanged: (v) => onChanged(v ?? false),
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              dense: true,
+              // Sem "desta vez": aceitar troca o método selecionado de verdade,
+              // igual a escolhê-lo no seletor, e a escolha fica valendo depois.
+              title: Text('Usar ${suggestion.method.name}'),
             ),
           ),
         ],

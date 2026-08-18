@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fundo do ícone adaptativo. Degradê em XML em vez de PNG: fica nítido em
+     qualquer densidade e não pesa no APK. Mesmos índigos do símbolo. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:angle="270"
+        android:startColor="#8B84FF"
+        android:endColor="#4A41C7"
+        android:type="linear" />
+</shape>
