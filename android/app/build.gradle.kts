@@ -8,7 +8,12 @@ plugins {
 android {
     namespace = "com.example.aura"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+
+    // Fixado em vez de herdar flutter.ndkVersion (26.3.11579264 no Flutter 3.32).
+    // O build do FlutLab avisa que shared_preferences_android exige 27.0.12077973,
+    // e é a partir da r27 que o NDK alinha as libs nativas em 16 KB — exigência
+    // do Android 15+, sem a qual o app pode quebrar ao abrir em aparelhos novos.
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

@@ -16,11 +16,58 @@ import 'package:percent_indicator/percent_indicator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  runApp(const AuraApp());
+  // Sem isto, qualquer exceção na inicialização derruba o app e o Android mostra
+  // apenas "o app tem um bug", sem dizer qual. Num aparelho sem cabo e sem logcat
+  // — que é o caso de quem só recebeu o APK por QR Code — isso é um beco sem
+  // saída. Aqui o erro é capturado e mostrado na tela, para poder ser lido.
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    AuraCrashReport.record(details.exception, details.stack);
+  };
+
+  ErrorWidget.builder = (details) => AuraErrorScreen(
+        title: 'Algo quebrou ao desenhar a tela',
+        error: details.exception,
+        stack: details.stack,
+      );
+
+  runZonedGuarded(
+    () {
+      final binding = WidgetsFlutterBinding.ensureInitialized();
+      // Erros assíncronos que não passam pelo FlutterError.onError.
+      binding.platformDispatcher.onError = (error, stack) {
+        AuraCrashReport.record(error, stack);
+        return true;
+      };
+      runApp(const AuraApp());
+    },
+    (error, stack) {
+      AuraCrashReport.record(error, stack);
+      // O app pode ter morrido antes de qualquer tela existir. Subir uma tela de
+      // erro é a única forma de o problema ficar visível no aparelho.
+      runApp(AuraApp(fatalError: error, fatalStack: stack));
+    },
+  );
+}
+
+/// Guarda a última exceção vista, para a tela de erro poder exibi-la.
+class AuraCrashReport {
+  static Object? lastError;
+  static StackTrace? lastStack;
+
+  static void record(Object error, StackTrace? stack) {
+    lastError = error;
+    lastStack = stack;
+  }
 }
 
 class AuraApp extends StatelessWidget {
-  const AuraApp({super.key});
+  /// Preenchidos apenas quando o app morreu antes de conseguir subir. Nesse caso
+  /// a tela de erro entra no lugar da interface normal.
+  final Object? fatalError;
+  final StackTrace? fatalStack;
+
+  const AuraApp({super.key, this.fatalError, this.fatalStack});
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +80,116 @@ class AuraApp extends StatelessWidget {
         brightness: Brightness.light,
         scaffoldBackgroundColor: Colors.transparent,
       ),
-      home: const HomeShell(),
+      home: fatalError == null
+          ? const HomeShell()
+          : AuraErrorScreen(
+              title: 'O Aura não conseguiu iniciar',
+              error: fatalError!,
+              stack: fatalStack,
+            ),
+    );
+  }
+}
+
+/// Tela de erro legível, no lugar da tela vermelha/cinza padrão do Flutter.
+///
+/// O texto é selecionável de propósito: num aparelho sem cabo, copiar ou
+/// fotografar esta tela é a única forma de tirar o erro de dentro do celular.
+class AuraErrorScreen extends StatelessWidget {
+  final String title;
+  final Object error;
+  final StackTrace? stack;
+  final VoidCallback? onRetry;
+  final Future<void> Function()? onResetData;
+
+  const AuraErrorScreen({
+    super.key,
+    required this.title,
+    required this.error,
+    this.stack,
+    this.onRetry,
+    this.onResetData,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Esta tela também é usada como ErrorWidget.builder, que pode ser chamado em
+    // qualquer ponto da árvore — inclusive acima do MaterialApp, onde não existe
+    // Directionality, MediaQuery nem Material. Por isso ela traz os próprios
+    // ancestrais e evita Scaffold/SafeArea: uma tela de erro que depende de
+    // contexto pode lançar ao ser desenhada e virar um laço infinito de erro.
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFF4F2FB), Color(0xFFE8E5F6)],
+          ),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: ListView(
+            // Margem generosa no topo no lugar do SafeArea, que exige MediaQuery.
+            padding: const EdgeInsets.fromLTRB(20, 64, 20, 32),
+            children: [
+              const SizedBox(height: 12),
+              const Icon(Icons.error_outline,
+                  size: 48, color: Color(0xFFB3261E)),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Mostre esta tela para quem estiver mantendo o app — o texto '
+                'abaixo diz exatamente o que falhou.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13),
+              ),
+              const SizedBox(height: 20),
+              AuraCard(
+                child: SelectableText(
+                  error.toString(),
+                  style: const TextStyle(
+                      fontFamily: 'monospace', fontSize: 12, height: 1.4),
+                ),
+              ),
+              if (stack != null) ...[
+                const SizedBox(height: 12),
+                AuraCard(
+                  child: SelectableText(
+                    // Só o topo do stack: é onde está a informação útil, e o
+                    // resto não caberia na tela de um celular.
+                    stack.toString().split('\n').take(12).join('\n'),
+                    style: const TextStyle(
+                        fontFamily: 'monospace', fontSize: 10, height: 1.4),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 20),
+              if (onRetry != null)
+                FilledButton.icon(
+                  onPressed: onRetry,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Tentar de novo'),
+                ),
+              if (onResetData != null) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: onResetData,
+                  icon: const Icon(Icons.delete_sweep_outlined),
+                  label: const Text('Limpar dados locais e reabrir'),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -266,15 +422,32 @@ class AuraStore {
   static const String kCustomFocus = 'customFocusMinutes';
   static const String kCustomBreak = 'customBreakMinutes';
 
-  static Future<List<TaskItem>> loadTasks() async {
+  /// Lê uma lista salva em JSON, descartando o conteúdo se ele estiver corrompido.
+  ///
+  /// Sem isto, um único registro malformado no armazenamento local deixaria o app
+  /// impossível de abrir para sempre — a exceção subiria durante a inicialização e
+  /// o usuário não teria nenhuma saída a não ser reinstalar.
+  static Future<List<T>> _loadList<T>(
+    String key,
+    T Function(Map<String, dynamic>) fromJson,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(kTasks);
-    if (raw == null) return [];
-    final List<dynamic> decoded = jsonDecode(raw) as List<dynamic>;
-    return decoded
-        .map((e) => TaskItem.fromJson(e as Map<String, dynamic>))
-        .toList();
+    final raw = prefs.getString(key);
+    if (raw == null) return <T>[];
+    try {
+      final List<dynamic> decoded = jsonDecode(raw) as List<dynamic>;
+      return decoded
+          .map((e) => fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (_) {
+      // Dado ilegível: melhor começar vazio do que não abrir.
+      await prefs.remove(key);
+      return <T>[];
+    }
   }
+
+  static Future<List<TaskItem>> loadTasks() =>
+      _loadList(kTasks, TaskItem.fromJson);
 
   static Future<void> saveTasks(List<TaskItem> tasks) async {
     final prefs = await SharedPreferences.getInstance();
@@ -282,15 +455,8 @@ class AuraStore {
         kTasks, jsonEncode(tasks.map((t) => t.toJson()).toList()));
   }
 
-  static Future<List<StudySession>> loadSessions() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(kSessions);
-    if (raw == null) return [];
-    final List<dynamic> decoded = jsonDecode(raw) as List<dynamic>;
-    return decoded
-        .map((e) => StudySession.fromJson(e as Map<String, dynamic>))
-        .toList();
-  }
+  static Future<List<StudySession>> loadSessions() =>
+      _loadList(kSessions, StudySession.fromJson);
 
   static Future<void> saveSessions(List<StudySession> sessions) async {
     final prefs = await SharedPreferences.getInstance();
@@ -880,6 +1046,11 @@ class _HomeShellState extends State<HomeShell> {
   int _index = 0;
   bool _loading = true;
 
+  /// Falha durante a carga inicial. Enquanto não for nulo, o app mostra a tela
+  /// de erro em vez de abrir com estado pela metade.
+  Object? _loadError;
+  StackTrace? _loadStack;
+
   List<StudySession> _sessions = [];
   List<TaskItem> _tasks = [];
   int _points = 0;
@@ -893,27 +1064,85 @@ class _HomeShellState extends State<HomeShell> {
   }
 
   Future<void> _loadAll() async {
-    final tasks = await AuraStore.loadTasks();
-    var sessions = await AuraStore.loadSessions();
-    final points = await AuraStore.loadPoints();
-    final streak = await AuraStore.loadStreak();
-    final seeded = await AuraStore.demoSeeded();
+    try {
+      final tasks = await AuraStore.loadTasks();
+      var sessions = await AuraStore.loadSessions();
+      final points = await AuraStore.loadPoints();
+      final streak = await AuraStore.loadStreak();
+      final seeded = await AuraStore.demoSeeded();
 
-    // Nenhuma tela pode aparecer vazia na primeira abertura.
-    if (sessions.isEmpty && !seeded) {
-      sessions = buildDemoSessions();
-      await AuraStore.saveSessions(sessions);
-      await AuraStore.setDemoSeeded(true);
+      // Nenhuma tela pode aparecer vazia na primeira abertura.
+      if (sessions.isEmpty && !seeded) {
+        sessions = buildDemoSessions();
+        await AuraStore.saveSessions(sessions);
+        await AuraStore.setDemoSeeded(true);
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _tasks = tasks;
+        _sessions = sessions;
+        _points = points;
+        _streak = streak;
+        _loading = false;
+        _loadError = null;
+        _loadStack = null;
+      });
+    } catch (error, stack) {
+      // Falhar aqui é o pior momento possível: o app morreria antes de desenhar
+      // qualquer coisa. Em vez disso, mostramos o que aconteceu.
+      AuraCrashReport.record(error, stack);
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadError = error;
+        _loadStack = stack;
+      });
     }
+  }
 
-    if (!mounted) return;
+  Future<void> _retryLoad() async {
     setState(() {
-      _tasks = tasks;
-      _sessions = sessions;
-      _points = points;
-      _streak = streak;
-      _loading = false;
+      _loading = true;
+      _loadError = null;
+      _loadStack = null;
     });
+    await _loadAll();
+  }
+
+  /// Última saída quando o armazenamento local ficou num estado que impede o app
+  /// de abrir — evita que a única solução seja reinstalar.
+  ///
+  /// Apaga tudo, inclusive sessões reais, então pede confirmação: quem chegou
+  /// nesta tela por um erro passageiro não pode perder o histórico por um toque.
+  Future<void> _resetLocalData() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Limpar dados locais?'),
+        content: const Text(
+          'Isto apaga todas as suas sessões, tarefas e pontos deste aparelho. '
+          'Não dá para desfazer. Use só se o app não estiver abrindo de jeito '
+          'nenhum.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Apagar tudo'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    await _retryLoad();
   }
 
   Future<void> _addPoints(int amount) async {
@@ -999,6 +1228,17 @@ class _HomeShellState extends State<HomeShell> {
 
   @override
   Widget build(BuildContext context) {
+    // A carga inicial falhou: mostrar o motivo, em vez de abrir quebrado.
+    if (_loadError != null) {
+      return AuraErrorScreen(
+        title: 'O Aura não conseguiu carregar seus dados',
+        error: _loadError!,
+        stack: _loadStack,
+        onRetry: _retryLoad,
+        onResetData: _resetLocalData,
+      );
+    }
+
     final climate = resolveClimate(_sessions);
 
     final pages = <Widget>[
@@ -2740,6 +2980,48 @@ class _AboutPageState extends State<AboutPage> {
                 ],
               ),
             ),
+            // Erros assíncronos e falhas de desenho não derrubam mais o app, mas
+            // por isso mesmo passariam despercebidos. Este cartão só aparece se
+            // algo tiver falhado, e dá ao usuário o texto exato para reportar.
+            if (AuraCrashReport.lastError != null) ...[
+              const SizedBox(height: 12),
+              AuraCard(
+                color: const Color(0xFFFDECEA).withValues(alpha: 0.95),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.bug_report_outlined,
+                            color: Color(0xFFB3261E)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Último erro registrado',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFFB3261E),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'O app continuou funcionando, mas algo falhou nesta '
+                      'sessão. Copie o texto abaixo ao relatar o problema.',
+                      style: TextStyle(fontSize: 13, height: 1.4),
+                    ),
+                    const SizedBox(height: 10),
+                    SelectableText(
+                      AuraCrashReport.lastError.toString(),
+                      style: const TextStyle(
+                          fontFamily: 'monospace', fontSize: 11, height: 1.4),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),

@@ -85,6 +85,10 @@ conteúdo de `pubspec.yaml` e `lib/main.dart` pelos deste projeto.
 Nos dois casos: **Get Packages** (equivalente a `flutter pub get`) e então **Run/Build** →
 Web para o Hot Preview, ou gere o **APK** para testar no celular via QR Code.
 
+> **Ao gerar o APK, escolha `android arm64`, não `android arm`.** O alvo `arm` produz um
+> binário só de 32 bits (`armeabi-v7a`), e celulares novos são arm64 — em vários deles a
+> engine do Flutter não carrega, e o app instala mas fecha sozinho ao abrir.
+
 > O GitHub e o FlutLab **não sincronizam automaticamente**. Um push neste repositório não
 > aparece sozinho no editor do FlutLab — é preciso reimportar o projeto lá a partir do
 > repositório atualizado. Evite editar nos dois lugares ao mesmo tempo.
