@@ -7,6 +7,30 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---
 
+## [1.1.0] — 2026-08-18
+
+Camada de animação e abertura própria. O app abria em três telas desconexas — flash branco,
+spinner pelado e interface — nenhuma com a identidade do Aura.
+
+### Adicionado
+
+- **Abertura contínua**: tela nativa (Android e iOS) com o índigo e a marca do ícone,
+  `AuraLoadingScreen` na mesma cor e dissolvência para a cor da aura do usuário.
+- **`AuraMark`**: a marca desenhada em widgets, sem asset — acompanha qualquer tamanho sem
+  perder nitidez.
+- **Animações finitas**: troca de aba com dissolvência e deslize, entrada escalonada dos
+  cards de insight e dos gráficos (`EntranceFade`), barras e linha do `fl_chart` crescendo,
+  e progresso suave no anel do cronômetro.
+- **Halo que respira** em volta do anel enquanto a sessão roda — a única animação contínua
+  do app, parada em todos os pontos onde a sessão para.
+- Dois testes que travam esse comportamento: o halo animando durante a sessão e parando ao
+  pausar, e a tela de carregamento não deixando animação presa.
+
+### Alterado
+
+- Os dois testes que rodam o cronômetro passaram a usar `pump(Duration)` no lugar de
+  `pumpAndSettle`, que esperaria a animação contínua terminar — ou seja, para sempre.
+
 ## [1.0.0] — 2026-08-18
 
 Primeira versão completa: MVP entregue, verificado em dois SDKs e rodando em aparelho real.

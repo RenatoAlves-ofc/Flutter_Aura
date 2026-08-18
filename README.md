@@ -170,7 +170,7 @@ O `pubspec.lock` versionado foi gerado no Flutter 3.32, o menor denominador comu
 ```bash
 flutter pub get
 flutter analyze     # sem issues
-flutter test        # 65 testes
+flutter test        # 67 testes
 flutter run
 ```
 
