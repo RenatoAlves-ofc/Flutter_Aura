@@ -7,6 +7,30 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---
 
+## [1.3.1] — 2026-08-19
+
+Duas perguntas respondidas por escrito, sem tocar em código.
+
+### Adicionado
+
+- **Decisão 19 — por que o arquivo único ficou.** Registrada com o argumento inteiro,
+  inclusive onde a crítica é procedente e qual seria a divisão correta num projeto que
+  continuasse. O ponto que decide: o código **já é em camadas**, e mover texto para pastas
+  sem mudar o grafo de dependências seria movimento, não arquitetura.
+- **A divisão em arquivos entrou no roadmap** do README, como adiamento declarado.
+- Duas perguntas prováveis no roteiro de apresentação: o arquivo único e os avisos do build.
+- `FLUTLAB.md` §4.1.1: a linha do tree-shaking da fonte de ícones — 1,6 MB para 7 KB — é
+  otimização, e aparece junto dos avisos assustando pelo mesmo motivo.
+
+### Alterado
+
+- **`FLUTLAB.md` §4.1 troca afirmação por prova.** Antes argumentava a partir do projeto ("o
+  app não traz dependência com código nativo"). Agora argumenta a partir do plugin que
+  dispara o aviso: `shared_preferences_android` **não tem nenhum** `.c`, `.cpp`, `.h`, `.so`,
+  `CMakeLists.txt` ou `.mk`, e o `build.gradle` dele nem menciona `ndkVersion` — a exigência
+  da 27 vem do AGP 8.12.1 que ele declara, como padrão de versão. É comparação de metadado,
+  não problema de compilação.
+
 ## [1.3.0] — 2026-08-19
 
 Passada de design. O app funcionava e estava verificado; o que faltava era **coerência

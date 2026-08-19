@@ -115,6 +115,11 @@ foi conferida à parte, rodando o build web num viewport de telefone.
 Ritual Semanal de fechamento, Modo Provas, arco fechado por temporada, compartilhamento de
 cartões de insight e onboarding com quiz de expectativa.
 
+Mais a **divisão do `main.dart` em vários arquivos**, por camada — adiada por restrição
+declarada do ambiente de entrega, que proíbe imports relativos. O porquê inteiro, incluindo
+o que estaria certo fazer num projeto que continuasse, está em
+[docs/DECISOES.md](docs/DECISOES.md) §19.
+
 A **sugestão adaptativa de duração** também estava nesta lista e acabou implementada: ela
 reaproveitava o motor de correlação que já existia, então saiu barata.
 

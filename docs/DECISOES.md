@@ -349,3 +349,51 @@ comparação que a barra existe para mostrar. Há um teste que trava exatamente 
 
 O campo é opcional de propósito: os outros três insights não têm duas medidas comparáveis, e
 inventar uma para preencher o formato seria pior do que não desenhar nada.
+
+---
+
+## 19. O arquivo único ficou — e por que a crítica a ele é procedente
+
+**Contexto.** `lib/main.dart` tem 3.914 linhas. Em qualquer avaliação de código isso é o
+primeiro apontamento, e com razão: arquivo único é prática ruim.
+
+**A crítica está certa no geral.** Num projeto que continuasse, a divisão correta seria por
+camada, com a lógica pura virando um pacote próprio, sem nenhuma dependência de Flutter:
+
+```
+lib/
+├── models/        StudySession · TaskItem · FocusMethod · Insight
+├── logic/         applyActivity · buildInsights · resolveClimate · suggestMethodForMood
+├── storage/       AuraStore
+└── ui/            HomeShell + as 5 telas + widgets compartilhados
+```
+
+**Decisão: manter o arquivo único.** Cinco motivos, em ordem de peso:
+
+1. **A especificação da atividade proíbe.** §8 do `INSTRUCOES_PARA_CLAUDE_CODE.md`:
+   *"Arquivo único: entregar tudo em `lib/main.dart`, sem imports relativos — o FlutLab tem
+   problemas com arquitetura multi-arquivo no navegador."* É restrição declarada do ambiente
+   de entrega, não preferência de estilo.
+
+2. **Dividir arquivos não desacopla nada por si só.** Este é o ponto técnico que decide. O
+   código **já é em camadas**: a faixa de lógica pura (562–1208) não importa nada do Flutter,
+   e 49 dos 70 testes batem nela sem construir uma única tela. Mover esse texto para pastas
+   sem mudar quem depende de quem deixaria o grafo de dependências **idêntico** — seria
+   movimento, não arquitetura.
+
+3. **O benefício não se realiza dentro da vida útil do projeto.** Separar arquivos paga ao
+   longo de meses, com várias pessoas mexendo em paralelo e resolvendo conflitos de merge.
+   Aqui é um autor e um prazo fechado.
+
+4. **O problema real que a crítica aponta já tem solução.** Navegar 3.914 linhas é ruim —
+   por isso existe o mapa de seções em [`ARQUITETURA.md`](ARQUITETURA.md) §1, com a linha de
+   cada faixa e um `grep` que o reconstrói quando as linhas envelhecerem.
+
+5. **Seria a mudança de maior risco por unidade de benefício disponível.** Toca todas as
+   linhas do app, obriga a refazer o APK e a reverificar tudo, e o resultado visível para o
+   usuário final é exatamente nenhum.
+
+**Consequência.** A divisão está registrada como item de roadmap, não como dívida esquecida.
+Se o projeto continuar depois da entrega, o primeiro passo é confirmar se a restrição do
+FlutLab ainda é verdade: imports relativos dentro de `lib/` são Dart padrão, e essa proibição
+pode ter virado folclore. Dá para testar em uma branch descartável, sem risco para a `main`.

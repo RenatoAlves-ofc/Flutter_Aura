@@ -81,15 +81,48 @@ avisos; a terceira parece um desastre e não é.
 
 ### 4.1 Aba Build — aviso sobre a NDK
 
-O FlutLab avisa que `shared_preferences_android` exige a NDK `27.0.12077973`, enquanto o
-projeto usa a `flutter.ndkVersion` (26.3.11579264 no Flutter 3.32).
+```
+Your project is configured with Android NDK 26.3.11579264, but the following
+plugin(s) depend on a different Android NDK version:
+- shared_preferences_android requires Android NDK 27.0.12077973
+```
 
-**É intencional.** O app não traz nenhuma dependência com código nativo próprio, então as
-únicas libs `.so` do APK vêm da engine do Flutter, que já cuida do alinhamento. Fixar a 27
-exigiria essa NDK instalada no ambiente de build, o que não dá para garantir no FlutLab — e
-o APK que funciona no aparelho foi gerado **sem** o pin.
+**O aviso é sobre metadado, não sobre compilação.** Isso não é opinião — é o que se vê
+abrindo o plugin que dispara o aviso, no `~/.pub-cache`:
 
-O pin chegou a ser aplicado e foi revertido; o histórico está em [DECISOES.md §5](DECISOES.md).
+| O que se procurou em `shared_preferences_android` | O que se achou |
+|---|---|
+| `.c`, `.cpp`, `.h`, `.so`, `CMakeLists.txt`, `.mk` | **nada** — o plugin não tem uma linha de código nativo |
+| `ndkVersion` no `android/build.gradle` dele | **não existe** |
+| De onde vem então a exigência da 27 | do **AGP 8.12.1**, que o plugin declara no `classpath` do buildscript, como padrão da versão |
+
+Ou seja: o Flutter compara dois números de versão declarados e avisa quando diferem. Como o
+plugin não compila nada nativo, **nenhuma `.so` dele entra no APK** — as únicas vêm da engine
+do Flutter, que já cuida do próprio alinhamento.
+
+Fixar a 27 exigiria essa NDK instalada no ambiente de build, o que não dá para garantir no
+FlutLab. O APK que funciona no aparelho foi gerado **sem** o pin. O pin chegou a ser aplicado
+e foi revertido — histórico em [DECISOES.md §5](DECISOES.md).
+
+> Se um dia quiser silenciar mesmo assim, teste numa **branch separada** e builde no FlutLab
+> antes de mergear. Se a NDK 27 não estiver lá, o build quebra — e é justamente esse risco
+> que fez o pin ser revertido.
+
+### 4.1.1 A linha do tree-shaking, que aparece junto e assusta pelo mesmo motivo
+
+```
+Font asset "MaterialIcons-Regular.otf" was tree-shaken, reducing it from
+1645184 to 7404 bytes (99.5% reduction).
+```
+
+**Isso é otimização a seu favor**, não problema. O Flutter descobriu quais ícones o app
+realmente usa e jogou fora o resto da fonte — 1,6 MB viraram 7 KB no APK. A mensagem existe
+só para explicar por que o arquivo encolheu.
+
+> **Nenhuma das três coisas desta seção é erro.** Um build bem-sucedido do Aura mostra o aviso
+> da NDK, a linha do tree-shaking, às vezes uma pilha de exceções do cache do Gradle (§4.3) —
+> e termina com `✓ Built` e `Build completed successfully`. São essas duas últimas linhas que
+> respondem se deu certo.
 
 ### 4.2 Aba Analyzer — regras de lint "não reconhecidas"
 
