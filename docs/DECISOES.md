@@ -16,7 +16,7 @@ proíbe imports relativos.
 **Decisão.** Todo o app em `lib/main.dart`, com a separação feita por banners de seção em
 vez de por pastas.
 
-**Consequência.** 3.914 linhas em um arquivo. Para compensar, a lógica de negócio é
+**Consequência.** 4.280 linhas em um arquivo. Para compensar, a lógica de negócio é
 escrita como funções puras que não importam nada do Flutter, e é atacada diretamente pelos
 testes. A ordem das seções é significativa: cada uma só depende das anteriores.
 
@@ -354,7 +354,7 @@ inventar uma para preencher o formato seria pior do que não desenhar nada.
 
 ## 19. O arquivo único ficou — e por que a crítica a ele é procedente
 
-**Contexto.** `lib/main.dart` tem 3.914 linhas. Em qualquer avaliação de código isso é o
+**Contexto.** `lib/main.dart` tem 4.280 linhas. Em qualquer avaliação de código isso é o
 primeiro apontamento, e com razão: arquivo único é prática ruim.
 
 **A crítica está certa no geral.** Num projeto que continuasse, a divisão correta seria por
@@ -377,7 +377,7 @@ lib/
 
 2. **Dividir arquivos não desacopla nada por si só.** Este é o ponto técnico que decide. O
    código **já é em camadas**: a faixa de lógica pura (562–1208) não importa nada do Flutter,
-   e 49 dos 70 testes batem nela sem construir uma única tela. Mover esse texto para pastas
+   e 54 dos 77 testes batem nela sem construir uma única tela. Mover esse texto para pastas
    sem mudar quem depende de quem deixaria o grafo de dependências **idêntico** — seria
    movimento, não arquitetura.
 
@@ -385,7 +385,7 @@ lib/
    longo de meses, com várias pessoas mexendo em paralelo e resolvendo conflitos de merge.
    Aqui é um autor e um prazo fechado.
 
-4. **O problema real que a crítica aponta já tem solução.** Navegar 3.914 linhas é ruim —
+4. **O problema real que a crítica aponta já tem solução.** Navegar 4.280 linhas é ruim —
    por isso existe o mapa de seções em [`ARQUITETURA.md`](ARQUITETURA.md) §1, com a linha de
    cada faixa e um `grep` que o reconstrói quando as linhas envelhecerem.
 
@@ -397,3 +397,78 @@ lib/
 Se o projeto continuar depois da entrega, o primeiro passo é confirmar se a restrição do
 FlutLab ainda é verdade: imports relativos dentro de `lib/` são Dart padrão, e essa proibição
 pode ter virado folclore. Dá para testar em uma branch descartável, sem risco para a `main`.
+
+---
+
+## 20. Ficha de personagem em vez de XP
+
+**Contexto.** O app estava sem graça, e o diagnóstico apontou motivos concretos, não falta de
+enfeite:
+
+- **Tudo estava no passado.** Havia **uma única** string em todo o app apontando para frente
+  (`"Faltam N sessões para desbloquear"`), e ela nunca aparecia — ver decisão 21.
+- **Os pontos não compravam nada.** `_points` só era incrementado e exibido. Pior: o README
+  afirma que o diferencial são *"descobertas pessoais, não pontos genéricos"*, e o app
+  entregava exatamente pontos genéricos. Contradizia o próprio posicionamento.
+- **Nada ali era identidade.** "Minha sequência é 13" não é algo que se conte a alguém.
+
+O pedido foi "uma pegada mais voltada a RPG". Isso se divide em duas coisas opostas.
+
+**O que foi recusado.** XP, níveis, medalhas e avatar. Seria a gamificação genérica contra a
+qual o produto se posiciona — e a pesquisa de concorrência do próprio projeto aponta que os
+apps do nicho erram justamente aí. Somar XP por cima de um app de correlação de humor
+deixaria o Aura *mais* parecido com os concorrentes, não menos, e contradiria o pitch em
+dobro.
+
+**Decisão.** Uma **ficha de personagem em que nenhum número é inventado**. Classe e atributos
+saem das mesmas contas que já alimentam os insights: método dominante, sequência efetiva,
+percentual de sessões que terminam melhor, diferença de duração entre faixas de humor e maior
+sessão sustentada.
+
+A frase que isso libera na apresentação é o ponto inteiro:
+> Outros apps te dão XP por existir. O Aura te dá uma ficha que é medição do seu
+> comportamento — se ela sobe, é porque você mudou, não porque você abriu o app.
+
+**Consequência.** A ficha **reforça** o diferencial em vez de diluí-lo, e não custou dado
+novo: `buildCharacterSheet` reaproveita `effectiveStreak`, `_moodBucket` e `methodById`.
+
+Dois detalhes que decorrem da escolha:
+
+- **Sem sessões, a ficha diz isso** em vez de mostrar quatro barras zeradas. Barra zerada
+  mente sobre não haver dado — é o mesmo erro que a tela Resumo já cometeu uma vez (§9).
+- **Cada atributo mostra o número real ao lado da barra.** A barra é leitura de relance; sem
+  o número ela vira uma escala vaga, que é o problema de metade das fichas de RPG digitais.
+  O valor satura em 100 e o número continua sendo dito por inteiro — há teste para isso.
+
+**Os pontos ficaram**, mas pararam de fingir que são o prêmio: o texto da tela agora diz que
+eles são contagem e que o que evolui é a ficha.
+
+---
+
+## 21. A quinta descoberta nasce bloqueada
+
+**Contexto.** Os quatro insights abrem com 5, 5, 7 e 6 sessões. O dataset de demonstração tem
+**22** — e havia um teste *garantindo* que os quatro abrissem, para nenhuma tela aparecer
+vazia na apresentação.
+
+O efeito colateral passou despercebido por muito tempo: **ninguém nunca via um cartão
+trancado.** Nem um usuário novo, nem a plateia do dia da apresentação. A mecânica de
+desbloqueio — que a especificação chama de núcleo inegociável — estava construída, testada, e
+invisível.
+
+**Decisão.** Uma quinta descoberta, **"Seu limite real"**, exigindo **30 sessões**: acima de
+quantos minutos as sessões passam a terminar pior. Com as 22 da demonstração ela fica
+trancada mostrando *"Faltam 8 sessões para desbloquear"*.
+
+**Por que 30 não é arbitrário.** Uma conclusão sobre *teto* de duração precisa de volume para
+não ser ruído: são três faixas de duração comparadas entre si, e o insight exige 3+ sessões
+em cada uma. Com pouco dado, uma única sessão longa e ruim decidiria o resultado — diria mais
+sobre aquele dia que sobre a pessoa.
+
+**Consequência.** A aba Insights passou a abrir em **"4 de 5 desbloqueadas"**, com um cartão
+visivelmente trancado e um contador. O app ganhou um "próximo" sem que nada precisasse ser
+enfraquecido: a demonstração continua rica, com quatro descobertas abertas.
+
+O teste que antes exigia "nenhuma trancada" foi reescrito para exigir **exatamente uma**, com
+o `id` e o número que falta. O que era garantia de tela cheia virou garantia de progressão
+visível.

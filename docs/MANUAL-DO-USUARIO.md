@@ -88,7 +88,7 @@ vai trabalhar, e essa informação fica junto da sessão.
 
 ![Aba Insights](img/05-insights.png)
 
-O coração do app. Quatro descobertas, calculadas a partir das suas sessões:
+O coração do app. Cinco descobertas, calculadas a partir das suas sessões:
 
 | Descoberta | O que responde | Libera com |
 |---|---|---|
@@ -96,9 +96,13 @@ O coração do app. Quatro descobertas, calculadas a partir das suas sessões:
 | **Focar muda seu humor** | se as sessões te deixam melhor do que te encontraram | 5 sessões |
 | **Seu melhor dia da semana** | em que dia você rende mais | 7 sessões |
 | **O método que mais te sustenta** | qual dos 11 funciona melhor para você | 6 sessões |
+| **Seu limite real** | acima de quantos minutos você começa a render menos | 30 sessões |
 
 Cada uma aparece **bloqueada** até haver dados suficientes, mostrando quantas sessões
 faltam. Isso é proposital: uma descoberta baseada em duas sessões não seria uma descoberta.
+
+A última é a mais exigente, e é normal que ela demore: descobrir o seu *teto* de duração
+precisa de bastante sessão para não ser palpite. Ela é o seu próximo objetivo dentro do app.
 
 ### Os gráficos
 
@@ -114,6 +118,26 @@ faixa de humor, e a altura é quanto tempo você sustentou em média começando 
 ## Aba Resumo
 
 ![Aba Resumo](img/07-resumo.png)
+
+### Sua ficha
+
+O topo da aba é a sua **ficha**: uma classe e quatro atributos.
+
+A **classe** vem do método que você mais usa — Maratonista, Ritmista, Sprinter ou Explorador
+(se você prefere o Flowtime). Ela muda sozinha se o seu jeito de trabalhar mudar.
+
+| Atributo | O que mede |
+|---|---|
+| **Constância** | sua sequência atual, já com as folgas descontadas |
+| **Recuperação** | quantas das suas sessões te devolvem melhor do que te encontraram |
+| **Amplitude** | quanto o seu humor inicial muda a duração que você sustenta |
+| **Profundidade** | a maior sessão que você já sustentou |
+
+**Nenhum destes números é ponto de experiência.** Não existe "subir de nível" no Aura: cada
+atributo é uma medida do que você fez de verdade. Se ele sobe, é porque o seu comportamento
+mudou — não porque você abriu o app.
+
+Ao lado de cada barra vai o número real. A barra é para bater o olho; o número é o dado.
 
 ### Sua aura
 
@@ -138,8 +162,8 @@ deveria apagar três semanas de esforço.
 
 ### Pontos
 
-10 por sessão de foco concluída, 5 por tarefa. Servem de combustível — o que importa mesmo
-são as descobertas na aba Insights.
+10 por sessão de foco concluída, 5 por tarefa. São só contagem: o que realmente evolui é a
+sua ficha, e o que importa mesmo são as descobertas na aba Insights.
 
 ---
 
@@ -165,7 +189,13 @@ Sim, na tela Sobre. As suas sessões reais permanecem, e dá para restaurar a de
 depois.
 
 **Por que um insight está bloqueado?**
-Falta volume de dados. O card diz quantas sessões faltam.
+Falta volume de dados. O card diz quantas sessões faltam. A quinta descoberta ("Seu limite
+real") exige 30 sessões e é normal que ela fique trancada por um bom tempo — ela é o objetivo
+de longo prazo do app.
+
+**A minha classe pode mudar?**
+Sim, sozinha. Ela sai do método que você mais usa: se você trocar de método por um tempo, a
+classe acompanha.
 
 **Por que não apareceu sugestão de método?**
 Você ainda não tem sessões suficientes começando naquele humor. O app prefere não sugerir

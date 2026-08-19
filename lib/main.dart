@@ -741,6 +741,7 @@ List<Insight> buildInsights(List<StudySession> sessions) {
     _insightMoodDelta(sessions),
     _insightWeekday(sessions),
     _insightMethod(sessions),
+    _insightDurationCeiling(sessions),
   ];
 }
 
@@ -955,6 +956,81 @@ Insight _insightMethod(List<StudySession> sessions) {
   );
 }
 
+/// A quinta descoberta — e a única que **nasce bloqueada** com o dataset de
+/// demonstração, de propósito.
+///
+/// Antes desta, o app não tinha nada apontando para frente: os quatro insights
+/// abrem com 5 a 7 sessões e a demonstração tem 22, então ninguém nunca via um
+/// cartão trancado. A mecânica de desbloqueio existia no código e era invisível
+/// na tela.
+///
+/// O limiar de 30 não é artificial para criar suspense: uma conclusão sobre
+/// *teto* de duração precisa de volume para não ser ruído. Com 22 sessões a
+/// demonstração mostra "faltam 8", que é um alvo concreto.
+Insight _insightDurationCeiling(List<StudySession> sessions) {
+  const int required = 30;
+  const String title = 'Seu limite real';
+  const IconData icon = Icons.speed;
+
+  Insight locked() => Insight(
+        id: 'duration_ceiling',
+        title: title,
+        icon: icon,
+        requiredSessions: required,
+        availableSessions: sessions.length,
+      );
+
+  if (sessions.length < required) return locked();
+
+  // Faixas de duração, não minutos exatos: agrupar é o que permite comparar
+  // humor final entre sessões curtas, médias e longas.
+  int band(int minutes) => minutes <= 25
+      ? 0
+      : minutes <= 50
+          ? 1
+          : 2;
+  const nomes = ['até 25 min', 'de 26 a 50 min', 'acima de 50 min'];
+
+  final porFaixa = <int, List<StudySession>>{};
+  for (final s in sessions) {
+    porFaixa.putIfAbsent(band(s.durationMinutes), () => []).add(s);
+  }
+
+  // Exige as três faixas com 3+ sessões cada: comparar um teto com base numa
+  // única sessão longa diria mais sobre aquele dia que sobre a pessoa.
+  final elegiveis = porFaixa.entries.where((e) => e.value.length >= 3).toList();
+  if (elegiveis.length < 3) return locked();
+
+  double humorFinal(List<StudySession> l) =>
+      l.map((s) => s.moodAfter).reduce((a, b) => a + b) / l.length;
+
+  elegiveis.sort((a, b) => humorFinal(b.value).compareTo(humorFinal(a.value)));
+  final melhor = elegiveis.first;
+  final pior = elegiveis.last;
+  final queda = humorFinal(melhor.value) - humorFinal(pior.value);
+
+  return Insight(
+    id: 'duration_ceiling',
+    title: title,
+    icon: icon,
+    requiredSessions: required,
+    availableSessions: sessions.length,
+    headline: nomes[melhor.key],
+    body: 'Suas sessões ${nomes[melhor.key]} terminam com humor '
+        '${fmt(humorFinal(melhor.value))}/5 — o seu melhor. '
+        '${nomes[pior.key][0].toUpperCase()}${nomes[pior.key].substring(1)} '
+        'fecham em ${fmt(humorFinal(pior.value))}/5, ${fmt(queda)} ponto a '
+        'menos. Focar mais tempo nem sempre é focar melhor.',
+    comparison: InsightComparison(
+      highLabel: nomes[melhor.key],
+      highValue: humorFinal(melhor.value),
+      lowLabel: nomes[pior.key],
+      lowValue: humorFinal(pior.value),
+      unit: '/5',
+    ),
+  );
+}
+
 // ============================================================
 // SUGESTÃO ADAPTATIVA DE DURAÇÃO
 // ============================================================
@@ -1024,6 +1100,156 @@ MethodSuggestion? suggestMethodForMood(List<StudySession> sessions, int mood) {
     avgDuration: avgDuration(best.value),
     avgMoodAfter: avgMoodAfter(best.value),
     sampleSize: best.value.length,
+  );
+}
+
+// ============================================================
+// FICHA DE PERSONAGEM (atributos derivados, nunca inventados)
+// ============================================================
+
+/// Um atributo da ficha.
+///
+/// `value` é só para desenhar a barra. Quem carrega a verdade é `display` — o
+/// número real, na unidade real. A barra é leitura rápida; o número é o dado.
+class CharacterAttribute {
+  final String name;
+
+  /// 0 a 100, para a largura da barra.
+  final int value;
+
+  /// O número real, formatado com unidade ("13 dias", "73%", "90 min").
+  final String display;
+
+  /// Uma linha dizendo de onde o número saiu.
+  final String note;
+
+  const CharacterAttribute({
+    required this.name,
+    required this.value,
+    required this.display,
+    required this.note,
+  });
+}
+
+class CharacterSheet {
+  final String className;
+  final String tagline;
+  final List<CharacterAttribute> attributes;
+
+  /// `false` quando ainda não há sessão nenhuma. A tela mostra o convite em vez
+  /// de quatro barras zeradas — o mesmo erro que a tela Resumo já cometeu uma
+  /// vez, mostrando "0 dias de sequência" ao lado de "20 sessões totais".
+  final bool hasData;
+
+  const CharacterSheet({
+    required this.className,
+    required this.tagline,
+    required this.attributes,
+    required this.hasData,
+  });
+}
+
+/// Monta a ficha a partir **só** do que já foi medido.
+///
+/// Nenhum ponto de experiência, nenhum nível, nenhuma medalha por existir: a
+/// classe sai do método que a pessoa de fato usa, e os quatro atributos saem
+/// das mesmas contas que alimentam os insights. É o que separa isto da
+/// gamificação genérica — aqui o número **é** o comportamento, não um prêmio
+/// pendurado em cima dele.
+CharacterSheet buildCharacterSheet(List<StudySession> sessions) {
+  if (sessions.isEmpty) {
+    return const CharacterSheet(
+      className: 'Sem ficha ainda',
+      tagline: 'Conclua uma sessão para o Aura começar a te medir.',
+      attributes: [],
+      hasData: false,
+    );
+  }
+
+  // ---- Classe: a família de duração do método mais usado ----
+  final contagem = <String, int>{};
+  for (final s in sessions) {
+    contagem[s.methodId] = (contagem[s.methodId] ?? 0) + 1;
+  }
+  final dominante = contagem.entries.reduce((a, b) => b.value > a.value ? b : a).key;
+  final metodo = methodById(dominante);
+
+  String classe;
+  String tagline;
+  if (metodo.isFlowtime) {
+    classe = 'Explorador';
+    tagline = 'Você não marca o fim antes de começar.';
+  } else {
+    final min = metodo.focusMinutes ?? 25;
+    if (min >= 50) {
+      classe = 'Maratonista';
+      tagline = 'Você entra fundo e fica.';
+    } else if (min <= 20) {
+      classe = 'Sprinter';
+      tagline = 'Você rende em investidas curtas.';
+    } else {
+      classe = 'Ritmista';
+      tagline = 'Você trabalha em ciclos constantes.';
+    }
+  }
+
+  // ---- Constância: a sequência que a regra de perdão sustenta hoje ----
+  final sequencia = effectiveStreak(streakFromSessions(sessions), DateTime.now());
+
+  // ---- Recuperação: com que frequência a sessão te devolve melhor ----
+  final melhoraram = sessions.where((s) => s.moodAfter > s.moodBefore).length;
+  final pctRecuperacao = (melhoraram * 100 / sessions.length).round();
+
+  // ---- Amplitude: quanto o humor inicial move a sua duração ----
+  final porFaixa = <int, List<int>>{};
+  for (final s in sessions) {
+    porFaixa.putIfAbsent(_moodBucket(s.moodBefore), () => []).add(s.durationMinutes);
+  }
+  double media(List<int> l) => l.reduce((a, b) => a + b) / l.length;
+  double amplitude = 0;
+  if (porFaixa.length >= 2) {
+    final medias = porFaixa.values.map(media).toList()..sort();
+    amplitude = medias.last - medias.first;
+  }
+
+  // ---- Profundidade: a maior sessão que você sustentou ----
+  final maior = sessions.map((s) => s.durationMinutes).reduce(math.max);
+
+  // Os tetos de normalização são alvos declarados, não escalas escondidas: 21
+  // dias de sequência, 100% de recuperação, 40 min de amplitude e 90 min de
+  // sessão — o Ciclo Ultradiano, o método mais longo do app.
+  int pct(num valor, num teto) => ((valor / teto) * 100).clamp(0, 100).round();
+
+  return CharacterSheet(
+    className: classe,
+    tagline: tagline,
+    hasData: true,
+    attributes: [
+      CharacterAttribute(
+        name: 'Constância',
+        value: pct(sequencia, 21),
+        display: '$sequencia ${sequencia == 1 ? 'dia' : 'dias'}',
+        note: 'sequência atual, com as folgas já descontadas',
+      ),
+      CharacterAttribute(
+        name: 'Recuperação',
+        value: pctRecuperacao,
+        display: '$pctRecuperacao%',
+        note: 'das sessões te devolvem melhor do que te encontraram',
+      ),
+      CharacterAttribute(
+        name: 'Amplitude',
+        value: pct(amplitude, 40),
+        display: '${fmt(amplitude)} min',
+        note: 'quanto o humor inicial move a sua duração',
+      ),
+      CharacterAttribute(
+        name: 'Profundidade',
+        value: pct(maior, 90),
+        display: '$maior min',
+        note: 'a maior sessão que você sustentou',
+      ),
+    ],
   );
 }
 
@@ -3248,6 +3474,7 @@ class SummaryPage extends StatelessWidget {
         ? 0
         : sessions.map((s) => s.durationMinutes).reduce((a, b) => a + b);
     final currentStreak = effectiveStreak(streak, now);
+    final sheet = buildCharacterSheet(sessions);
 
     // Mesmo caso da aba Foco: o conteúdo não enche a tela e sobrava um bloco
     // vazio no fim. Ver o comentário lá para o porquê do `ConstrainedBox`.
@@ -3259,6 +3486,8 @@ class SummaryPage extends StatelessWidget {
         child: Column(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
+        _CharacterSheetCard(sheet: sheet),
+        const SizedBox(height: 12),
         AuraCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -3401,9 +3630,9 @@ class SummaryPage extends StatelessWidget {
         const SizedBox(height: 12),
         AuraCard(
           child: Text(
-            'Cada sessão de foco concluída gera 10 pontos e cada tarefa '
-            'concluída gera 5. Mas o que importa mesmo são as descobertas na '
-            'aba Insights — os pontos são só o combustível.',
+            'Os pontos são contagem: 10 por sessão, 5 por tarefa. O que '
+            'realmente evolui é a sua ficha, e cada atributo dela é medida do '
+            'que você fez — não prêmio por ter aberto o app.',
             style: theme.textTheme.bodySmall,
           ),
         ),
@@ -3850,6 +4079,143 @@ class AuraCard extends StatelessWidget {
         ],
       ),
       child: child,
+    );
+  }
+}
+
+/// A ficha na tela.
+///
+/// Cada barra é o `value` do atributo; ao lado dela vai o número real. As duas
+/// coisas juntas de propósito: a barra dá a leitura de relance, o número
+/// impede que a barra vire uma escala vaga que não quer dizer nada.
+class _CharacterSheetCard extends StatelessWidget {
+  final CharacterSheet sheet;
+
+  const _CharacterSheetCard({required this.sheet});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    if (!sheet.hasData) {
+      return AuraCard(
+        child: Row(
+          children: [
+            Icon(Icons.shield_outlined,
+                color: theme.colorScheme.outline, size: 28),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(sheet.tagline, style: theme.textTheme.bodyMedium),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return AuraCard(
+      color: kBrandIndigo.withValues(alpha: 0.07),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.shield_outlined, color: kBrandIndigo),
+              const SizedBox(width: 10),
+              Text('Sua ficha', style: theme.textTheme.titleMedium),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            sheet.className,
+            style: theme.textTheme.headlineMedium?.copyWith(
+              color: kBrandIndigo,
+              fontWeight: FontWeight.bold,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(sheet.tagline, style: theme.textTheme.bodySmall),
+          const SizedBox(height: 18),
+          for (final a in sheet.attributes) ...[
+            _AttributeBar(attribute: a),
+            const SizedBox(height: 14),
+          ],
+          Text(
+            'Nenhum destes números é ponto de experiência: todos saem das suas '
+            'sessões. A ficha muda quando o seu comportamento muda.',
+            style: theme.textTheme.bodySmall,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AttributeBar extends StatelessWidget {
+  final CharacterAttribute attribute;
+
+  const _AttributeBar({required this.attribute});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(attribute.name,
+                  style: theme.textTheme.bodyMedium
+                      ?.copyWith(fontWeight: FontWeight.w600)),
+            ),
+            Text(
+              attribute.display,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: kBrandIndigo,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 5),
+        // Mesmo padrão das barras comparativas dos insights: animação finita,
+        // sem `fl_chart`. Ver ARQUITETURA §8 para o porquê de nada aqui poder
+        // repetir indefinidamente.
+        SizedBox(
+          height: 8,
+          child: Stack(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: kBrandIndigo.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: attribute.value / 100),
+                duration: const Duration(milliseconds: 700),
+                curve: Curves.easeOutCubic,
+                builder: (context, t, _) => Align(
+                  alignment: Alignment.centerLeft,
+                  child: FractionallySizedBox(
+                    widthFactor: t.clamp(0.0, 1.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: kBrandIndigo,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(attribute.note, style: theme.textTheme.bodySmall),
+      ],
     );
   }
 }

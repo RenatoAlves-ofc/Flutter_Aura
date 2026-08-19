@@ -125,7 +125,7 @@ void main() {
   group('motor de insights', () {
     test('tudo fica bloqueado sem dados', () {
       final insights = buildInsights([]);
-      expect(insights.length, 4);
+      expect(insights.length, 5);
       expect(insights.every((i) => !i.unlocked), isTrue);
       expect(insights.first.missing, greaterThan(0));
     });
@@ -394,6 +394,64 @@ void main() {
     });
   });
 
+  group('ficha de personagem', () {
+    test('sem sessões, a ficha diz isso em vez de mostrar zeros', () {
+      final f = buildCharacterSheet([]);
+      expect(f.hasData, isFalse);
+      expect(f.attributes, isEmpty,
+          reason: 'quatro barras zeradas mentem sobre não haver dado nenhum');
+    });
+
+    test('a classe sai do método que a pessoa de fato usa', () {
+      final base = DateTime(2026, 8, 10);
+      CharacterSheet comMetodo(String id, int duracao) => buildCharacterSheet([
+            session(date: base, duration: duracao, before: 4, after: 4, method: id),
+            session(date: base, duration: duracao, before: 4, after: 4, method: id),
+            session(date: base, duration: duracao, before: 4, after: 4, method: id),
+          ]);
+
+      expect(comMetodo('ciclo_ultradiano', 90).className, 'Maratonista');
+      expect(comMetodo('micro_sessao', 15).className, 'Sprinter');
+      expect(comMetodo('pomodoro_classico', 25).className, 'Ritmista');
+      expect(comMetodo('flowtime', 42).className, 'Explorador');
+    });
+
+    test('todo atributo cabe na barra, de 0 a 100', () {
+      final f = buildCharacterSheet(buildDemoSessions());
+      expect(f.attributes.length, 4);
+      for (final a in f.attributes) {
+        expect(a.value, inInclusiveRange(0, 100), reason: a.name);
+        expect(a.display, isNotEmpty, reason: a.name);
+      }
+    });
+
+    test('o valor extremo satura em 100 em vez de estourar a barra', () {
+      final base = DateTime(2026, 8, 10);
+      final f = buildCharacterSheet([
+        // 240 min é muito acima do teto de 90 usado na normalização.
+        session(date: base, duration: 240, before: 4, after: 5),
+      ]);
+      final profundidade =
+          f.attributes.firstWhere((a) => a.name == 'Profundidade');
+      expect(profundidade.value, 100);
+      expect(profundidade.display, '240 min',
+          reason: 'a barra satura, mas o número real continua sendo dito');
+    });
+
+    test('recuperação conta as sessões que terminam melhor do que começaram',
+        () {
+      final base = DateTime(2026, 8, 10);
+      final f = buildCharacterSheet([
+        session(date: base, duration: 25, before: 2, after: 4),
+        session(date: base, duration: 25, before: 3, after: 5),
+        session(date: base, duration: 25, before: 4, after: 4),
+        session(date: base, duration: 25, before: 4, after: 2),
+      ]);
+      // 2 de 4 melhoraram.
+      expect(f.attributes.firstWhere((a) => a.name == 'Recuperação').value, 50);
+    });
+  });
+
   group('clima pessoal', () {
     final base = DateTime(2026, 8, 10);
 
@@ -441,14 +499,22 @@ void main() {
   group('dataset de demonstração', () {
     final demo = buildDemoSessions();
 
-    test('tem volume suficiente para desbloquear todos os insights', () {
+    test('abre quatro descobertas e deixa a quinta trancada, de propósito', () {
       final insights = buildInsights(demo);
       expect(demo.length, 22, reason: 'valor citado no README');
-      expect(
-        insights.where((i) => !i.unlocked).map((i) => i.title).toList(),
-        isEmpty,
-        reason: 'nenhuma tela pode aparecer vazia na apresentação',
-      );
+
+      final trancadas = insights.where((i) => !i.unlocked).toList();
+
+      // As quatro primeiras abrem: nenhuma tela pode aparecer vazia na
+      // apresentação.
+      expect(insights.where((i) => i.unlocked).length, 4);
+
+      // E exatamente uma fica trancada — sem isso o app não teria nada
+      // apontando para frente, que era o defeito que ela veio corrigir.
+      expect(trancadas.length, 1);
+      expect(trancadas.single.id, 'duration_ceiling');
+      expect(trancadas.single.missing, 8,
+          reason: '30 exigidas menos as 22 da demonstração');
     });
 
     test('vem todo marcado como demonstração, para poder ser removido', () {

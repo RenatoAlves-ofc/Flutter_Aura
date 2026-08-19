@@ -79,7 +79,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Descobertas'), findsOneWidget);
-    expect(find.textContaining('4 de 4 desbloqueadas'), findsOneWidget);
+    expect(find.textContaining('4 de 5 desbloqueadas'), findsOneWidget);
 
     // Os gráficos ficam abaixo dos cards de insight; a ListView só os constrói
     // ao rolar, então rolar até eles é parte do teste.
@@ -100,6 +100,38 @@ void main() {
     expect(find.text('Sua aura hoje'), findsOneWidget);
     expect(find.text('Pontos'), findsOneWidget);
     expect(find.text('Minutos focados'), findsOneWidget);
+  });
+
+  testWidgets('a aba Resumo abre pela ficha, com os quatro atributos',
+      (tester) async {
+    await bootApp(tester);
+
+    await tester.tap(find.text('Resumo'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sua ficha'), findsOneWidget);
+    for (final atributo in const [
+      'Constância',
+      'Recuperação',
+      'Amplitude',
+      'Profundidade',
+    ]) {
+      expect(find.text(atributo), findsOneWidget, reason: atributo);
+    }
+  });
+
+  testWidgets('a quinta descoberta aparece trancada, com o quanto falta',
+      (tester) async {
+    await bootApp(tester);
+
+    await tester.tap(find.text('Insights'));
+    await tester.pumpAndSettle();
+
+    // O ponto da quinta descoberta é ser vista trancada: sem isso o app não
+    // mostra nenhuma progressão para quem abre pela primeira vez.
+    await tester.scrollUntilVisible(find.text('Seu limite real'), 300);
+    expect(find.text('Seu limite real'), findsOneWidget);
+    expect(find.textContaining('Faltam 8'), findsOneWidget);
   });
 
   testWidgets('a aba Tarefas aceita uma tarefa nova', (tester) async {

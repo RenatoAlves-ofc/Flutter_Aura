@@ -7,6 +7,38 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---
 
+## [1.4.0] — 2026-08-19
+
+O app funcionava, era bonito e estava sem graça. Duas mudanças, e nenhuma delas é enfeite.
+
+### Adicionado
+
+- **Ficha de personagem** na aba Resumo: uma classe (Maratonista, Ritmista, Sprinter,
+  Explorador) e quatro atributos — Constância, Recuperação, Amplitude e Profundidade —
+  **todos derivados das sessões reais**. `buildCharacterSheet` reaproveita `effectiveStreak`,
+  `_moodBucket` e `methodById`; não precisou de dado novo.
+- **Quinta descoberta: "Seu limite real"** — acima de quantos minutos as sessões passam a
+  terminar pior. Exige 30 sessões e, com as 22 da demonstração, **nasce trancada** mostrando
+  "faltam 8". A aba Insights passou a abrir em **"4 de 5 desbloqueadas"**.
+- Sete testes novos: classe por método dominante, atributos dentro de 0–100, saturação em 100
+  sem estourar a barra, recuperação, ficha sem sessões, a quinta descoberta trancada com o
+  dataset demo, e a ficha aparecendo na tela. **77 testes**.
+
+### Alterado
+
+- **O texto dos pontos parou de mentir.** Dizia que eles eram "o combustível"; agora diz que
+  são contagem e que o que evolui é a ficha. O README sempre prometeu *"descobertas pessoais,
+  não pontos genéricos"* e o app entregava pontos genéricos — a contradição acabou.
+- O teste que exigia "nenhuma descoberta trancada" foi reescrito para exigir **exatamente
+  uma**. O que era garantia de tela cheia virou garantia de progressão visível.
+
+### O que foi recusado, e por quê
+
+O pedido era "uma pegada de RPG". **XP, níveis e medalhas foram descartados**: seriam a
+gamificação genérica contra a qual o produto se posiciona, e a pesquisa de concorrência do
+próprio projeto aponta que os apps do nicho erram exatamente aí. Registrado em
+[`DECISOES.md`](docs/DECISOES.md) §20.
+
 ## [1.3.1] — 2026-08-19
 
 Duas perguntas respondidas por escrito, sem tocar em código.

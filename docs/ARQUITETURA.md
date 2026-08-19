@@ -8,7 +8,7 @@ dados passam e onde ficam as regras. Para o *porquê* de cada escolha, veja
 
 ## 1. Arquivo único, e o que isso obriga
 
-Todo o app vive em **`lib/main.dart`** (3.914 linhas). Não é preferência de estilo: o
+Todo o app vive em **`lib/main.dart`** (4.280 linhas). Não é preferência de estilo: o
 FlutLab tem problemas com arquitetura multi-arquivo no navegador, então a especificação
 proibiu imports relativos.
 
@@ -17,7 +17,7 @@ marcadas com banners. A ordem importa: cada faixa só depende das anteriores.
 
 ### Mapa navegável
 
-Um arquivo de 3.914 linhas é intransitável sem mapa. As linhas abaixo são os banners de
+Um arquivo de 4.280 linhas é intransitável sem mapa. As linhas abaixo são os banners de
 seção — abra o arquivo e pule direto para a faixa que interessa.
 
 | Linha | Seção | Camada |
@@ -28,20 +28,21 @@ seção — abra o arquivo e pule direto para a faixa que interessa.
 | **432** | `PERSISTÊNCIA (shared_preferences)` — `AuraStore` | persistência |
 | **562** | `SEQUÊNCIA COM PERDÃO` | **lógica pura** |
 | **677** | `MOTOR DE INSIGHTS` | **lógica pura** |
-| **959** | `SUGESTÃO ADAPTATIVA DE DURAÇÃO` | **lógica pura** |
-| **1031** | `CLIMA PESSOAL (a "aura")` | **lógica pura** |
-| **1121** | `DATASET DE DEMONSTRAÇÃO` | **lógica pura** |
-| **1209** | `SHELL PRINCIPAL` — `_HomeShellState` | estado |
-| **1614** | `TELA 1: FOCO` — cronômetro, método, check de humor | UI |
-| **2591** | `TELA 2: TAREFAS` | UI |
-| **2742** | `TELA 3: INSIGHTS` — motor de correlação e gráficos | UI |
-| **3221** | `TELA 4: RESUMO` | UI |
-| **3419** | `TELA: SOBRE` | UI |
-| **3663** | `WIDGETS COMPARTILHADOS` — `AuraCard`, `AuraMark`, `EntranceFade` | UI |
+| **1035** | `SUGESTÃO ADAPTATIVA DE DURAÇÃO` | **lógica pura** |
+| **1107** | `FICHA DE PERSONAGEM` — `buildCharacterSheet` | **lógica pura** |
+| **1257** | `CLIMA PESSOAL (a "aura")` | **lógica pura** |
+| **1347** | `DATASET DE DEMONSTRAÇÃO` | **lógica pura** |
+| **1435** | `SHELL PRINCIPAL` — `_HomeShellState` | estado |
+| **1840** | `TELA 1: FOCO` — cronômetro, método, check de humor | UI |
+| **2817** | `TELA 2: TAREFAS` | UI |
+| **2968** | `TELA 3: INSIGHTS` — motor de correlação e gráficos | UI |
+| **3447** | `TELA 4: RESUMO` — a ficha | UI |
+| **3648** | `TELA: SOBRE` | UI |
+| **3892** | `WIDGETS COMPARTILHADOS` — `AuraCard`, `AuraMark`, `EntranceFade` | UI |
 
-A faixa do meio (562–1208) é a mais importante: **é lógica pura, sem nenhuma dependência de
+A faixa do meio (562–1434) é a mais importante: **é lógica pura, sem nenhuma dependência de
 Flutter**. Funções que recebem `List<StudySession>` e devolvem números ou objetos de dados.
-É por isso que 49 dos 70 testes conseguem rodar sem construir uma única tela.
+É por isso que 54 dos 77 testes conseguem rodar sem construir uma única tela.
 
 > As linhas envelhecem a cada edição. Se divergirem, o que vale são os banners no próprio
 > arquivo — `grep -n '^// [A-Z]\{4,\}' lib/main.dart` reconstrói esta tabela em um comando.
@@ -57,12 +58,14 @@ Flutter**. Funções que recebem `List<StudySession>` e devolvem números ou obj
 ├──────────────────────────────────────────────────────────┤
 │  Lógica      buildInsights · applyActivity ·             │
 │  pura        resolveClimate · suggestMethodForMood ·     │
-│              streakFromSessions · buildDemoSessions      │
+│              buildCharacterSheet · streakFromSessions ·  │
+│              buildDemoSessions                           │
 ├──────────────────────────────────────────────────────────┤
 │  Persistência           AuraStore (shared_preferences)   │
 ├──────────────────────────────────────────────────────────┤
 │  Modelos     StudySession · TaskItem · FocusMethod ·     │
-│              StreakState · Insight · AuraClimate         │
+│              StreakState · Insight · AuraClimate ·       │
+│              CharacterSheet                              │
 └──────────────────────────────────────────────────────────┘
 ```
 
@@ -180,7 +183,7 @@ malformado deixa o app impossível de abrir para sempre.
 
 ### Motor de insights
 
-`buildInsights(sessions)` devolve sempre 4 objetos `Insight`. Cada um tem um volume mínimo
+`buildInsights(sessions)` devolve sempre 5 objetos `Insight`. Cada um tem um volume mínimo
 de dados; abaixo dele o card aparece bloqueado, mostrando quantas sessões faltam — o
 bloqueio é a própria mecânica, não um erro.
 
@@ -190,8 +193,32 @@ bloqueio é a própria mecânica, não um erro.
 | Focar muda humor | média de `moodAfter - moodBefore` | 5 sessões |
 | Melhor dia | minutos totais por dia da semana | 7 sessões |
 | Método que sustenta | `moodAfter` médio por `methodId` | 6 sessões, 2+ métodos com 2+ sessões |
+| **Seu limite real** | `moodAfter` médio por faixa de duração | **30 sessões**, 3 faixas com 3+ sessões |
 
 Faixas de humor (`_moodBucket`): **1-2** baixo, **3** neutro, **4-5** alto.
+
+O quinto limiar é alto de propósito. Com as 22 sessões da demonstração ele **nasce
+bloqueado**, e é isso que faz a mecânica de desbloqueio finalmente aparecer na tela: antes
+dele os quatro primeiros abriam todos de saída, e ninguém — nem um usuário novo, nem a
+plateia de uma apresentação — via um cartão trancado. Ver [`DECISOES.md`](DECISOES.md) §21.
+
+### Ficha de personagem
+
+`buildCharacterSheet(sessions)` devolve uma **classe** e **quatro atributos**, e nenhum deles
+é inventado:
+
+| Campo | De onde sai |
+|---|---|
+| Classe | família de duração do método mais usado — Maratonista (50+), Ritmista (25–45), Sprinter (≤20), Explorador (Flowtime) |
+| Constância | `effectiveStreak`, normalizada por 21 dias |
+| Recuperação | % de sessões com `moodAfter > moodBefore` |
+| Amplitude | diferença de duração média entre a faixa de humor mais alta e a mais baixa |
+| Profundidade | maior `durationMinutes`, normalizada por 90 min |
+
+Cada atributo carrega `value` (0–100, só para a largura da barra) **e** `display`, o número
+real com unidade. A barra é leitura de relance; o número é o dado. Os tetos de normalização
+são alvos declarados no código, não escalas escondidas — e o valor satura em 100 em vez de
+estourar a barra, com teste que trava isso.
 
 ### Sequência com perdão
 
@@ -350,13 +377,13 @@ estar rodando.
 ## 10. Testes
 
 ```bash
-flutter test          # 70 testes
+flutter test          # 77 testes
 ```
 
 | Arquivo | Testes | Foco |
 |---|---|---|
-| `test/aura_logic_test.dart` | 49 | lógica pura: sequência, insights, sugestão, clima, dataset, serialização |
-| `test/aura_app_test.dart` | 21 | interface: navegação, fluxo de humor, gráficos, animação, resiliência, tela de erro |
+| `test/aura_logic_test.dart` | 54 | lógica pura: sequência, insights, sugestão, clima, dataset, serialização |
+| `test/aura_app_test.dart` | 23 | interface: navegação, fluxo de humor, gráficos, animação, resiliência, tela de erro |
 
 Os testes de interface rodam num viewport de telefone (420×940) em vez do padrão 800×600 —
 foi assim que apareceu um estouro de layout que o padrão escondia.

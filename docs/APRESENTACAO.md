@@ -70,7 +70,8 @@ seguir.
 
 ### Passo 5 — Ir para a aba Insights
 
-Mostre "4 de 4 desbloqueadas". Leia **em voz alta** o primeiro card:
+Mostre **"4 de 5 desbloqueadas"** — e volte nesse número, ele importa. Leia **em voz alta**
+o primeiro card:
 
 > "Quando você começa animado, suas sessões duram em média X min. Quando começa pra baixo,
 > caem para Y min."
@@ -79,6 +80,12 @@ Mostre "4 de 4 desbloqueadas". Leia **em voz alta** o primeiro card:
 > bloqueada até haver dados suficientes — uma conclusão tirada de duas sessões não seria uma
 > conclusão.
 
+Role até o cartão **trancado** ("Seu limite real — faltam 8 sessões") e pare nele um segundo.
+
+> Fale: esta ainda não abriu. Ela precisa de 30 sessões porque descobrir o seu *teto* de
+> duração exige volume — com pouco dado, um único dia ruim decidiria o resultado. É o que o
+> app tem de próximo objetivo: ele não acaba quando você abre.
+
 ### Passo 6 — Rolar até o gráfico de correlação
 
 As barras sobem junto com o humor inicial.
@@ -86,9 +93,17 @@ As barras sobem junto com o humor inicial.
 > Fale: é a tese do app em uma imagem. Quanto melhor a pessoa chega, mais tempo ela
 > sustenta — e isso não é força de vontade, é um padrão que dá para observar.
 
-### Passo 7 — Aba Resumo
+### Passo 7 — Aba Resumo: a ficha
 
-Aponte o fundo colorido: a aura. Depois a sequência com perdão.
+**Comece pela ficha**, no topo: a classe e os quatro atributos.
+
+> Fale: isto é uma ficha de personagem, e é aqui que o Aura se separa dos concorrentes.
+> **Nenhum destes números é ponto de experiência.** A classe sai do método que a pessoa usa;
+> Recuperação é a porcentagem real de sessões que terminam melhor do que começaram;
+> Profundidade é a maior sessão que ela sustentou. Outros apps dão XP por abrir o aplicativo.
+> Aqui, se o número sobe, é porque o comportamento mudou.
+
+Só então aponte o fundo colorido: a aura. Depois a sequência com perdão.
 
 > Fale: a cada 3 dias seguidos ganha-se uma folga. Faltou um dia, a folga é gasta e a
 > sequência continua. O público-alvo são estudantes em época de prova — punir quem falhou um
@@ -116,7 +131,7 @@ onboarding com quiz.
 ## 3. Se sobrar tempo (ou se perguntarem)
 
 **"Como você garantiu que funciona?"**
-70 testes automatizados, em dois SDKs diferentes. Mas testes não olham para a tela — a
+77 testes automatizados, em dois SDKs diferentes. Mas testes não olham para a tela — a
 interface foi conferida separadamente, servindo o build web num viewport de telefone. Foi
 essa conferência que achou a tela Resumo abrindo incoerente. Detalhes em
 [`RELATORIO-E2E.md`](RELATORIO-E2E.md).
@@ -127,11 +142,11 @@ antes de descobrirmos que era o alvo de build: `arm` gera binário de 32 bits, e
 arm64 a engine nativa não carrega. O app morria antes de qualquer código Dart rodar — por
 isso nenhuma instrumentação em Dart conseguia capturar. Está em [`DECISOES.md`](DECISOES.md) §6.
 
-**"Por que 3.914 linhas num arquivo só?"**
+**"Por que 4.280 linhas num arquivo só?"**
 Restrição declarada do ambiente de entrega: a especificação da atividade proíbe imports
 relativos, porque o FlutLab tem problemas com arquitetura multi-arquivo no navegador. A
 mitigação foi separar por **camada dentro do arquivo**: a lógica de negócio é escrita como
-funções puras que não importam nada do Flutter, e 49 dos 70 testes batem nela sem construir
+funções puras que não importam nada do Flutter, e 54 dos 77 testes batem nela sem construir
 uma única tela. Fora dessa restrição, a divisão em pastas seria o certo — e está registrada
 no roadmap, não esquecida. Detalhe em [`DECISOES.md`](DECISOES.md) §19.
 
@@ -182,10 +197,10 @@ Faça isso **até 22/08**, não na véspera.
 | | |
 |---|---|
 | Métodos de foco | 11 |
-| Descobertas desbloqueáveis | 4 |
+| Descobertas desbloqueáveis | 5, uma delas trancada de propósito |
 | Estados da aura | 4 + neutro |
-| Testes automatizados | 70 (49 de lógica pura, 21 de interface) |
+| Testes automatizados | 77 (54 de lógica pura, 23 de interface) |
 | Dependências externas | 4, todas gratuitas |
-| Linhas de código | ~3.900, em arquivo único por exigência do FlutLab |
+| Linhas de código | ~4.300, em arquivo único por exigência do FlutLab |
 | Backend | nenhum |
 | Animações contínuas no app | 1, de propósito |
