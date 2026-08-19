@@ -16,7 +16,7 @@ proíbe imports relativos.
 **Decisão.** Todo o app em `lib/main.dart`, com a separação feita por banners de seção em
 vez de por pastas.
 
-**Consequência.** ~3.400 linhas em um arquivo. Para compensar, a lógica de negócio é
+**Consequência.** 3.684 linhas em um arquivo. Para compensar, a lógica de negócio é
 escrita como funções puras que não importam nada do Flutter, e é atacada diretamente pelos
 testes. A ordem das seções é significativa: cada uma só depende das anteriores.
 
@@ -236,3 +236,56 @@ seguem na lista ativa do `package:lints` até a 6.1.0, e no mesmo Flutter 3.32.8
 diagnóstico do arquivo incluído sem desligar nenhuma verificação do nosso código. O código
 de diagnóstico foi validado com um teste de controle: um nome inexistente faz o analisador
 responder `isn't a recognized error code`, e com `included_file_warning` ele não reclama.
+
+---
+
+## 15. Uma única animação contínua no app inteiro
+
+**Contexto.** A interface era estática e a abertura era um corte seco. Adicionar animação era
+o pedido; o problema é que animação e suíte de testes se atropelam.
+
+`pumpAndSettle()` avança o relógio do teste até **todas** as animações terminarem. Uma
+animação que repete indefinidamente nunca termina, então o teste espera até estourar o
+tempo. A suíte usa `pumpAndSettle` em **25 chamadas** — uma animação contínua mal colocada
+derruba a suíte inteira, não um teste.
+
+**Decisão.** Só **uma** animação contínua no app: o halo que respira em volta do anel,
+enquanto a sessão roda. Todas as outras são finitas — entram, terminam e param.
+
+Três consequências práticas dessa decisão:
+
+- O escalonamento do `EntranceFade` sai de um `Interval` na curva, **não** de
+  `Future.delayed`. Assim continua sendo uma animação só, finita, e o `pumpAndSettle`
+  termina. Com `Future.delayed` seriam N temporizadores soltos, que o teste não enxerga.
+- `_breath` é parado em **todos** os pontos onde a sessão para: pausar, reiniciar, fim de
+  ciclo e fim de Flowtime. Esquecer um deles deixaria o halo animando fora da sessão.
+- Os dois testes que rodam o cronômetro usam `pump(Duration)` no lugar de `pumpAndSettle`.
+
+**Consequência.** Dois testes travam esse comportamento: o halo animando durante a sessão e
+parando ao pausar, e a tela de carregamento não deixando animação presa. Sem eles, a próxima
+pessoa que adicionar um `repeat()` descobriria o problema como uma suíte inteira travando,
+sem pista de qual mudança causou.
+
+**Detalhe que só apareceu ao investigar uma falha:** depois de pausar, o que continuava
+animando não era o halo — era o splash de tinta do botão que acabara de ser tocado. O teste
+espera esse tempo de propósito, e o comentário no código diz isso, para ninguém "otimizar" a
+espera de volta.
+
+---
+
+## 16. A marca desenhada em widgets, não como asset
+
+**Contexto.** A abertura precisa mostrar a marca do Aura em pelo menos dois lugares: a tela
+nativa (que só aceita bitmap) e a `AuraLoadingScreen` (que é Flutter).
+
+**Decisão.** `AuraMark` é um `StatelessWidget` que desenha a marca com `Container` e
+`BoxDecoration` — halos, anel âmbar e núcleo — recebendo o tamanho por parâmetro. O PNG
+existe só onde é obrigatório: o ícone do launcher e a tela nativa de abertura.
+
+**Consequência.** A marca acompanha qualquer tamanho sem perder nitidez e sem multiplicar
+arquivos por densidade. E, como a tela nativa e a tela Flutter compartilham o mesmo degradê
+(`#8B84FF` → `#4A41C7`, declarado nos dois lados), a passagem de uma para a outra não pisca.
+
+**Limite conhecido.** As duas cores estão declaradas em dois lugares — `kSplashGradient` no
+Dart e `launch_gradient.xml` no Android. Não há como compartilhar uma constante entre eles;
+mudar uma sem a outra faz a abertura piscar. Está anotado nos dois arquivos.
