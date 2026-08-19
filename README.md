@@ -92,18 +92,18 @@ e podem ser removidas na tela **Sobre**.
 ```bash
 flutter pub get
 flutter analyze     # sem issues
-flutter test        # 67 testes
+flutter test        # 70 testes
 flutter run
 ```
 
 Para rodar ou buildar o APK **no FlutLab**, veja [docs/FLUTLAB.md](docs/FLUTLAB.md) — inclui
 os dois avisos que são esperados e por que o APK precisa ser gerado como `arm64`.
 
-O app inteiro vive em **`lib/main.dart`** (3.684 linhas), sem imports relativos, por
+O app inteiro vive em **`lib/main.dart`** (3.914 linhas), sem imports relativos, por
 exigência do ambiente. O mapa navegável do arquivo está em
 [docs/ARQUITETURA.md](docs/ARQUITETURA.md).
 
-Os 67 testes cobrem a lógica que não aparece na tela: a sequência com perdão, o motor de
+Os 70 testes cobrem a lógica que não aparece na tela: a sequência com perdão, o motor de
 insights e seus limiares, o clima pessoal, a serialização retrocompatível, a resiliência a
 dados corrompidos e o dataset de demonstração. Testes não olham para a tela — a interface
 foi conferida à parte, rodando o build web num viewport de telefone.

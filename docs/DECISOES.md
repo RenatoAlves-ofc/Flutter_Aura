@@ -16,7 +16,7 @@ proíbe imports relativos.
 **Decisão.** Todo o app em `lib/main.dart`, com a separação feita por banners de seção em
 vez de por pastas.
 
-**Consequência.** 3.684 linhas em um arquivo. Para compensar, a lógica de negócio é
+**Consequência.** 3.914 linhas em um arquivo. Para compensar, a lógica de negócio é
 escrita como funções puras que não importam nada do Flutter, e é atacada diretamente pelos
 testes. A ordem das seções é significativa: cada uma só depende das anteriores.
 
@@ -289,3 +289,63 @@ arquivos por densidade. E, como a tela nativa e a tela Flutter compartilham o me
 **Limite conhecido.** As duas cores estão declaradas em dois lugares — `kSplashGradient` no
 Dart e `launch_gradient.xml` no Android. Não há como compartilhar uma constante entre eles;
 mudar uma sem a outra faz a abertura piscar. Está anotado nos dois arquivos.
+
+---
+
+## 17. Índigo é a estrutura; a aura é o estado
+
+**Contexto.** O tema já era sedeado em índigo (`colorSchemeSeed: 0xFF6C63FF`), e o ícone e a
+tela de abertura também. Mas a interface era verde-azulada, porque quase todo elemento
+colorido usava `climate.accent` — a cor que muda com o estado do usuário. Resultado: o app
+parecia trocar de produto entre a abertura e a primeira tela, e a marca do ícone não aparecia
+em lugar nenhum depois disso.
+
+Havia ainda uma incoerência maior. A AppBar mostrava `climate.icon`, um símbolo que **muda**
+com o clima. O app portanto nunca exibia a própria marca.
+
+**Decisão.** Uma regra, com uma exceção nomeada:
+
+- **`kBrandIndigo` é a estrutura** — marca, anel do cronômetro, botões, números de insight,
+  ícones de estatística. Não muda nunca.
+- **`AuraClimate.accent` é o estado do usuário** — o gradiente de fundo, o brilho da marca,
+  o halo do anel. Só isso.
+- **Exceção: cores semânticas**, onde a cor *é* a informação — prioridade de tarefa
+  (`_priorityColor`) e faces do check de humor (`moodColors`). Trocá-las apagaria
+  significado.
+
+A AppBar passou a mostrar o `AuraMark` — a mesma forma do ícone e da abertura —, com o clima
+aparecendo na **cor do brilho** em vez de trocar o símbolo. Identidade constante e sinal de
+clima no mesmo elemento.
+
+**Consequência.** A regra é o que torna a interface conferível: qualquer cor fora dessas três
+categorias é um desvio, e dá para apontar. Foi assim que sobraram visíveis, depois da
+primeira passada, uma estrela âmbar na AppBar e um fogo laranja no cartão de sequência — os
+dois últimos resquícios da paleta antiga.
+
+A constante mora em `CONSTANTES DE APOIO` com a regra na própria docstring, porque uma regra
+de cor que só existe num documento separado não sobrevive à próxima edição.
+
+---
+
+## 18. A tese do app passou a ser mostrada, não narrada
+
+**Contexto.** O insight principal — o que carrega a tese do produto — dizia "suas sessões
+duram em média 40.8 min... caem para 15 min" **dentro de um parágrafo de cinco linhas**. O
+app existe para provar uma correlação, e a correlação estava escondida em prosa.
+
+Os quatro cartões de insight também tinham peso visual idêntico, então nenhum vencia.
+
+**Decisão.** `Insight` ganhou um campo opcional `comparison` (`InsightComparison`), e o
+cartão desenha **duas barras proporcionais** quando ele existe. O primeiro insight
+desbloqueado recebe tratamento de destaque: fundo índigo suave, mais respiro e número maior.
+
+As barras são `Container` com `FractionallySizedBox`, **não** `fl_chart`. É a razão entre
+duas larguras; trazer um gráfico completo custaria tempo de quadro numa tela que já desenha
+dois gráficos de verdade logo abaixo.
+
+**Consequência.** `InsightComparison.lowRatio` tem piso de `0.08`. Sem ele, uma diferença
+extrema renderiza a barra menor com largura quase zero — ela some da tela, e some junto a
+comparação que a barra existe para mostrar. Há um teste que trava exatamente esse piso.
+
+O campo é opcional de propósito: os outros três insights não têm duas medidas comparáveis, e
+inventar uma para preencher o formato seria pior do que não desenhar nada.
