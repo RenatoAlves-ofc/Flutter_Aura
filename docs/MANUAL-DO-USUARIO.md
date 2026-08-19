@@ -8,6 +8,19 @@ Tudo fica no seu aparelho. Não há login, servidor nem feed.
 
 ---
 
+## Ao abrir o app
+
+<p align="center">
+  <img src="img/00-abertura.png" width="190" alt="Tela de abertura do Aura">
+</p>
+
+A abertura é a mesma marca do ícone, no mesmo índigo. Ela não pisca branco nem mostra um
+carregamento genérico: a tela de abertura dissolve direto na cor da **sua** aura, que é a cor
+que o app vai manter enquanto você usa.
+
+Se você vir um flash branco ou o ícone padrão do Flutter, o aplicativo instalado é de uma
+versão anterior.
+
 ## Primeira abertura
 
 O app já abre com **22 sessões de demonstração** dos últimos 14 dias, para que nenhuma tela
@@ -31,7 +44,9 @@ Ciclo Ultradiano (90/20). Duas são diferentes das demais:
 
 **2. Toque em Iniciar.** Antes de o cronômetro rodar, o app pergunta como você está.
 
-**3. Foque.** O anel mostra o progresso. Dá para pausar e reiniciar a qualquer momento.
+**3. Foque.** O anel mostra o progresso, e enquanto a sessão roda um halo **respira** em
+volta dele — é o sinal de que o cronômetro está ativo, visível de longe. Ao pausar, o halo
+para. Dá para pausar e reiniciar a qualquer momento.
 
 **4. Ao terminar**, o app pergunta como você está agora. É o contraste entre as duas
 respostas que alimenta os insights — sem ele, o Aura seria só mais um cronômetro.

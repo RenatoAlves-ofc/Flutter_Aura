@@ -8,31 +8,43 @@ dados passam e onde ficam as regras. Para o *porquê* de cada escolha, veja
 
 ## 1. Arquivo único, e o que isso obriga
 
-Todo o app vive em **`lib/main.dart`** (~3.400 linhas). Não é preferência de estilo: o
+Todo o app vive em **`lib/main.dart`** (3.684 linhas). Não é preferência de estilo: o
 FlutLab tem problemas com arquitetura multi-arquivo no navegador, então a especificação
 proibiu imports relativos.
 
 Sem pastas para separar responsabilidades, a separação é feita por **faixas do arquivo**,
 marcadas com banners. A ordem importa: cada faixa só depende das anteriores.
 
-```
-main() + captura de erro + AuraErrorScreen     ← infraestrutura
-MODELOS                                        ← dados puros
-CONSTANTES DE APOIO                            ← escalas, datas, formatação
-PERSISTÊNCIA (shared_preferences)              ← AuraStore
-SEQUÊNCIA COM PERDÃO (regra fixa)              ┐
-MOTOR DE INSIGHTS (Dart puro)                  │ lógica pura, sem Flutter
-SUGESTÃO ADAPTATIVA DE DURAÇÃO                 │ (é o que os testes atacam)
-CLIMA PESSOAL (a "aura")                       │
-DATASET DE DEMONSTRAÇÃO                        ┘
-SHELL PRINCIPAL                                ← estado do app
-TELA 1: FOCO / 2: TAREFAS / 3: INSIGHTS / 4: RESUMO / SOBRE
-WIDGETS COMPARTILHADOS
-```
+### Mapa navegável
 
-A faixa do meio é a mais importante: **é lógica pura, sem nenhuma dependência de Flutter**.
-Funções que recebem `List<StudySession>` e devolvem números ou objetos de dados. É por isso
-que 46 dos 67 testes conseguem rodar sem construir uma única tela.
+Um arquivo de 3.684 linhas é intransitável sem mapa. As linhas abaixo são os banners de
+seção — abra o arquivo e pule direto para a faixa que interessa.
+
+| Linha | Seção | Camada |
+|---:|---|---|
+| 1 | `main()`, `AuraCrashReport`, `AuraApp`, `AuraErrorScreen` | infraestrutura |
+| **205** | `MODELOS` | dados puros |
+| **352** | `CONSTANTES DE APOIO` — escalas, datas, formatação | dados puros |
+| **416** | `PERSISTÊNCIA (shared_preferences)` — `AuraStore` | persistência |
+| **546** | `SEQUÊNCIA COM PERDÃO` | **lógica pura** |
+| **661** | `MOTOR DE INSIGHTS` | **lógica pura** |
+| **904** | `SUGESTÃO ADAPTATIVA DE DURAÇÃO` | **lógica pura** |
+| **976** | `CLIMA PESSOAL (a "aura")` | **lógica pura** |
+| **1066** | `DATASET DE DEMONSTRAÇÃO` | **lógica pura** |
+| **1154** | `SHELL PRINCIPAL` — `_HomeShellState` | estado |
+| **1549** | `TELA 1: FOCO` — cronômetro, método, check de humor | UI |
+| **2493** | `TELA 2: TAREFAS` | UI |
+| **2644** | `TELA 3: INSIGHTS` — motor de correlação e gráficos | UI |
+| **3023** | `TELA 4: RESUMO` | UI |
+| **3206** | `TELA: SOBRE` | UI |
+| **3450** | `WIDGETS COMPARTILHADOS` — `AuraCard`, `AuraMark`, `EntranceFade` | UI |
+
+A faixa do meio (546–1153) é a mais importante: **é lógica pura, sem nenhuma dependência de
+Flutter**. Funções que recebem `List<StudySession>` e devolvem números ou objetos de dados.
+É por isso que 46 dos 67 testes conseguem rodar sem construir uma única tela.
+
+> As linhas envelhecem a cada edição. Se divergirem, o que vale são os banners no próprio
+> arquivo — `grep -n '^// [A-Z]\{4,\}' lib/main.dart` reconstrói esta tabela em um comando.
 
 ---
 
@@ -57,6 +69,38 @@ que 46 dos 67 testes conseguem rodar sem construir uma única tela.
 A camada de lógica **não conhece** a de persistência: recebe listas prontas. Quem lê do
 disco é sempre o `_HomeShellState`, que então passa os dados para baixo. Isso é o que torna
 a lógica testável sem `SharedPreferences` mockado.
+
+### O ciclo de vida de uma sessão
+
+Este é o caminho que faz o app inteiro funcionar. Repare que **tudo que é derivado nasce da
+lista de sessões** — nada é gravado como número solto:
+
+```mermaid
+flowchart TD
+    A["Usuário toca em Iniciar"] --> B["_MoodSheet: humor ANTES (1..5)"]
+    B --> C{"suggestMethodForMood()"}
+    C -->|"2+ sessões nessa faixa"| D["Cartão de sugestão de método"]
+    C -->|"sem evidência"| E["Não mostra nada"]
+    D --> F["Cronômetro roda"]
+    E --> F
+    F --> G["_MoodSheet: humor DEPOIS (1..5)"]
+    G --> H["_recordSession(StudySession)"]
+    H --> I["AuraStore.saveSessions()"]
+    I --> J["List&lt;StudySession&gt;"]
+    J --> K["streakFromSessions()"]
+    J --> L["pointsFromSessions()"]
+    J --> M["resolveClimate()"]
+    J --> N["buildInsights()"]
+    K --> O["Aba Resumo"]
+    L --> O
+    M --> P["Gradiente do app inteiro"]
+    N --> Q["Aba Insights + gráficos"]
+```
+
+`_recordSession` ser o **único** ponto de entrada é o que garante isso. Quando o dataset de
+demonstração gravava sessões por fora desse caminho, a tela Resumo abria com "0 dias de
+sequência" ao lado de "20 sessões totais" — o defeito está registrado em
+[`DECISOES.md`](DECISOES.md) §9.
 
 ---
 
@@ -157,6 +201,18 @@ Faixas de humor (`_moodBucket`): **1-2** baixo, **3** neutro, **4-5** alto.
 - dia seguinte → sequência cresce
 - faltou **exatamente um** dia **e** há token → gasta o token, sequência sobrevive
 - qualquer outro buraco → recomeça do 1
+
+```mermaid
+stateDiagram-v2
+    [*] --> Ativa: primeira sessão
+    Ativa --> Ativa: mesma data<br/>(conta dias, não sessões)
+    Ativa --> Cresce: dia seguinte
+    Cresce --> Ativa
+    Ativa --> Perdoada: faltou 1 dia<br/>E há token
+    Perdoada --> Ativa: gasta 1 token
+    Ativa --> Reinicia: buraco maior<br/>OU sem token
+    Reinicia --> Ativa: sequência volta a 1
+```
 
 A cada 3 dias acumulados ganha-se 1 token, com teto de 3.
 

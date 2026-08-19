@@ -19,7 +19,7 @@ Android 16.
 
 | | |
 |---|---|
-| Linhas em `lib/main.dart` | 3.438 |
+| Linhas em `lib/main.dart` | 3.684 |
 | Testes automatizados | 67 (46 de lógica, 21 de interface) |
 | `flutter analyze` | sem nenhum aviso |
 | SDKs verificados | Flutter 3.32.8 (o do FlutLab) e 3.47.0 |
@@ -48,6 +48,30 @@ ou o teste feito no aparelho.
 **Além do escopo do MVP:** um item da Seção 3.1 (roadmap) foi implementado — a
 **sugestão adaptativa de duração**, descrita na Seção 5 — e o app recebeu uma camada de
 animação e uma abertura própria, descritas na Seção 6.
+
+### 2.1 Matriz de rastreabilidade
+
+A tabela acima diz *que* está pronto. Esta diz **onde**: cada regra do produto, a função que
+a implementa e o teste que a trava. Um avaliador consegue conferir qualquer linha abrindo
+dois arquivos.
+
+| Regra do produto | Implementação (`lib/main.dart`) | Teste que trava |
+|---|---|---|
+| Sequência cresce, perdoa 1 dia e reinicia no resto | `applyActivity` — linha 580 | `faltar exatamente um dia com token guardado não quebra a sequência`, `faltar mais de um dia quebra mesmo com token` |
+| Sequência morre sozinha se o usuário sumir | `effectiveStreak` — 631 | `some quando o usuário passou dos dias de graça` |
+| Resumo nunca diverge das sessões | `streakFromSessions` — 646, `pointsFromSessions` — 658 | `reconstrói a sequência aplicando a mesma regra de dia a dia`, `os pontos acompanham as sessões` |
+| 4 insights, cada um com seu limiar | `buildInsights` — 690 | `tudo fica bloqueado sem dados`, `dia da semana exige 7 sessões`, +4 |
+| Sugestão adaptativa não chuta | `suggestMethodForMood` — 940 | `não sugere com base numa única tentativa`, `nunca sugere Flowtime nem Personalizado`, +6 |
+| A aura reflete o agora, não a média | `resolveClimate` — 1049 | `a aura olha as sessões recentes, não a média histórica` |
+| Demonstração determinística e removível | `buildDemoSessions` — 1073 | `é determinístico, para a apresentação ser sempre igual`, `vem todo marcado como demonstração` |
+| Dado corrompido não impede o app de abrir | `AuraStore._loadList` — 419 | `abre normalmente com sessões corrompidas no armazenamento`, +3 |
+| Dados salvos por versões antigas continuam abrindo | `StudySession.fromJson`, `TaskItem.fromJson` — 205+ | `sessão antiga sem methodId cai no Pomodoro Clássico`, `tarefa salva antes do campo id ganha um id na leitura` |
+| 11 métodos sobre o mesmo cronômetro | `kFocusMethods` — 352+ | `são os 11 prometidos`, `só o Flowtime não tem duração fixa` |
+| Uma única animação contínua | `EntranceFade` — 3462, `_breath` na tela Foco | `o halo respira durante a sessão e para ao pausar`, `a tela de carregamento não deixa animação presa` |
+| A tela de erro nunca depende de ancestrais | `AuraErrorScreen` — 1+ | `desenha sem MaterialApp em volta` |
+
+As linhas envelhecem a cada edição; o mapa vivo das seções está em
+[`ARQUITETURA.md`](ARQUITETURA.md) §1.
 
 ---
 
@@ -209,6 +233,18 @@ Um detalhe que só apareceu ao investigar uma falha: depois de pausar, o que con
 animando não era o halo, era o splash de tinta do próprio botão tocado. O teste espera esse
 tempo de propósito, e diz isso no comentário.
 
+**Um achado sobre a tela de carregamento no web.** Ao tentar capturar a `AuraLoadingScreen`
+do build web para a documentação — 296 quadros seguidos, no maior ritmo que o navegador
+permite — ela **não aparece em nenhum**. No web o `shared_preferences` lê do
+armazenamento do navegador rápido o bastante para `_loading` já ser `false` na primeira
+pintura, então a tela existe mas nunca ganha um quadro.
+
+Não é defeito: no Android quem cobre essa janela é a tela nativa de abertura, que aparece
+antes de a engine subir e usa exatamente o mesmo degradê. Vale registrar porque explica por
+que a imagem `00-abertura.png` da documentação é a **arte da tela nativa**, composta a partir
+dos dois arquivos que vão no APK (`launch_gradient.xml` e `launch_image.png`), e não uma
+captura do navegador — que seria impossível de obter.
+
 ## 7. O que fica fora e por quê
 
 - **Build de APK neste repositório:** não há automação de CI. O APK é gerado no FlutLab,
@@ -224,10 +260,9 @@ tempo de propósito, e diz isso no comentário.
 
 ## 8. Pendências para a entrega
 
-| Item | Responsável | Observação |
-|---|---|---|
-| Reimportar o projeto no FlutLab | Usuário | GitHub e FlutLab não sincronizam sozinhos; sem isso nada deste repositório chega ao APK |
-| Gerar o APK final como **`android arm64`** | Usuário | Guardar o arquivo com antecedência, para não depender do FlutLab no dia |
-| QR Code para a apresentação | Usuário | Gerado pelo FlutLab junto com o APK |
-| Comprovante da interação com IA | Usuário | Item do checklist de ideação que estava em 50% |
-| Slides e ensaio do pitch | Usuário | Roteiro sugerido em [`APRESENTACAO.md`](APRESENTACAO.md) |
+Consolidadas em um documento só, com dono por item e o que fazer se algo falhar:
+**[`ENTREGA.md`](ENTREGA.md)**.
+
+Resumo: tudo que depende de código está pronto e verificado. O que falta depende de acesso
+ao FlutLab e ao aparelho — reimportar o projeto, gerar o APK como `arm64`, salvar o arquivo,
+gerar o QR Code e preparar os slides.

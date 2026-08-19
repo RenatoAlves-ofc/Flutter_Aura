@@ -7,6 +7,50 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---
 
+## [1.2.0] — 2026-08-19
+
+Passada completa na documentação. O código não mudou — só `.md`, um script e uma imagem.
+
+### Adicionado
+
+- **`docs/ENTREGA.md`**: checklist único até 24/08, com dono por item. As pendências estavam
+  duplicadas em dois documentos que já divergiam entre si.
+- **`docs/FLUTLAB.md`**: importar, buildar como `arm64`, os dois avisos esperados e a razão
+  de cada versão travada. Recebeu a profundidade operacional que inchava o README.
+- **`docs/USO-DE-IA.md`**: como o projeto foi construído com IA e, principalmente, os três
+  diagnósticos que ela errou e o que provou o contrário em cada caso.
+- **`NOTICE.md`**: atribuição do material Apache-2.0 vendorizado em `.claude/`, que estava
+  sendo redistribuído sem a licença nem o crédito exigidos.
+- **`tool/verifica_docs.sh`**: compara os números afirmados na documentação com os reais.
+  Validado com teste de controle — pega exatamente o "65 testes" que escapou da rodada
+  anterior.
+- Mapa navegável de `lib/main.dart` com as linhas dos 15 banners, e dois diagramas Mermaid
+  (ciclo de vida de uma sessão e máquina de estados da sequência) em `ARQUITETURA.md`.
+- Matriz de rastreabilidade em `RELATORIO-E2E.md`: cada regra do produto → a função que a
+  implementa → o teste que a trava.
+- Decisões 15 (uma única animação contínua) e 16 (marca desenhada em widgets) em
+  `DECISOES.md`.
+- Seção da abertura no manual e Passo 0 no roteiro de apresentação, com
+  `docs/img/00-abertura.png`.
+
+### Corrigido
+
+- `docs/APRESENTACAO.md` afirmava **65 testes** em dois lugares, um deles a tabela de números
+  para os slides. São 67 desde a versão anterior.
+- A contagem de linhas de `lib/main.dart` estava errada em quatro documentos: `~3.400` em
+  três e `3.438` em um. São **3.684**.
+
+### Alterado
+
+- README reestruturado de 193 para 123 linhas: pitch, prints, índice e os diferenciais —
+  incluindo a abertura e a animação, que não apareciam em lugar nenhum dele.
+
+### Registrado
+
+- No web a `AuraLoadingScreen` **não chega a ganhar um quadro**: o armazenamento local
+  resolve antes da primeira pintura. Descoberto ao tentar capturá-la em 296 quadros
+  seguidos. No Android quem cobre essa janela é a tela nativa, com o mesmo degradê.
+
 ## [1.1.0] — 2026-08-18
 
 Camada de animação e abertura própria. O app abria em três telas desconexas — flash branco,
