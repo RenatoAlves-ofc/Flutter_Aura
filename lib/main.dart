@@ -352,6 +352,22 @@ FocusMethod methodById(String id) => focusMethods.firstWhere(
 // CONSTANTES DE APOIO
 // ============================================================
 
+/// Índigo da marca — o mesmo do ícone do launcher e da tela de abertura.
+///
+/// **Regra de cor do app**, que vale para toda a interface:
+///
+/// - **Índigo é a estrutura**: marca, botões, anel do cronômetro, números de
+///   insight, aba ativa. Não muda nunca.
+/// - **`AuraClimate.accent` é o estado do usuário**: a aura, e só ela.
+/// - **Exceção: cores semânticas**, onde a cor *é* a informação e trocá-la
+///   apagaria significado — a prioridade das tarefas (`_priorityColor`) e as
+///   faces do check de humor (`moodColors`). Não é decoração solta.
+///
+/// Antes desta regra as duas famílias de cor conviviam sem critério — o ícone e
+/// a abertura eram índigo e a interface era verde-azulada, o que fazia o app
+/// parecer outro produto depois da tela de abertura.
+const Color kBrandIndigo = Color(0xFF6C63FF);
+
 /// Índice 1..5 — o índice 0 fica vazio de propósito para a escala bater com o
 /// valor guardado em `moodBefore` / `moodAfter`.
 const List<String> moodLabels = [
@@ -661,6 +677,36 @@ int pointsFromSessions(List<StudySession> sessions) => sessions.length * 10;
 // MOTOR DE INSIGHTS (Dart puro, sem IA e sem API)
 // ============================================================
 
+/// Duas medidas que um insight pode expor para serem **mostradas**, e não só
+/// narradas no texto.
+///
+/// O app inteiro existe para provar uma correlação, e ela estava sendo contada
+/// em prosa no meio de um parágrafo. Duas barras lado a lado entregam a mesma
+/// informação antes de a pessoa terminar de ler a frase.
+class InsightComparison {
+  final String highLabel;
+  final double highValue;
+  final String lowLabel;
+  final double lowValue;
+  final String unit;
+
+  const InsightComparison({
+    required this.highLabel,
+    required this.highValue,
+    required this.lowLabel,
+    required this.lowValue,
+    required this.unit,
+  });
+
+  /// Proporção da barra menor em relação à maior, entre 0 e 1.
+  ///
+  /// Piso de 0.08 para a barra menor nunca sumir: uma barra de largura zero
+  /// some da tela e some junto com ela a comparação que a barra existe para
+  /// mostrar.
+  double get lowRatio =>
+      highValue <= 0 ? 0 : (lowValue / highValue).clamp(0.08, 1.0);
+}
+
 class Insight {
   final String id;
   final String title;
@@ -669,6 +715,7 @@ class Insight {
   final int availableSessions;
   final String? headline;
   final String? body;
+  final InsightComparison? comparison;
 
   const Insight({
     required this.id,
@@ -678,6 +725,7 @@ class Insight {
     required this.availableSessions,
     this.headline,
     this.body,
+    this.comparison,
   });
 
   bool get unlocked => body != null;
@@ -752,6 +800,13 @@ Insight _insightMoodVsDuration(List<StudySession> sessions) {
         '${fmt(averages[best]!)} min. Quando ${_bucketNames[worst]}, caem para '
         '${fmt(averages[worst]!)} min. São ${fmt(diff)} min de foco que dependem '
         'de como você chega, não de força de vontade.',
+    comparison: InsightComparison(
+      highLabel: _bucketNames[best],
+      highValue: averages[best]!,
+      lowLabel: _bucketNames[worst],
+      lowValue: averages[worst]!,
+      unit: 'min',
+    ),
   );
 }
 
@@ -1454,10 +1509,19 @@ class _HomeShellState extends State<HomeShell> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           scrolledUnderElevation: 0,
+          // A marca é constante — a mesma forma do ícone do launcher e da tela
+          // de abertura. O clima aparece na COR do anel, não trocando o
+          // símbolo: antes o app nunca mostrava a própria marca, porque o
+          // ícone da AppBar mudava junto com o estado do usuário.
           title: Row(
             children: [
-              Icon(climate.icon, color: climate.accent),
-              const SizedBox(width: 8),
+              AuraMark(
+                size: 30,
+                ringColor: kBrandIndigo,
+                glowColor: climate.accent,
+                coreColor: kBrandIndigo,
+              ),
+              const SizedBox(width: 10),
               const Text('Aura',
                   style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: 1)),
             ],
@@ -1474,7 +1538,8 @@ class _HomeShellState extends State<HomeShell> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.star, color: Colors.amber, size: 18),
+                    const Icon(Icons.star_outline,
+                        color: kBrandIndigo, size: 18),
                     const SizedBox(width: 4),
                     Text('$_points',
                         style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -1927,10 +1992,19 @@ class _FocusPageState extends State<FocusPage>
 
     final linkedTask = _findLinkedTask();
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-      child: Column(
+    // O conteúdo desta tela é mais curto que a altura do telefone, e antes
+    // ficava empilhado no topo com uns 400 px vazios embaixo. O
+    // `ConstrainedBox` com a altura disponível deixa a `Column` distribuir esse
+    // resto entre os blocos, em vez de largá-lo todo no fim. Continua rolando
+    // normalmente quando o conteúdo passa da tela — em Flowtime, por exemplo.
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight - 32),
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _MethodSelector(
             methodId: _methodId,
@@ -1946,9 +2020,13 @@ class _FocusPageState extends State<FocusPage>
               children: [
                 Text(
                   _isBreak ? 'Pausa' : (isFlowtime ? 'Flowtime' : 'Foco'),
+                  // Mesma cor do anel: o título e o progresso falam da mesma
+                  // coisa, e antes o título era verde-água enquanto o anel era
+                  // índigo.
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: climate.accent,
+                        color:
+                            _isBreak ? const Color(0xFF4DB6AC) : kBrandIndigo,
                       ),
                 ),
                 const SizedBox(height: 4),
@@ -1974,10 +2052,16 @@ class _FocusPageState extends State<FocusPage>
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
+                            // Zero em repouso, de propósito: a sombra de um
+                            // círculo é preenchida, então com o cronômetro
+                            // parado ela aparecia como um disco esverdeado no
+                            // miolo do anel, brigando com o índigo. Agora o
+                            // halo só existe enquanto a sessão roda — que é o
+                            // que ele significa.
                             color: (_isBreak
                                     ? const Color(0xFF4DB6AC)
                                     : climate.accent)
-                                .withValues(alpha: 0.10 + 0.16 * t),
+                                .withValues(alpha: 0.26 * t),
                             blurRadius: 18 + 26 * t,
                             spreadRadius: 2 + 10 * t,
                           ),
@@ -1986,9 +2070,15 @@ class _FocusPageState extends State<FocusPage>
                       child: child,
                     );
                   },
+                  // O anel é o elemento herói da tela e estava sendo o mais
+                  // apagado dela: trilha em alpha 0.12 sobre cartão quase
+                  // branco, praticamente invisível com o cronômetro parado.
+                  // A trilha agora se enxerga, o traço é mais grosso e o
+                  // progresso usa o índigo da marca — a pausa continua no
+                  // verde-água, que é o que distingue foco de descanso.
                   child: CircularPercentIndicator(
-                    radius: 108,
-                    lineWidth: 14,
+                    radius: 120,
+                    lineWidth: 18,
                     percent: progress,
                     // Curto de propósito: o anel avança pouquíssimo por segundo,
                     // e uma animação longa manteria quadros agendados o tempo
@@ -1997,16 +2087,22 @@ class _FocusPageState extends State<FocusPage>
                     animateFromLastPercent: true,
                     animationDuration: 300,
                     circularStrokeCap: CircularStrokeCap.round,
-                    backgroundColor: climate.accent.withValues(alpha: 0.12),
+                    backgroundColor: kBrandIndigo.withValues(alpha: 0.10),
                     progressColor:
-                        _isBreak ? const Color(0xFF4DB6AC) : climate.accent,
+                        _isBreak ? const Color(0xFF4DB6AC) : kBrandIndigo,
                   center: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         displayTime,
                         style: const TextStyle(
-                            fontSize: 40, fontWeight: FontWeight.bold),
+                          fontSize: 46,
+                          fontWeight: FontWeight.w700,
+                          // Tracking fechado: em número grande o espaçamento
+                          // padrão espalha demais os dígitos.
+                          letterSpacing: -1.5,
+                          height: 1.1,
+                        ),
                       ),
                       if (_moodBefore != null && !_isBreak)
                         Row(
@@ -2100,7 +2196,9 @@ class _FocusPageState extends State<FocusPage>
               ],
             ),
           ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -2683,7 +2781,13 @@ class InsightsPage extends StatelessWidget {
               index: e.$1,
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: _InsightCard(insight: e.$2),
+                child: _InsightCard(
+                  insight: e.$2,
+                  featured: e.$2.unlocked && e.$2.id == insights.firstWhere(
+                    (i) => i.unlocked,
+                    orElse: () => insights.first,
+                  ).id,
+                ),
               ),
             )),
         const SizedBox(height: 8),
@@ -2701,10 +2805,91 @@ class InsightsPage extends StatelessWidget {
   }
 }
 
+/// Barra proporcional de uma comparação, desenhada com `Container`.
+///
+/// Sem `fl_chart` de propósito: é a razão entre duas larguras, e trazer um
+/// gráfico completo para isso custaria mais tempo de quadro numa tela que já
+/// desenha dois gráficos de verdade mais abaixo.
+class _ComparisonBars extends StatelessWidget {
+  final InsightComparison data;
+  final Color color;
+
+  const _ComparisonBars({required this.data, required this.color});
+
+  Widget _row(BuildContext context, String label, double value, double ratio,
+      Color barColor) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(label,
+                  style: theme.textTheme.bodySmall,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis),
+            ),
+            const SizedBox(width: 8),
+            Text('${value.toStringAsFixed(1)} ${data.unit}',
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(fontWeight: FontWeight.w700, color: barColor)),
+          ],
+        ),
+        const SizedBox(height: 4),
+        // `FractionallySizedBox` mantém a proporção em qualquer largura de
+        // tela, sem precisar medir nada.
+        SizedBox(
+          height: 10,
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: FractionallySizedBox(
+              widthFactor: ratio,
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: 1),
+                duration: const Duration(milliseconds: 620),
+                curve: Curves.easeOutCubic,
+                builder: (context, t, _) => Align(
+                  alignment: Alignment.centerLeft,
+                  child: FractionallySizedBox(
+                    widthFactor: t,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: barColor,
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _row(context, data.highLabel, data.highValue, 1.0, color),
+        const SizedBox(height: 10),
+        _row(context, data.lowLabel, data.lowValue, data.lowRatio,
+            color.withValues(alpha: 0.38)),
+      ],
+    );
+  }
+}
+
 class _InsightCard extends StatelessWidget {
   final Insight insight;
 
-  const _InsightCard({required this.insight});
+  /// O primeiro insight desbloqueado carrega a tese do app e ganha destaque.
+  /// Sem isso os quatro cartões competiam com peso idêntico e nenhum vencia.
+  final bool featured;
+
+  const _InsightCard({required this.insight, this.featured = false});
 
   @override
   Widget build(BuildContext context) {
@@ -2745,6 +2930,8 @@ class _InsightCard extends StatelessWidget {
     }
 
     return AuraCard(
+      color: featured ? kBrandIndigo.withValues(alpha: 0.07) : null,
+      padding: EdgeInsets.all(featured ? 20 : 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2760,16 +2947,27 @@ class _InsightCard extends StatelessWidget {
             ],
           ),
           if (insight.headline != null) ...[
-            const SizedBox(height: 10),
+            SizedBox(height: featured ? 12 : 10),
             Text(
               insight.headline!,
-              style: theme.textTheme.headlineSmall?.copyWith(
+              style: (featured
+                      ? theme.textTheme.headlineMedium
+                      : theme.textTheme.headlineSmall)
+                  ?.copyWith(
                 color: theme.colorScheme.primary,
                 fontWeight: FontWeight.bold,
+                letterSpacing: -0.5,
               ),
             ),
           ],
-          const SizedBox(height: 8),
+          if (insight.comparison != null) ...[
+            const SizedBox(height: 14),
+            _ComparisonBars(
+              data: insight.comparison!,
+              color: theme.colorScheme.primary,
+            ),
+          ],
+          const SizedBox(height: 12),
           Text(insight.body!, style: const TextStyle(height: 1.4)),
         ],
       ),
@@ -3051,8 +3249,15 @@ class SummaryPage extends StatelessWidget {
         : sessions.map((s) => s.durationMinutes).reduce((a, b) => a + b);
     final currentStreak = effectiveStreak(streak, now);
 
-    return ListView(
+    // Mesmo caso da aba Foco: o conteúdo não enche a tela e sobrava um bloco
+    // vazio no fim. Ver o comentário lá para o porquê do `ConstrainedBox`.
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minHeight: constraints.maxHeight - 32),
+        child: Column(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         AuraCard(
           child: Column(
@@ -3091,9 +3296,9 @@ class SummaryPage extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(Icons.local_fire_department,
+                  Icon(Icons.local_fire_department_outlined,
                       color: currentStreak > 0
-                          ? Colors.deepOrange
+                          ? kBrandIndigo
                           : theme.colorScheme.outline,
                       size: 32),
                   const SizedBox(width: 12),
@@ -3145,12 +3350,17 @@ class SummaryPage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
+        // Grade de números. Todos os ícones são outline e seguem a regra de
+        // cor: índigo para o que descreve o app, `climate.accent` só para o
+        // que descreve o estado do usuário agora — que aqui é "sessões hoje".
+        // Antes eram quatro cores (âmbar, dois verdes e um roxo) e dois pesos
+        // diferentes numa grade 2x2.
         Row(
           children: [
             Expanded(
               child: _StatTile(
-                icon: Icons.star,
-                iconColor: Colors.amber,
+                icon: Icons.star_outline,
+                iconColor: kBrandIndigo,
                 label: 'Pontos',
                 value: '$points',
               ),
@@ -3172,7 +3382,7 @@ class SummaryPage extends StatelessWidget {
             Expanded(
               child: _StatTile(
                 icon: Icons.check_circle_outline,
-                iconColor: const Color(0xFF4DB6AC),
+                iconColor: kBrandIndigo,
                 label: 'Sessões totais',
                 value: '${sessions.length}',
               ),
@@ -3180,8 +3390,8 @@ class SummaryPage extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _StatTile(
-                icon: Icons.hourglass_bottom,
-                iconColor: const Color(0xFF6D5B9E),
+                icon: Icons.hourglass_empty,
+                iconColor: kBrandIndigo,
                 label: 'Minutos focados',
                 value: '$totalMinutes',
               ),
@@ -3197,7 +3407,10 @@ class SummaryPage extends StatelessWidget {
             style: theme.textTheme.bodySmall,
           ),
         ),
-      ],
+        ],
+        ),
+      ),
+      ),
     );
   }
 }
@@ -3490,14 +3703,29 @@ class EntranceFade extends StatelessWidget {
 class AuraMark extends StatelessWidget {
   final double size;
 
-  const AuraMark({super.key, this.size = 132});
+  /// Cor do anel. No fundo índigo da abertura é o âmbar do ícone; na AppBar
+  /// recebe a cor da aura, para a marca sinalizar o clima sem trocar de forma.
+  final Color ringColor;
+
+  /// Cor dos halos e do núcleo. Branco sobre o índigo da abertura; sobre fundo
+  /// claro precisa ser uma cor com contraste, senão a marca some.
+  final Color glowColor;
+  final Color coreColor;
+
+  const AuraMark({
+    super.key,
+    this.size = 132,
+    this.ringColor = const Color(0xFFFFD54F),
+    this.glowColor = Colors.white,
+    this.coreColor = Colors.white,
+  });
 
   Widget _halo(double diameter, double alpha) => Container(
         width: diameter,
         height: diameter,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Colors.white.withValues(alpha: alpha),
+          color: glowColor.withValues(alpha: alpha),
         ),
       );
 
@@ -3518,17 +3746,19 @@ class AuraMark extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: const Color(0xFFFFD54F),
-                width: size * 0.022,
+                color: ringColor,
+                // Piso de 1.4 para a marca não sumir em tamanho de AppBar: a
+                // borda proporcional daria menos de 1 px lógico e some.
+                width: math.max(1.4, size * 0.022),
               ),
             ),
           ),
           Container(
             width: size * 0.35,
             height: size * 0.35,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white,
+              color: coreColor,
             ),
           ),
         ],

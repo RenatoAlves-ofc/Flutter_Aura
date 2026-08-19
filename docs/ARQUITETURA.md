@@ -8,7 +8,7 @@ dados passam e onde ficam as regras. Para o *porquê* de cada escolha, veja
 
 ## 1. Arquivo único, e o que isso obriga
 
-Todo o app vive em **`lib/main.dart`** (3.684 linhas). Não é preferência de estilo: o
+Todo o app vive em **`lib/main.dart`** (3.914 linhas). Não é preferência de estilo: o
 FlutLab tem problemas com arquitetura multi-arquivo no navegador, então a especificação
 proibiu imports relativos.
 
@@ -17,31 +17,31 @@ marcadas com banners. A ordem importa: cada faixa só depende das anteriores.
 
 ### Mapa navegável
 
-Um arquivo de 3.684 linhas é intransitável sem mapa. As linhas abaixo são os banners de
+Um arquivo de 3.914 linhas é intransitável sem mapa. As linhas abaixo são os banners de
 seção — abra o arquivo e pule direto para a faixa que interessa.
 
 | Linha | Seção | Camada |
 |---:|---|---|
 | 1 | `main()`, `AuraCrashReport`, `AuraApp`, `AuraErrorScreen` | infraestrutura |
 | **205** | `MODELOS` | dados puros |
-| **352** | `CONSTANTES DE APOIO` — escalas, datas, formatação | dados puros |
-| **416** | `PERSISTÊNCIA (shared_preferences)` — `AuraStore` | persistência |
-| **546** | `SEQUÊNCIA COM PERDÃO` | **lógica pura** |
-| **661** | `MOTOR DE INSIGHTS` | **lógica pura** |
-| **904** | `SUGESTÃO ADAPTATIVA DE DURAÇÃO` | **lógica pura** |
-| **976** | `CLIMA PESSOAL (a "aura")` | **lógica pura** |
-| **1066** | `DATASET DE DEMONSTRAÇÃO` | **lógica pura** |
-| **1154** | `SHELL PRINCIPAL` — `_HomeShellState` | estado |
-| **1549** | `TELA 1: FOCO` — cronômetro, método, check de humor | UI |
-| **2493** | `TELA 2: TAREFAS` | UI |
-| **2644** | `TELA 3: INSIGHTS` — motor de correlação e gráficos | UI |
-| **3023** | `TELA 4: RESUMO` | UI |
-| **3206** | `TELA: SOBRE` | UI |
-| **3450** | `WIDGETS COMPARTILHADOS` — `AuraCard`, `AuraMark`, `EntranceFade` | UI |
+| **352** | `CONSTANTES DE APOIO` — `kBrandIndigo`, escalas, datas, formatação | dados puros |
+| **432** | `PERSISTÊNCIA (shared_preferences)` — `AuraStore` | persistência |
+| **562** | `SEQUÊNCIA COM PERDÃO` | **lógica pura** |
+| **677** | `MOTOR DE INSIGHTS` | **lógica pura** |
+| **959** | `SUGESTÃO ADAPTATIVA DE DURAÇÃO` | **lógica pura** |
+| **1031** | `CLIMA PESSOAL (a "aura")` | **lógica pura** |
+| **1121** | `DATASET DE DEMONSTRAÇÃO` | **lógica pura** |
+| **1209** | `SHELL PRINCIPAL` — `_HomeShellState` | estado |
+| **1614** | `TELA 1: FOCO` — cronômetro, método, check de humor | UI |
+| **2591** | `TELA 2: TAREFAS` | UI |
+| **2742** | `TELA 3: INSIGHTS` — motor de correlação e gráficos | UI |
+| **3221** | `TELA 4: RESUMO` | UI |
+| **3419** | `TELA: SOBRE` | UI |
+| **3663** | `WIDGETS COMPARTILHADOS` — `AuraCard`, `AuraMark`, `EntranceFade` | UI |
 
-A faixa do meio (546–1153) é a mais importante: **é lógica pura, sem nenhuma dependência de
+A faixa do meio (562–1208) é a mais importante: **é lógica pura, sem nenhuma dependência de
 Flutter**. Funções que recebem `List<StudySession>` e devolvem números ou objetos de dados.
-É por isso que 46 dos 67 testes conseguem rodar sem construir uma única tela.
+É por isso que 49 dos 70 testes conseguem rodar sem construir uma única tela.
 
 > As linhas envelhecem a cada edição. Se divergirem, o que vale são os banners no próprio
 > arquivo — `grep -n '^// [A-Z]\{4,\}' lib/main.dart` reconstrói esta tabela em um comando.
@@ -274,7 +274,35 @@ o erro que veio mostrar.
 
 ---
 
-## 7. Animação, e a restrição que ela impõe aos testes
+## 7. A regra de cor
+
+Duas famílias de cor conviviam sem critério: o ícone e a tela de abertura eram índigo, e a
+interface era verde-azulada, porque quase tudo usava `climate.accent`. O app parecia trocar
+de produto depois da abertura.
+
+```
+kBrandIndigo (0xFF6C63FF)  →  ESTRUTURA DO APP
+                              marca, anel do cronômetro, botões,
+                              números de insight, ícones de estatística
+
+AuraClimate.accent         →  ESTADO DO USUÁRIO
+                              o gradiente de fundo, o brilho da marca,
+                              o halo do anel, "Sessões hoje"
+
+cores semânticas           →  EXCEÇÃO: quando a cor É a informação
+                              prioridade de tarefa, faces do check de humor
+```
+
+A exceção é deliberada e limitada: em `_priorityColor` e em `moodColors` a cor carrega
+significado que índigo e verde-azulado não conseguem transmitir. Fora desses dois lugares,
+qualquer terceira cor na interface é um desvio da regra.
+
+A constante vive em `CONSTANTES DE APOIO` (linha 352) com a regra escrita na própria
+docstring, para quem for mexer no código não precisar achar este documento.
+
+---
+
+## 8. Animação, e a restrição que ela impõe aos testes
 
 O app tem **uma única animação contínua**: o halo que respira em volta do anel, enquanto a
 sessão roda. Todas as outras são finitas — entram, terminam e param.
@@ -303,7 +331,7 @@ e fim de Flowtime. Os dois testes que rodam o cronômetro usam `pump(Duration)` 
 `pumpAndSettle`, e há um teste que verifica justamente isto: o halo anima durante a sessão
 e para ao pausar.
 
-## 8. Restrições do FlutLab respeitadas pelo código
+## 9. Restrições do FlutLab respeitadas pelo código
 
 | Restrição | Como aparece no código |
 |---|---|
@@ -319,19 +347,31 @@ estar rodando.
 
 ---
 
-## 9. Testes
+## 10. Testes
 
 ```bash
-flutter test          # 67 testes
+flutter test          # 70 testes
 ```
 
 | Arquivo | Testes | Foco |
 |---|---|---|
-| `test/aura_logic_test.dart` | 46 | lógica pura: sequência, insights, sugestão, clima, dataset, serialização |
+| `test/aura_logic_test.dart` | 49 | lógica pura: sequência, insights, sugestão, clima, dataset, serialização |
 | `test/aura_app_test.dart` | 21 | interface: navegação, fluxo de humor, gráficos, animação, resiliência, tela de erro |
 
 Os testes de interface rodam num viewport de telefone (420×940) em vez do padrão 800×600 —
 foi assim que apareceu um estouro de layout que o padrão escondia.
+
+> **Ao alternar entre SDKs, rode `flutter clean` antes.** Sem isso, o `build/` fica com o
+> `shaders/ink_sparkle.frag` de um SDK e o outro falha ao carregá-lo:
+>
+> ```
+> Exception: Asset 'shaders/ink_sparkle.frag' manifest could not be decoded:
+> INVALID_ARGUMENT: Runtime stages buffer failed verification.
+> ```
+>
+> O sintoma é um teste de toque quebrando com uma mensagem que não tem nada a ver com o
+> código — o `ink_sparkle` é o splash de tinta do Material, carregado quando o teste toca num
+> botão. `rm -rf .dart_tool` **não** basta; é o `flutter clean` que limpa o `build/`.
 
 Testes **não** cobrem aparência. A interface foi conferida separadamente, servindo o build
 web e navegando com captura de tela; ver [`RELATORIO-E2E.md`](RELATORIO-E2E.md) §3.2.

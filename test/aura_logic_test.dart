@@ -130,6 +130,43 @@ void main() {
       expect(insights.first.missing, greaterThan(0));
     });
 
+    test('humor × duração expõe as duas médias para serem mostradas', () {
+      final base = DateTime(2026, 8, 10);
+      final sessions = [
+        session(date: base, duration: 40, before: 5, after: 5),
+        session(date: base, duration: 40, before: 5, after: 4),
+        session(date: base, duration: 40, before: 4, after: 4),
+        session(date: base, duration: 10, before: 1, after: 2),
+        session(date: base, duration: 10, before: 2, after: 2),
+      ];
+
+      final c = buildInsights(sessions).first.comparison;
+      expect(c, isNotNull, reason: 'a tese do app precisa poder ser desenhada');
+      expect(c!.highValue, greaterThan(c.lowValue));
+      expect(c.highValue, closeTo(40, 0.01));
+      expect(c.lowValue, closeTo(10, 0.01));
+      expect(c.unit, 'min');
+      // 10/40 = 0.25, acima do piso de 0.08.
+      expect(c.lowRatio, closeTo(0.25, 0.001));
+    });
+
+    test('a barra menor nunca some, mesmo com diferença extrema', () {
+      const c = InsightComparison(
+        highLabel: 'alto',
+        highValue: 100,
+        lowLabel: 'baixo',
+        lowValue: 1,
+        unit: 'min',
+      );
+      // Sem piso seria 0.01 — uma barra de largura invisível, que apagaria da
+      // tela justamente a comparação que ela existe para mostrar.
+      expect(c.lowRatio, 0.08);
+    });
+
+    test('insight bloqueado não carrega comparação para desenhar', () {
+      expect(buildInsights([]).first.comparison, isNull);
+    });
+
     test('humor × duração desbloqueia e aponta a direção certa', () {
       final base = DateTime(2026, 8, 10);
       final sessions = [

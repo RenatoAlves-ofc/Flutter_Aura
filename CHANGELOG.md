@@ -7,6 +7,50 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---
 
+## [1.3.0] — 2026-08-19
+
+Passada de design. O app funcionava e estava verificado; o que faltava era **coerência
+visual** — cada tela foi construída em separado e juntas não formavam um sistema.
+
+### Adicionado
+
+- **Regra de cor explícita**: `kBrandIndigo` é a estrutura do app, `AuraClimate.accent` é o
+  estado do usuário, e cores semânticas são a única exceção. Escrita na docstring da
+  constante, não só num documento.
+- **Barras comparativas** no insight principal (`InsightComparison`): a tese do app deixa de
+  ser narrada num parágrafo e passa a ser desenhada. Sem `fl_chart` — é a razão entre duas
+  larguras.
+- **Hierarquia entre os insights**: o primeiro desbloqueado ganha fundo índigo suave e número
+  maior; os outros recuam. Antes os quatro competiam com peso idêntico.
+- Três testes novos: as duas médias expostas para desenho, o piso da barra menor, e o insight
+  bloqueado não carregando comparação. **70 testes**, em Flutter 3.32.8 e 3.47.0.
+
+### Alterado
+
+- **A AppBar mostra a marca do app.** Era `climate.icon`, um símbolo que mudava com o estado
+  — o app nunca exibia a própria marca. Agora é o `AuraMark`, a mesma forma do ícone e da
+  abertura, com o clima aparecendo na cor do brilho.
+- **O anel do cronômetro virou o elemento herói da tela**, que era justamente o mais apagado
+  dela: trilha visível, traço de 14 para 18, raio de 108 para 120, progresso em índigo e o
+  tempo em corpo maior com tracking fechado.
+- **Fim de ~400 px de espaço morto** nas abas Foco e Resumo.
+- **Sistema de ícones unificado**: todos outline, seguindo a regra de cor. Saíram
+  `Colors.amber`, `Colors.deepOrange` e `0xFF6D5B9E`.
+- Prints da documentação regerados.
+
+### Corrigido
+
+- O halo do anel tinha `alpha 0.10` mesmo com o cronômetro parado. Como a sombra de um
+  círculo é preenchida, isso aparecia como um disco esverdeado no miolo do anel. Agora o halo
+  só existe enquanto a sessão roda — que é o que ele significa.
+- O título do cartão do cronômetro era verde-água enquanto o anel era índigo. Passou a
+  acompanhar a cor do anel.
+
+### Nota de entrega
+
+**Isto invalida o APK de 8,5 MB** gerado do commit `48b7e72`. Depois do merge é preciso
+reimportar no FlutLab e gerar de novo como `arm64`.
+
 ## [1.2.1] — 2026-08-19
 
 O que o build do APK final ensinou. Só documentação.

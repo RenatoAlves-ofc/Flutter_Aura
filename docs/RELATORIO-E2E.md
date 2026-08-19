@@ -19,8 +19,8 @@ Android 16.
 
 | | |
 |---|---|
-| Linhas em `lib/main.dart` | 3.684 |
-| Testes automatizados | 67 (46 de lógica, 21 de interface) |
+| Linhas em `lib/main.dart` | 3.914 |
+| Testes automatizados | 70 (49 de lógica, 21 de interface) |
 | `flutter analyze` | sem nenhum aviso |
 | SDKs verificados | Flutter 3.32.8 (o do FlutLab) e 3.47.0 |
 | Métodos de foco | 11, incluindo Flowtime |
@@ -87,7 +87,7 @@ não pegariam.
 que o FlutLab usa, e o 3.47.0. Rodar nos dois não é redundância — foi assim que apareceu
 uma asserção de layout que só a versão nova emite (Seção 4).
 
-Os 67 testes cobrem deliberadamente a lógica que **não aparece na tela** e por isso não
+Os 70 testes cobrem deliberadamente a lógica que **não aparece na tela** e por isso não
 seria pega por inspeção visual: a regra de sequência com perdão, os limiares de desbloqueio
 dos insights, o clima pessoal, a serialização retrocompatível e a resiliência a dados
 corrompidos.
@@ -251,7 +251,41 @@ que a imagem `00-abertura.png` da documentação é a **arte da tela nativa**, c
 dos dois arquivos que vão no APK (`launch_gradient.xml` e `launch_image.png`), e não uma
 captura do navegador — que seria impossível de obter.
 
-## 7. O que fica fora e por quê
+## 7. Passada de design
+
+Depois de o app estar funcional e verificado, sobrou o problema que nenhum teste pega: as
+telas foram construídas uma a uma, cada decisão local era defensável, e juntas não formavam
+um sistema. Seis coisas foram diagnosticadas **olhando os prints**, não seguindo tendência:
+
+| Problema | Correção |
+|---|---|
+| Não existia marca constante — a AppBar mostrava `climate.icon`, que muda com o estado | `AuraMark`, a mesma forma do ícone e da abertura, com o clima na cor do brilho |
+| O anel do cronômetro era o elemento mais apagado da tela | trilha visível, traço e raio maiores, progresso em índigo |
+| ~400 px de espaço morto em Foco e Resumo | `ConstrainedBox` com a altura disponível |
+| Quatro cores e dois pesos de ícone numa grade 2×2 | todos outline, seguindo a regra de cor |
+| Os quatro cartões de insight competiam com peso idêntico | o primeiro desbloqueado ganha destaque |
+| A tese do app era narrada num parágrafo, nunca mostrada | duas barras comparativas dentro do cartão |
+
+A raiz de quase tudo era a falta de uma regra: o ícone e a abertura eram índigo, a interface
+era verde-azulada, e nada dizia qual cor significava o quê. A regra — **índigo é a estrutura,
+`climate.accent` é o estado do usuário, cores semânticas são a exceção** — está em
+[`DECISOES.md`](DECISOES.md) §17 e na docstring da própria constante.
+
+**Uma limitação da pesquisa, dita sem rodeio.** A investigação de referências visuais pedia
+consultar galerias de design, mas `dribbble.com` e `awwwards.com` estão bloqueados pelo proxy
+deste ambiente (`EGRESS_BLOCKED`). O material que rendeu foi o **Material 3 Expressive**, e
+com um achado que limitou o escopo: o Flutter 3.32 **não o implementa**
+([flutter#168813](https://github.com/flutter/flutter/issues/168813)). Aplicaram-se os
+princípios — tipografia enfática, cor com significado — não os componentes. O diagnóstico
+acima veio das telas reais.
+
+Ficaram deliberadamente de fora, como corte e não como esquecimento: tipografia display
+completa, cantos em superellipse (existem no 3.32, mas mexeriam em todo cartão), motion com
+molas e paleta reconstruída.
+
+---
+
+## 8. O que fica fora e por quê
 
 - **Build de APK neste repositório:** não há automação de CI. O APK é gerado no FlutLab,
   como a atividade exige.
@@ -264,7 +298,7 @@ captura do navegador — que seria impossível de obter.
 
 ---
 
-## 8. Pendências para a entrega
+## 9. Pendências para a entrega
 
 Consolidadas em um documento só, com dono por item e o que fazer se algo falhar:
 **[`ENTREGA.md`](ENTREGA.md)**.

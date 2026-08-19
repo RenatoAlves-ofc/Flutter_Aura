@@ -13,13 +13,13 @@ evidência está no [relatório ponta a ponta](RELATORIO-E2E.md).
 | | Item | Evidência |
 |---|---|---|
 | ✅ | Os 8 itens da Definição de Pronto | [RELATORIO-E2E.md §2](RELATORIO-E2E.md), item a item |
-| ✅ | 67 testes automatizados passando | `flutter test`, em Flutter 3.32.8 e 3.47.0 |
+| ✅ | 70 testes automatizados passando | `flutter test`, em Flutter 3.32.8 e 3.47.0 |
 | ✅ | `flutter analyze` sem nenhum aviso | nos dois SDKs |
 | ✅ | App instalado e rodando em celular real | Android 16, APK arm64 — feito com uma versão anterior; o APK final ainda precisa ser instalado, item 3.1 |
 | ✅ | Identidade própria: `applicationId`, ícone e abertura | [DECISOES.md §11, §12, §16](DECISOES.md) |
 | ✅ | Item de roadmap implementado (sugestão adaptativa) | [RELATORIO-E2E.md §5](RELATORIO-E2E.md) |
 | ✅ | Documentação do repositório | este diretório |
-| ✅ | **APK final gerado** | 8,5 MB, alvo `arm64`, a partir do commit `48b7e72` — o código com a abertura e a animação |
+| ⚠️ | **APK gerado** | 8,5 MB, alvo `arm64`, do commit `48b7e72`. **Precisa ser refeito** — a passada de design mudou a interface depois dele |
 
 ---
 
@@ -38,9 +38,17 @@ Estes quatro saíram da lista em 19/08:
 > São do cache compartilhado do FlutLab, não deste projeto — explicação completa em
 > [FLUTLAB.md §4.3](FLUTLAB.md). Se acontecer de novo, não é motivo para refazer nada.
 
-Como o APK saiu do commit `48b7e72`, ele **já contém** a abertura própria, as animações, o
-ícone e a sugestão adaptativa. Mudanças posteriores só de documentação **não** exigem gerar o
-APK de novo — `.md` não entra no APK.
+> ### ⚠️ Este APK ficou desatualizado
+>
+> Ele saiu do commit `48b7e72`. Depois dele veio a **passada de design** — marca na AppBar,
+> anel do cronômetro, barras comparativas nos insights, fim do espaço morto — que muda o que
+> aparece na tela. O APK atual mostra a versão anterior.
+>
+> **Refaça os passos acima** depois de mergear: reimportar no FlutLab e gerar como `arm64`.
+> Continua sendo um rebuild só, porque você ainda não tinha instalado o anterior.
+
+O que **não** exige gerar o APK de novo é mudança só de documentação — `.md` não entra no
+APK. Foi o caso da rodada anterior a esta.
 
 ---
 

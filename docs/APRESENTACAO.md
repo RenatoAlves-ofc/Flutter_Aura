@@ -116,7 +116,7 @@ onboarding com quiz.
 ## 3. Se sobrar tempo (ou se perguntarem)
 
 **"Como você garantiu que funciona?"**
-67 testes automatizados, em dois SDKs diferentes. Mas testes não olham para a tela — a
+70 testes automatizados, em dois SDKs diferentes. Mas testes não olham para a tela — a
 interface foi conferida separadamente, servindo o build web num viewport de telefone. Foi
 essa conferência que achou a tela Resumo abrindo incoerente. Detalhes em
 [`RELATORIO-E2E.md`](RELATORIO-E2E.md).
@@ -168,8 +168,8 @@ Faça isso **até 22/08**, não na véspera.
 | Métodos de foco | 11 |
 | Descobertas desbloqueáveis | 4 |
 | Estados da aura | 4 + neutro |
-| Testes automatizados | 67 (46 de lógica pura, 21 de interface) |
+| Testes automatizados | 70 (49 de lógica pura, 21 de interface) |
 | Dependências externas | 4, todas gratuitas |
-| Linhas de código | ~3.700, em arquivo único por exigência do FlutLab |
+| Linhas de código | ~3.900, em arquivo único por exigência do FlutLab |
 | Backend | nenhum |
 | Animações contínuas no app | 1, de propósito |
