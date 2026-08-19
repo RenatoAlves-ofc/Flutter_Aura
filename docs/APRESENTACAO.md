@@ -127,6 +127,22 @@ antes de descobrirmos que era o alvo de build: `arm` gera binário de 32 bits, e
 arm64 a engine nativa não carrega. O app morria antes de qualquer código Dart rodar — por
 isso nenhuma instrumentação em Dart conseguia capturar. Está em [`DECISOES.md`](DECISOES.md) §6.
 
+**"Por que 3.914 linhas num arquivo só?"**
+Restrição declarada do ambiente de entrega: a especificação da atividade proíbe imports
+relativos, porque o FlutLab tem problemas com arquitetura multi-arquivo no navegador. A
+mitigação foi separar por **camada dentro do arquivo**: a lógica de negócio é escrita como
+funções puras que não importam nada do Flutter, e 49 dos 70 testes batem nela sem construir
+uma única tela. Fora dessa restrição, a divisão em pastas seria o certo — e está registrada
+no roadmap, não esquecida. Detalhe em [`DECISOES.md`](DECISOES.md) §19.
+
+**"E aqueles avisos no log do build?"**
+Nenhum deles é erro. O da NDK é comparação de número de versão: o plugin que o dispara
+(`shared_preferences_android`) **não tem uma linha de código nativo**, então nada dele entra
+no APK como biblioteca compilada. A linha do tree-shaking é otimização — 1,6 MB de fonte de
+ícones viraram 7 KB. E as exceções do cache do Gradle vêm da máquina do FlutLab, não do
+projeto. O que responde se o build deu certo são as duas últimas linhas:
+`✓ Built` e `Build completed successfully`. Tudo em [`FLUTLAB.md`](FLUTLAB.md) §4.
+
 **"Por que não usou Provider/Bloc?"**
 Restrição do ambiente: `setState` evita riscos de compatibilidade no FlutLab. A mitigação
 foi manter a lógica de negócio como funções puras, fora dos widgets — é o que permite testá-la
