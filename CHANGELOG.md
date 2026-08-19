@@ -7,6 +7,34 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---
 
+## [1.2.1] — 2026-08-19
+
+O que o build do APK final ensinou. Só documentação.
+
+### Adicionado
+
+- **Como conferir a ABI do APK depois de gerado** ([`FLUTLAB.md`](docs/FLUTLAB.md) §3.1):
+  renomear para `.zip` e olhar dentro de `lib/`. O log do build **não** revela o alvo — mostra
+  `assembleRelease` para os dois — e o tamanho do arquivo também não. O arquivo revela.
+- **Os stack traces de cache do Gradle** ([`FLUTLAB.md`](docs/FLUTLAB.md) §4.3): dezenas de
+  `CorruptedCacheException` no `file-access.bin` no meio do build, vindas de um worker
+  assíncrono que escreve a contabilidade do cache compartilhado do FlutLab. Não é saída de
+  build e não é deste projeto; o sinal que vale é `Build completed successfully` no fim.
+
+### Alterado
+
+- [`ENTREGA.md`](docs/ENTREGA.md) reorganizado: merge, reimportação, `Get Packages` e geração
+  do APK saíram da lista de pendências. **Instalar o APK final no celular** passou a ser o
+  único item bloqueante.
+- O APK final está identificado por commit e tamanho — **`48b7e72`, 8,5 MB, alvo `arm64`** —
+  em vez de só "o APK". É o que prova que ele tem a abertura e a animação, e não uma versão
+  anterior.
+
+### Corrigido
+
+- A descrição do PR #10 no GitHub afirmava conter dois commits. Continha um: o da animação. A
+  passada na documentação era o PR #11.
+
 ## [1.2.0] — 2026-08-19
 
 Passada completa na documentação. O código não mudou — só `.md`, um script e uma imagem.

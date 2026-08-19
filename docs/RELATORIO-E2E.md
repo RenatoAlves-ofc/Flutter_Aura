@@ -42,7 +42,7 @@ ou o teste feito no aparelho.
 | 4 | Gráfico de correlação em `fl_chart` sem erro | ✅ | Teste de interface `a aba Insights renderiza os gráficos com o dataset demo`, que rola até cada gráfico e confirma `BarChart` e `LineChart` na árvore; print `06-graficos.png` |
 | 5 | Clima Pessoal mudando entre pelo menos 2 estados | ✅ | Grupo `clima pessoal` (4 testes) cobre os 4 estados; observado na prática: os prints mostram **Radiante** (dourado) antes de um ajuste no dataset e **Fluindo** (verde-azulado) depois |
 | 6 | Sequência não quebra ao faltar um dia | ✅ | Teste `faltar exatamente um dia com token guardado não quebra a sequência`, mais 7 outros no grupo `sequência com perdão` cobrindo teto de tokens, buraco grande e duas sessões no mesmo dia |
-| 7 | APK builda no FlutLab e abre em celular real | ✅ | Build do APK no FlutLab (8,3 MB) e instalação em aparelho **Android 16**. Exige o alvo **`android arm64`** — ver Seção 4 |
+| 7 | APK builda no FlutLab e abre em celular real | ✅ | Instalado e aberto em aparelho **Android 16**, a partir de um build de 8,3 MB. O **APK final** foi gerado em 19/08 do commit `48b7e72` — 8,5 MB, alvo `arm64`, já com a abertura e a animação. Exige o alvo **`android arm64`** — ver Seção 4 |
 | 8 | Nenhuma tela vazia na primeira abertura | ✅ | Dataset de demonstração de 22 sessões semeado no primeiro uso; grupo `dataset de demonstração` (7 testes) garante volume, determinismo e variedade de métodos; conferido em todas as abas nos prints |
 
 **Além do escopo do MVP:** um item da Seção 3.1 (roadmap) foi implementado — a
@@ -114,6 +114,12 @@ Nenhum desses seria detectado por `analyze` ou pelos testes.
 
 O APK gerado no FlutLab foi instalado num Android 16. Foi essa camada que revelou o
 problema mais grave do projeto, descrito a seguir.
+
+O **APK final** — 8,5 MB, alvo `arm64`, gerado em 19/08 do commit `48b7e72`, que é o código
+com a abertura e a animação — foi buildado com sucesso. Esse build trouxe um sintoma novo e
+inofensivo, registrado em [`FLUTLAB.md`](FLUTLAB.md) §4.3: dezenas de exceções Java do cache
+compartilhado do FlutLab no meio do log, seguidas de `Build completed successfully`. Vale
+saber distinguir, porque a aparência é de desastre e o efeito é nenhum.
 
 ---
 

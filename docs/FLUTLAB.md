@@ -54,14 +54,30 @@ abertura própria.
 > teste no aparelho provar a causa. O registro completo está em
 > [DECISOES.md §6](DECISOES.md) e [RELATORIO-E2E.md §4.1](RELATORIO-E2E.md).
 
-O APK arm64 gerado assim tem cerca de **8 MB** e foi instalado e testado em um aparelho
-**Android 16**.
+O APK arm64 gerado assim tem cerca de **8,5 MB**.
+
+### 3.1 Como conferir a ABI depois de gerado
+
+O log do build **não** diz qual alvo foi usado — ele mostra só `Running Gradle task
+'assembleRelease'`, igual para os dois. E o tamanho do arquivo não distingue: `arm` e `arm64`
+saem parecidos.
+
+Quem responde é o próprio APK. Renomeie o `.apk` para `.zip`, abra, e olhe dentro de `lib/`:
+
+| O que tem em `lib/` | Significado |
+|---|---|
+| `arm64-v8a/` | **correto** — 64 bits |
+| `armeabi-v7a/` | **errado** — é o alvo `arm`; o app instala e fecha ao abrir |
+
+Vale fazer isso uma vez, na hora de guardar o arquivo. Encerra uma dúvida que já custou dias
+neste projeto, e leva menos de um minuto.
 
 ---
 
-## 4. Dois avisos do FlutLab que são esperados
+## 4. Três coisas que o FlutLab mostra e não são problema
 
-Nenhum dos dois impede o build, e nenhum é problema deste projeto.
+Nenhuma das três impede o build, e nenhuma é problema deste projeto. As duas primeiras são
+avisos; a terceira parece um desastre e não é.
 
 ### 4.1 Aba Build — aviso sobre a NDK
 
@@ -88,6 +104,45 @@ versão do pacote que lista exatamente as mesmas regras.
 O `analysis_options.yaml` traz `included_file_warning: ignore`, que silencia o diagnóstico
 do arquivo incluído sem desligar nenhuma verificação do nosso código. O código de
 diagnóstico foi validado com um teste de controle — [DECISOES.md §14](DECISOES.md).
+
+### 4.3 Uma pilha de stack traces Java no meio do build
+
+Este é o mais assustador dos três, e o mais inofensivo. No meio do
+`Running Gradle task 'assembleRelease'` podem aparecer **dezenas de exceções Java** como esta,
+repetidas:
+
+```
+Failed to execute org.gradle.cache.internal.AsyncCacheAccessDecoratedCache$$Lambda...
+org.gradle.api.UncheckedIOException: Could not add entry '/var/workspace/.gradle/caches/...'
+    to cache file-access.bin (/var/workspace/.gradle/caches/journal-1/file-access.bin).
+Caused by: org.gradle.cache.internal.btree.CorruptedCacheException:
+    Corrupted IndexBlock 632126 found in cache '.../journal-1/file-access.bin'.
+```
+
+**Por que não é fatal.** Olhe de onde as exceções vêm: `AsyncCacheAccessDecoratedCache` →
+`ExclusiveCacheAccessingWorker`. É um worker **assíncrono**, e o `file-access.bin` que ele não
+consegue escrever é o *journal* do cache — o arquivo de contabilidade que o Gradle usa para
+decidir o que expirar. **Não é saída de build.** O Gradle registra a falha do worker e segue
+compilando.
+
+Repare também nos caminhos citados: `/var/workspace/.gradle/caches/...`. É o cache
+compartilhado da máquina do FlutLab que está corrompido, não nada deste repositório — nenhuma
+entrada citada é código do Aura.
+
+**Como saber se deu certo mesmo assim.** Ignore o meio e vá para o fim do log. Se aparecerem
+estas duas linhas, o APK é válido:
+
+```
+✓ Built build/app/outputs/flutter-apk/app-release.apk (8.5MB)
+✔️ Build completed successfully.
+```
+
+Foi exatamente o que aconteceu no build do APK final: ~15 stack traces, e o APK saiu inteiro.
+
+**Se um dia falhar de verdade por causa disso**, a saída é **reimportar o projeto** — um
+workspace novo vem com cache novo. Não mexa no `build.gradle.kts`: o problema não está lá, e
+alterar o build sob uma hipótese errada já custou caro neste projeto uma vez
+([DECISOES.md §5](DECISOES.md)).
 
 ---
 
