@@ -248,6 +248,18 @@ class StudySession {
   final String? linkedTaskId;
   final String methodId;
 
+  /// Que tipo de trabalho era esta sessão — ver [kFocusContexts].
+  ///
+  /// É o que permite ao app responder *qual tipo de trabalho te esgota*, e não
+  /// apenas onde o seu tempo foi. Sessões gravadas antes deste campo existir
+  /// caem em `geral`, que é honesto: de fato não se sabe o que elas eram.
+  final String contextId;
+
+  /// Nota curta e opcional sobre o que ia ser feito. Sempre pode ser nula: o
+  /// campo existe no momento em que a pessoa só quer começar a focar, então
+  /// exigir texto ali seria atrito no pior lugar possível.
+  final String? note;
+
   /// Marca as sessões do dataset de demonstração, para que possam ser
   /// removidas sem levar junto as sessões reais do usuário.
   final bool isDemo;
@@ -259,6 +271,8 @@ class StudySession {
     required this.moodAfter,
     this.linkedTaskId,
     required this.methodId,
+    this.contextId = kDefaultContextId,
+    this.note,
     this.isDemo = false,
   });
 
@@ -269,6 +283,8 @@ class StudySession {
         'moodAfter': moodAfter,
         'linkedTaskId': linkedTaskId,
         'methodId': methodId,
+        'contextId': contextId,
+        'note': note,
         'isDemo': isDemo,
       };
 
@@ -279,6 +295,10 @@ class StudySession {
         moodAfter: j['moodAfter'] as int,
         linkedTaskId: j['linkedTaskId'] as String?,
         methodId: j['methodId'] as String? ?? 'pomodoro_classico',
+        // Retrocompatível de propósito: quem já tem o app instalado tem sessões
+        // gravadas sem estes dois campos, e elas precisam continuar abrindo.
+        contextId: j['contextId'] as String? ?? kDefaultContextId,
+        note: j['note'] as String?,
         isDemo: j['isDemo'] as bool? ?? false,
       );
 }
@@ -368,6 +388,62 @@ FocusMethod methodById(String id) => focusMethods.firstWhere(
 /// parecer outro produto depois da tela de abertura.
 const Color kBrandIndigo = Color(0xFF6C63FF);
 
+/// O que o usuário declarou sobre si e sobre o que está fazendo.
+///
+/// Tudo opcional: o app inteiro funciona com o perfil vazio, e é assim que ele
+/// abre. Nada aqui sai do aparelho — vale o mesmo que vale para as sessões.
+class AuraProfile {
+  final String? name;
+  final String contextId;
+
+  /// "O que você está focando neste período" — ex.: "TCC sobre visão
+  /// computacional". É a resposta a *o que está sendo feito*, num campo só, sem
+  /// repetir a aba Tarefas.
+  final String? focus;
+
+  const AuraProfile({
+    this.name,
+    this.contextId = kDefaultContextId,
+    this.focus,
+  });
+
+  bool get isEmpty =>
+      (name == null || name!.isEmpty) && (focus == null || focus!.isEmpty);
+}
+
+/// Os tipos de trabalho que uma sessão pode ter.
+///
+/// Categorizar sessão por tag é comum no mercado — Forest, Toggl e Focus To-Do
+/// fazem isso. O que nenhum deles faz é **cruzar a categoria com o humor**:
+/// todos respondem "onde foi o meu tempo", e o Aura responde "qual tipo de
+/// trabalho te esgota, e por quanto tempo você aguenta cada um". Por isso este
+/// campo existe junto do insight que o consome, e não sozinho.
+class FocusContext {
+  final String id;
+  final String name;
+  final IconData icon;
+
+  const FocusContext({required this.id, required this.name, required this.icon});
+}
+
+const String kDefaultContextId = 'geral';
+
+const List<FocusContext> kFocusContexts = [
+  FocusContext(id: 'academico', name: 'Acadêmico', icon: Icons.school_outlined),
+  FocusContext(id: 'trabalho', name: 'Trabalho', icon: Icons.work_outline),
+  FocusContext(id: 'pessoal', name: 'Pessoal', icon: Icons.self_improvement_outlined),
+  FocusContext(id: 'criativo', name: 'Criativo', icon: Icons.brush_outlined),
+  FocusContext(id: kDefaultContextId, name: 'Geral', icon: Icons.circle_outlined),
+];
+
+/// Um id desconhecido cai em `Geral` em vez de estourar — mesma política de
+/// `methodById`, pelo mesmo motivo: dado gravado por outra versão não pode
+/// derrubar o app.
+FocusContext contextById(String id) => kFocusContexts.firstWhere(
+      (c) => c.id == id,
+      orElse: () => kFocusContexts.last,
+    );
+
 /// Índice 1..5 — o índice 0 fica vazio de propósito para a escala bater com o
 /// valor guardado em `moodBefore` / `moodAfter`.
 const List<String> moodLabels = [
@@ -444,6 +520,9 @@ class AuraStore {
   static const String kSelectedMethod = 'selectedMethodId';
   static const String kCustomFocus = 'customFocusMinutes';
   static const String kCustomBreak = 'customBreakMinutes';
+  static const String kProfileName = 'profileName';
+  static const String kProfileContext = 'profileContext';
+  static const String kProfileFocus = 'profileFocus';
 
   /// Lê uma lista salva em JSON, descartando o conteúdo se ele estiver corrompido.
   ///
@@ -541,6 +620,33 @@ class AuraStore {
   static Future<void> saveSelectedMethod(String id) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(kSelectedMethod, id);
+  }
+
+  static Future<AuraProfile> loadProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    return AuraProfile(
+      name: prefs.getString(kProfileName),
+      contextId: prefs.getString(kProfileContext) ?? kDefaultContextId,
+      focus: prefs.getString(kProfileFocus),
+    );
+  }
+
+  static Future<void> saveProfile(AuraProfile profile) async {
+    final prefs = await SharedPreferences.getInstance();
+    // Campo apagado é campo removido, não string vazia guardada: assim o
+    // `loadProfile` volta ao estado "sem perfil" de verdade.
+    Future<void> put(String key, String? value) async {
+      final v = value?.trim();
+      if (v == null || v.isEmpty) {
+        await prefs.remove(key);
+      } else {
+        await prefs.setString(key, v);
+      }
+    }
+
+    await put(kProfileName, profile.name);
+    await put(kProfileFocus, profile.focus);
+    await prefs.setString(kProfileContext, profile.contextId);
   }
 
   static Future<List<int>> loadCustomDurations() async {
@@ -741,8 +847,74 @@ List<Insight> buildInsights(List<StudySession> sessions) {
     _insightMoodDelta(sessions),
     _insightWeekday(sessions),
     _insightMethod(sessions),
+    _insightContext(sessions),
     _insightDurationCeiling(sessions),
   ];
+}
+
+/// A descoberta que só o Aura consegue dar.
+///
+/// Forest, Toggl e Focus To-Do categorizam sessão por tag e respondem "onde foi
+/// o meu tempo". Nenhum deles cruza a categoria com o humor, que é o que
+/// responde a pergunta útil: **qual tipo de trabalho te esgota, e por quanto
+/// tempo você aguenta cada um.**
+Insight _insightContext(List<StudySession> sessions) {
+  const int required = 8;
+  const String title = 'Onde você rende mais';
+  const IconData icon = Icons.category_outlined;
+
+  Insight locked() => Insight(
+        id: 'context',
+        title: title,
+        icon: icon,
+        requiredSessions: required,
+        availableSessions: sessions.length,
+      );
+
+  if (sessions.length < required) return locked();
+
+  final porContexto = <String, List<StudySession>>{};
+  for (final s in sessions) {
+    porContexto.putIfAbsent(s.contextId, () => []).add(s);
+  }
+
+  // Dois contextos com 3+ sessões cada: comparar tipos de trabalho com base em
+  // uma ou duas tentativas diria mais sobre aqueles dias que sobre a pessoa.
+  final elegiveis = porContexto.entries.where((e) => e.value.length >= 3).toList();
+  if (elegiveis.length < 2) return locked();
+
+  double duracao(List<StudySession> l) =>
+      l.map((s) => s.durationMinutes).reduce((a, b) => a + b) / l.length;
+  double humorFinal(List<StudySession> l) =>
+      l.map((s) => s.moodAfter).reduce((a, b) => a + b) / l.length;
+
+  elegiveis.sort((a, b) => duracao(b.value).compareTo(duracao(a.value)));
+  final maior = elegiveis.first;
+  final menor = elegiveis.last;
+
+  final nomeMaior = contextById(maior.key).name;
+  final nomeMenor = contextById(menor.key).name;
+
+  return Insight(
+    id: 'context',
+    title: title,
+    icon: icon,
+    requiredSessions: required,
+    availableSessions: sessions.length,
+    headline: nomeMaior,
+    body: 'Em $nomeMaior você sustenta ${fmt(duracao(maior.value))} min por '
+        'sessão e termina em ${fmt(humorFinal(maior.value))}/5. Em $nomeMenor '
+        'são ${fmt(duracao(menor.value))} min, fechando em '
+        '${fmt(humorFinal(menor.value))}/5. Não é falta de disciplina: tipos de '
+        'trabalho diferentes cobram preços diferentes de você.',
+    comparison: InsightComparison(
+      highLabel: nomeMaior,
+      highValue: duracao(maior.value),
+      lowLabel: nomeMenor,
+      lowValue: duracao(menor.value),
+      unit: 'min',
+    ),
+  );
 }
 
 /// Agrupa `moodBefore` em três faixas legíveis: 1-2 baixo, 3 neutro, 4-5 alto.
@@ -1136,6 +1308,12 @@ class CharacterSheet {
   final String tagline;
   final List<CharacterAttribute> attributes;
 
+  /// Vêm do perfil, e todos podem faltar: a ficha funciona anônima, que é como
+  /// ela abre antes de a pessoa preencher qualquer coisa.
+  final String? name;
+  final String? contextName;
+  final String? focus;
+
   /// `false` quando ainda não há sessão nenhuma. A tela mostra o convite em vez
   /// de quatro barras zeradas — o mesmo erro que a tela Resumo já cometeu uma
   /// vez, mostrando "0 dias de sequência" ao lado de "20 sessões totais".
@@ -1146,6 +1324,9 @@ class CharacterSheet {
     required this.tagline,
     required this.attributes,
     required this.hasData,
+    this.name,
+    this.contextName,
+    this.focus,
   });
 }
 
@@ -1156,13 +1337,27 @@ class CharacterSheet {
 /// das mesmas contas que alimentam os insights. É o que separa isto da
 /// gamificação genérica — aqui o número **é** o comportamento, não um prêmio
 /// pendurado em cima dele.
-CharacterSheet buildCharacterSheet(List<StudySession> sessions) {
+CharacterSheet buildCharacterSheet(
+  List<StudySession> sessions, {
+  AuraProfile profile = const AuraProfile(),
+}) {
+  final nome = (profile.name?.trim().isEmpty ?? true) ? null : profile.name!.trim();
+  final foco = (profile.focus?.trim().isEmpty ?? true) ? null : profile.focus!.trim();
+  // O contexto "Geral" não vira rótulo: dizer "Ritmista · Geral" não acrescenta
+  // nada, e o padrão é justamente quem não escolheu.
+  final contexto = profile.contextId == kDefaultContextId
+      ? null
+      : contextById(profile.contextId).name;
+
   if (sessions.isEmpty) {
-    return const CharacterSheet(
+    return CharacterSheet(
       className: 'Sem ficha ainda',
       tagline: 'Conclua uma sessão para o Aura começar a te medir.',
-      attributes: [],
+      attributes: const [],
       hasData: false,
+      name: nome,
+      contextName: contexto,
+      focus: foco,
     );
   }
 
@@ -1224,6 +1419,9 @@ CharacterSheet buildCharacterSheet(List<StudySession> sessions) {
     className: classe,
     tagline: tagline,
     hasData: true,
+    name: nome,
+    contextName: contexto,
+    focus: foco,
     attributes: [
       CharacterAttribute(
         name: 'Constância',
@@ -1353,6 +1551,11 @@ AuraClimate resolveClimate(List<StudySession> sessions) {
 /// melhor — é isso que os insights vão encontrar.
 List<StudySession> buildDemoSessions() {
   final rnd = math.Random(7);
+  // Gerador separado de propósito. Sortear o contexto do mesmo `rnd` deslocaria
+  // toda a sequência seguinte, mudando métodos e durações de todas as sessões —
+  // e com elas os números já publicados na documentação e nos prints. Com dois
+  // geradores, acrescentar o contexto não altera nada do que já existia.
+  final ctxRnd = math.Random(11);
   final today = dayOf(DateTime.now());
   final sessions = <StudySession>[];
 
@@ -1363,6 +1566,18 @@ List<StudySession> buildDemoSessions() {
     3: ['pomodoro_classico', '40_20'],
     4: ['pomodoro_classico', 'pomodoro_longo', '52_17'],
     5: ['pomodoro_longo', '52_17', 'ciclo_ultradiano'],
+  };
+
+  // Contextos por humor inicial. A correlação embutida é deliberada e é a que o
+  // insight "onde você rende mais" existe para descobrir: trabalho
+  // administrativo aparece nos dias ruins e rende sessões curtas; estudo e
+  // trabalho criativo aparecem nos dias bons e sustentam mais tempo.
+  const contextByMood = <int, List<String>>{
+    1: ['trabalho', 'geral'],
+    2: ['trabalho', 'geral'],
+    3: ['trabalho', 'pessoal'],
+    4: ['academico', 'academico', 'criativo'],
+    5: ['academico', 'criativo'],
   };
 
   // Humor de cada dia (índice = dias atrás). Os dias 6 e 2 ficam vazios de
@@ -1416,12 +1631,16 @@ List<StudySession> buildDemoSessions() {
             Duration(hours: 9 + i * 5, minutes: rnd.nextInt(50)),
           );
 
+      final contextPool = contextByMood[mood]!;
+      final contextId = contextPool[ctxRnd.nextInt(contextPool.length)];
+
       sessions.add(StudySession(
         date: date,
         durationMinutes: duration,
         moodBefore: mood,
         moodAfter: moodAfter,
         methodId: methodId,
+        contextId: contextId,
         isDemo: true,
       ));
     }
@@ -1454,6 +1673,7 @@ class _HomeShellState extends State<HomeShell> {
   List<StudySession> _sessions = [];
   List<TaskItem> _tasks = [];
   int _points = 0;
+  AuraProfile _profile = const AuraProfile();
   StreakState _streak = const StreakState(
       streak: 0, tokens: 0, runLength: 0, lastActiveDay: null);
 
@@ -1463,6 +1683,23 @@ class _HomeShellState extends State<HomeShell> {
     _loadAll();
   }
 
+  Future<void> _editProfile() async {
+    final atualizado = await showModalBottomSheet<AuraProfile>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _ProfileSheet(profile: _profile),
+    );
+    if (atualizado == null || !mounted) return;
+    await AuraStore.saveProfile(atualizado);
+    if (!mounted) return;
+    // Relê do disco em vez de confiar no que foi enviado: o `saveProfile`
+    // remove campo vazio, então é a leitura que diz o estado real.
+    final profile = await AuraStore.loadProfile();
+    if (!mounted) return;
+    setState(() => _profile = profile);
+  }
+
   Future<void> _loadAll() async {
     try {
       final tasks = await AuraStore.loadTasks();
@@ -1470,6 +1707,7 @@ class _HomeShellState extends State<HomeShell> {
       var points = await AuraStore.loadPoints();
       var streak = await AuraStore.loadStreak();
       final seeded = await AuraStore.demoSeeded();
+      final profile = await AuraStore.loadProfile();
 
       // Nenhuma tela pode aparecer vazia na primeira abertura.
       if (sessions.isEmpty && !seeded) {
@@ -1492,6 +1730,7 @@ class _HomeShellState extends State<HomeShell> {
         _sessions = sessions;
         _points = points;
         _streak = streak;
+        _profile = profile;
         _loading = false;
         _loadError = null;
         _loadStack = null;
@@ -1687,6 +1926,7 @@ class _HomeShellState extends State<HomeShell> {
         climate: climate,
         sessions: _sessions,
         onSessionRecorded: _recordSession,
+        defaultContextId: _profile.contextId,
       ),
       TaskListPage(
         tasks: _tasks,
@@ -1700,6 +1940,8 @@ class _HomeShellState extends State<HomeShell> {
         sessions: _sessions,
         streak: _streak,
         climate: climate,
+        profile: _profile,
+        onEditProfile: _editProfile,
       ),
     ];
 
@@ -1848,7 +2090,17 @@ class _MoodResult {
   /// Método que o usuário aceitou da sugestão adaptativa, se aceitou algum.
   final String? applyMethodId;
 
-  const _MoodResult(this.mood, this.taskId, {this.applyMethodId});
+  /// Tipo de trabalho e nota, preenchidos só no check de **antes** da sessão.
+  final String? contextId;
+  final String? note;
+
+  const _MoodResult(
+    this.mood,
+    this.taskId, {
+    this.applyMethodId,
+    this.contextId,
+    this.note,
+  });
 }
 
 class FocusPage extends StatefulWidget {
@@ -1859,12 +2111,16 @@ class FocusPage extends StatefulWidget {
   final List<StudySession> sessions;
   final Future<void> Function(StudySession session) onSessionRecorded;
 
+  /// Contexto do perfil, usado como pré-seleção do check de humor.
+  final String defaultContextId;
+
   const FocusPage({
     super.key,
     required this.tasks,
     required this.climate,
     required this.sessions,
     required this.onSessionRecorded,
+    this.defaultContextId = kDefaultContextId,
   });
 
   @override
@@ -1894,6 +2150,8 @@ class _FocusPageState extends State<FocusPage>
 
   int? _moodBefore;
   String? _linkedTaskId;
+  String _sessionContextId = kDefaultContextId;
+  String? _sessionNote;
 
   /// Pausa calculada ao fim de uma sessão de Flowtime, que não tem pausa fixa.
   int? _flowtimeBreakSuggestion;
@@ -1975,6 +2233,9 @@ class _FocusPageState extends State<FocusPage>
       setState(() {
         _moodBefore = result.mood;
         _linkedTaskId = result.taskId;
+        _sessionContextId = result.contextId ?? widget.defaultContextId;
+        final nota = result.note?.trim();
+        _sessionNote = (nota == null || nota.isEmpty) ? null : nota;
       });
     }
 
@@ -2012,6 +2273,8 @@ class _FocusPageState extends State<FocusPage>
       _isRunning = false;
       _moodBefore = null;
       _linkedTaskId = null;
+      _sessionContextId = widget.defaultContextId;
+      _sessionNote = null;
       _resetTimerValues();
     });
   }
@@ -2047,6 +2310,8 @@ class _FocusPageState extends State<FocusPage>
       moodBefore: _moodBefore ?? 3,
       moodAfter: after,
       linkedTaskId: _linkedTaskId,
+      contextId: _sessionContextId,
+      note: _sessionNote,
       methodId: _methodId,
     ));
 
@@ -2054,6 +2319,8 @@ class _FocusPageState extends State<FocusPage>
     setState(() {
       _moodBefore = null;
       _linkedTaskId = null;
+      _sessionContextId = widget.defaultContextId;
+      _sessionNote = null;
       _isRunning = false;
       _isBreak = true;
       _elapsedSeconds = 0;
@@ -2093,6 +2360,8 @@ class _FocusPageState extends State<FocusPage>
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) => _MoodSheet(
+        asksContext: true,
+        defaultContextId: widget.defaultContextId,
         title: 'Como você está agora?',
         subtitle: 'Isso é o que permite o Aura descobrir o que realmente '
             'afeta seu foco.',
@@ -2566,12 +2835,19 @@ class _MoodSheet extends StatefulWidget {
   final List<StudySession> sessions;
   final String currentMethodId;
 
+  /// Só o check de **antes** pergunta tipo de trabalho e nota. No de depois, a
+  /// pessoa acabou de focar e pedir texto ali é atrito no pior momento.
+  final bool asksContext;
+  final String defaultContextId;
+
   const _MoodSheet({
     required this.title,
     required this.subtitle,
     required this.linkableTasks,
     this.sessions = const [],
     this.currentMethodId = '',
+    this.asksContext = false,
+    this.defaultContextId = kDefaultContextId,
   });
 
   @override
@@ -2579,6 +2855,9 @@ class _MoodSheet extends StatefulWidget {
 }
 
 class _MoodSheetState extends State<_MoodSheet> {
+  late String _contextId = widget.defaultContextId;
+  final TextEditingController _note = TextEditingController();
+
   int? _selected;
   String? _taskId;
 
@@ -2598,6 +2877,12 @@ class _MoodSheetState extends State<_MoodSheet> {
   }
 
   @override
+  void dispose() {
+    _note.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
@@ -2611,7 +2896,11 @@ class _MoodSheetState extends State<_MoodSheet> {
         color: theme.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      child: Column(
+      // Rolável desde que os chips de contexto e o campo de nota entraram: com
+      // o cartão de sugestão aberto, em 420x940 o conteúdo passa da altura do
+      // sheet e sem isto ele estoura com a faixa amarela e preta.
+      child: SingleChildScrollView(
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2720,6 +3009,37 @@ class _MoodSheetState extends State<_MoodSheet> {
               onChanged: (v) => setState(() => _acceptSuggestion = v),
             ),
           ],
+          if (widget.asksContext) ...[
+            const SizedBox(height: 20),
+            Text('Que tipo de trabalho é este?',
+                style: theme.textTheme.titleSmall),
+            const SizedBox(height: 8),
+            // Já vem com o contexto do perfil marcado: quem não quiser mudar
+            // não toca em nada, e o atrito continua zero.
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final c in kFocusContexts)
+                  ChoiceChip(
+                    label: Text(c.name),
+                    avatar: Icon(c.icon, size: 18),
+                    selected: _contextId == c.id,
+                    onSelected: (_) => setState(() => _contextId = c.id),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: _note,
+              maxLength: 60,
+              decoration: const InputDecoration(
+                isDense: true,
+                labelText: 'O que você vai fazer? (opcional)',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
@@ -2733,11 +3053,14 @@ class _MoodSheetState extends State<_MoodSheet> {
                         applyMethodId: _acceptSuggestion
                             ? _suggestion?.method.id
                             : null,
+                        contextId: widget.asksContext ? _contextId : null,
+                        note: widget.asksContext ? _note.text : null,
                       )),
               child: const Text('Confirmar'),
             ),
           ),
         ],
+        ),
       ),
     );
   }
@@ -3452,6 +3775,8 @@ class SummaryPage extends StatelessWidget {
   final List<StudySession> sessions;
   final StreakState streak;
   final AuraClimate climate;
+  final AuraProfile profile;
+  final VoidCallback onEditProfile;
 
   const SummaryPage({
     super.key,
@@ -3459,6 +3784,8 @@ class SummaryPage extends StatelessWidget {
     required this.sessions,
     required this.streak,
     required this.climate,
+    required this.profile,
+    required this.onEditProfile,
   });
 
   @override
@@ -3474,7 +3801,7 @@ class SummaryPage extends StatelessWidget {
         ? 0
         : sessions.map((s) => s.durationMinutes).reduce((a, b) => a + b);
     final currentStreak = effectiveStreak(streak, now);
-    final sheet = buildCharacterSheet(sessions);
+    final sheet = buildCharacterSheet(sessions, profile: profile);
 
     // Mesmo caso da aba Foco: o conteúdo não enche a tela e sobrava um bloco
     // vazio no fim. Ver o comentário lá para o porquê do `ConstrainedBox`.
@@ -3486,7 +3813,7 @@ class SummaryPage extends StatelessWidget {
         child: Column(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        _CharacterSheetCard(sheet: sheet),
+        _CharacterSheetCard(sheet: sheet, onEditProfile: onEditProfile),
         const SizedBox(height: 12),
         AuraCard(
           child: Column(
@@ -4083,6 +4410,126 @@ class AuraCard extends StatelessWidget {
   }
 }
 
+/// Onde o perfil é preenchido.
+///
+/// Três campos, todos opcionais, e nenhum deles sai do aparelho — a mesma
+/// promessa que vale para as sessões.
+class _ProfileSheet extends StatefulWidget {
+  final AuraProfile profile;
+
+  const _ProfileSheet({required this.profile});
+
+  @override
+  State<_ProfileSheet> createState() => _ProfileSheetState();
+}
+
+class _ProfileSheetState extends State<_ProfileSheet> {
+  late final TextEditingController _name =
+      TextEditingController(text: widget.profile.name ?? '');
+  late final TextEditingController _focus =
+      TextEditingController(text: widget.profile.focus ?? '');
+  late String _contextId = widget.profile.contextId;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _focus.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        20,
+        20,
+        MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.outlineVariant,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text('Seu perfil', style: theme.textTheme.headlineSmall),
+            const SizedBox(height: 4),
+            Text(
+              'Tudo opcional, e nada disso sai do seu aparelho.',
+              style: theme.textTheme.bodySmall,
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: _name,
+              textCapitalization: TextCapitalization.words,
+              decoration: const InputDecoration(
+                labelText: 'Como te chamar',
+                hintText: 'Seu nome ou apelido',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 18),
+            Text('Seu foco principal', style: theme.textTheme.titleSmall),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final c in kFocusContexts)
+                  ChoiceChip(
+                    label: Text(c.name),
+                    avatar: Icon(c.icon, size: 18),
+                    selected: _contextId == c.id,
+                    onSelected: (_) => setState(() => _contextId = c.id),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            TextField(
+              controller: _focus,
+              maxLength: 80,
+              decoration: const InputDecoration(
+                labelText: 'O que você está focando neste período',
+                hintText: 'ex.: TCC sobre visão computacional',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: () => Navigator.of(context).pop(
+                  AuraProfile(
+                    name: _name.text,
+                    contextId: _contextId,
+                    focus: _focus.text,
+                  ),
+                ),
+                child: const Text('Salvar'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// A ficha na tela.
 ///
 /// Cada barra é o `value` do atributo; ao lado dela vai o número real. As duas
@@ -4090,8 +4537,9 @@ class AuraCard extends StatelessWidget {
 /// impede que a barra vire uma escala vaga que não quer dizer nada.
 class _CharacterSheetCard extends StatelessWidget {
   final CharacterSheet sheet;
+  final VoidCallback onEditProfile;
 
-  const _CharacterSheetCard({required this.sheet});
+  const _CharacterSheetCard({required this.sheet, required this.onEditProfile});
 
   @override
   Widget build(BuildContext context) {
@@ -4106,6 +4554,15 @@ class _CharacterSheetCard extends StatelessWidget {
             const SizedBox(width: 14),
             Expanded(
               child: Text(sheet.tagline, style: theme.textTheme.bodyMedium),
+            ),
+            // Sem sessões a ficha está vazia, mas o perfil já pode ser
+            // preenchido — sem este botão não haveria como.
+            IconButton(
+              tooltip: 'Editar perfil',
+              visualDensity: VisualDensity.compact,
+              icon: const Icon(Icons.edit_outlined, size: 20),
+              color: kBrandIndigo,
+              onPressed: onEditProfile,
             ),
           ],
         ),
@@ -4122,12 +4579,32 @@ class _CharacterSheetCard extends StatelessWidget {
             children: [
               const Icon(Icons.shield_outlined, color: kBrandIndigo),
               const SizedBox(width: 10),
-              Text('Sua ficha', style: theme.textTheme.titleMedium),
+              Expanded(
+                child: Text('Sua ficha', style: theme.textTheme.titleMedium),
+              ),
+              // O perfil se edita a partir da própria ficha, não de uma tela
+              // escondida: ele é parte dela, e é aqui que ele aparece.
+              IconButton(
+                tooltip: 'Editar perfil',
+                visualDensity: VisualDensity.compact,
+                icon: const Icon(Icons.edit_outlined, size: 20),
+                color: kBrandIndigo,
+                onPressed: onEditProfile,
+              ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
+          if (sheet.name != null)
+            Text(
+              sheet.name!,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           Text(
-            sheet.className,
+            sheet.contextName == null
+                ? sheet.className
+                : '${sheet.className} · ${sheet.contextName}',
             style: theme.textTheme.headlineMedium?.copyWith(
               color: kBrandIndigo,
               fontWeight: FontWeight.bold,
@@ -4136,6 +4613,23 @@ class _CharacterSheetCard extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           Text(sheet.tagline, style: theme.textTheme.bodySmall),
+          if (sheet.focus != null) ...[
+            const SizedBox(height: 10),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.flag_outlined, size: 16, color: kBrandIndigo),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    sheet.focus!,
+                    style: theme.textTheme.bodyMedium
+                        ?.copyWith(fontStyle: FontStyle.italic),
+                  ),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: 18),
           for (final a in sheet.attributes) ...[
             _AttributeBar(attribute: a),

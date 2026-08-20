@@ -16,7 +16,7 @@ proíbe imports relativos.
 **Decisão.** Todo o app em `lib/main.dart`, com a separação feita por banners de seção em
 vez de por pastas.
 
-**Consequência.** 4.280 linhas em um arquivo. Para compensar, a lógica de negócio é
+**Consequência.** 4.774 linhas em um arquivo. Para compensar, a lógica de negócio é
 escrita como funções puras que não importam nada do Flutter, e é atacada diretamente pelos
 testes. A ordem das seções é significativa: cada uma só depende das anteriores.
 
@@ -354,7 +354,7 @@ inventar uma para preencher o formato seria pior do que não desenhar nada.
 
 ## 19. O arquivo único ficou — e por que a crítica a ele é procedente
 
-**Contexto.** `lib/main.dart` tem 4.280 linhas. Em qualquer avaliação de código isso é o
+**Contexto.** `lib/main.dart` tem 4.774 linhas. Em qualquer avaliação de código isso é o
 primeiro apontamento, e com razão: arquivo único é prática ruim.
 
 **A crítica está certa no geral.** Num projeto que continuasse, a divisão correta seria por
@@ -377,7 +377,7 @@ lib/
 
 2. **Dividir arquivos não desacopla nada por si só.** Este é o ponto técnico que decide. O
    código **já é em camadas**: a faixa de lógica pura (562–1208) não importa nada do Flutter,
-   e 54 dos 77 testes batem nela sem construir uma única tela. Mover esse texto para pastas
+   e 63 dos 88 testes batem nela sem construir uma única tela. Mover esse texto para pastas
    sem mudar quem depende de quem deixaria o grafo de dependências **idêntico** — seria
    movimento, não arquitetura.
 
@@ -385,7 +385,7 @@ lib/
    longo de meses, com várias pessoas mexendo em paralelo e resolvendo conflitos de merge.
    Aqui é um autor e um prazo fechado.
 
-4. **O problema real que a crítica aponta já tem solução.** Navegar 4.280 linhas é ruim —
+4. **O problema real que a crítica aponta já tem solução.** Navegar 4.774 linhas é ruim —
    por isso existe o mapa de seções em [`ARQUITETURA.md`](ARQUITETURA.md) §1, com a linha de
    cada faixa e um `grep` que o reconstrói quando as linhas envelhecerem.
 
@@ -472,3 +472,76 @@ enfraquecido: a demonstração continua rica, com quatro descobertas abertas.
 O teste que antes exigia "nenhuma trancada" foi reescrito para exigir **exatamente uma**, com
 o `id` e o número que falta. O que era garantia de tela cheia virou garantia de progressão
 visível.
+
+---
+
+## 22. Contexto de foco e o insight que o consome entram juntos
+
+**Contexto.** O pedido era personalização: deixar a pessoa marcar se a sessão é acadêmica,
+de trabalho, pessoal.
+
+A pesquisa mostrou que **isso é table stakes, não diferencial**. O
+[Forest](https://forestapp.cc/) tem tags (Study, Work, Writing) com filtro de analytics, o
+[Toggl Track](https://toggl.com/track/focused-work/) tem projetos e tags, o Focus To-Do tem
+projetos. Um seletor de "Acadêmico / Pessoal" sozinho **empata** com o mercado.
+
+O que nenhum deles faz é cruzar a categoria com o humor. Todos respondem *"onde foi o meu
+tempo"*. Nenhum responde:
+
+> **Qual tipo de trabalho me esgota, e por quanto tempo eu aguento cada um.**
+
+**Decisão.** O campo `contextId` e o insight *"Onde você rende mais"* entram **na mesma
+mudança**, nunca separados. Separados, o campo é commodity e o insight é impossível.
+
+O insight exige **8 sessões e 2 contextos com 3+ sessões cada**: comparar tipos de trabalho
+com base em uma ou duas tentativas diria mais sobre aqueles dias que sobre a pessoa.
+
+**Consequência.** Isto é o que o Aura tem de mais difícil de copiar — não porque a conta seja
+complexa, mas porque exige o check de humor, que os concorrentes não pedem. A frase de
+apresentação sai pronta: *"o Forest te diz onde o seu tempo foi; o Aura te diz qual trabalho
+te custa caro"*.
+
+**Dois detalhes que decorrem:**
+
+- **`geral` é o padrão e o destino dos dados antigos.** Quem já tem o app instalado tem
+  sessões gravadas sem este campo, e chamá-las de "Geral" é honesto — de fato não se sabe o
+  que elas eram. Há um teste que carrega um JSON no formato antigo, porque este é o risco
+  real de qualquer campo novo.
+- **O dataset de demonstração ganhou um gerador de aleatórios próprio** (`ctxRnd`). Sortear o
+  contexto do mesmo `rnd` deslocaria toda a sequência seguinte, mudando métodos e durações de
+  todas as sessões — e com elas os números já publicados na documentação e nos prints. Com
+  dois geradores, acrescentar o contexto não altera nada do que já existia.
+
+---
+
+## 23. Onde o perfil e a nota moram
+
+**Contexto.** O pedido incluía descrever "o que está sendo ou será feito". Isso pode virar
+duas coisas diferentes, e as duas foram implementadas por motivos distintos.
+
+**Decisão.**
+
+- **No perfil, uma declaração de foco atual** — *"o que você está focando neste período"*,
+  ex.: "TCC sobre visão computacional". Um campo só, que aparece na ficha e dá contexto ao
+  app inteiro sem repetir a aba Tarefas.
+- **Por sessão, uma nota curta e opcional** — no check de humor de **antes**, junto dos chips
+  de contexto.
+
+**O perfil se edita a partir da própria ficha**, por um lápis no cartão, e não numa tela de
+configurações escondida: ele é parte da ficha, e é ali que ele aparece. O botão existe também
+no estado vazio da ficha — sem ele, alguém sem sessão nenhuma não teria como preencher o
+perfil.
+
+**Consequência, e o cuidado com atrito.** O momento de começar a focar é o pior lugar
+possível para exigir digitação. Por isso:
+
+- os chips **já vêm com o contexto do perfil marcado** — zero toque para quem não quer mudar;
+- a nota é opcional e some do registro se ficar em branco;
+- o check de humor **de depois não pergunta nada disso**: a pessoa acabou de focar, e pedir
+  texto ali cobraria no momento de alívio.
+
+**Um defeito que isso quase criou.** O `_MoodSheet` era um `Column(mainAxisSize: min)` **sem
+rolagem**. Com os chips e o campo novos, mais o cartão de sugestão aberto, o conteúdo passa
+da altura do sheet em 420×940 — e apareceria a faixa amarela e preta de estouro, na
+demonstração. Virou `SingleChildScrollView`; a inspeção visual foi o que pegou isso, porque
+nenhum teste olha para overflow.

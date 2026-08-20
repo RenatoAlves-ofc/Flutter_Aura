@@ -14,7 +14,7 @@ provaria nada sobre o método de trabalho.
 | Fez | Não fez |
 |---|---|
 | Escreveu o código a partir da especificação | Definiu o produto, o público-alvo ou o diferencial |
-| Escreveu os 77 testes | Testou em aparelho real — só o autor tinha o celular |
+| Escreveu os 88 testes | Testou em aparelho real — só o autor tinha o celular |
 | Escreveu esta documentação | Gerou o APK, o QR Code ou os slides |
 | Diagnosticou defeitos e propôs correções | Acertou todos os diagnósticos de primeira (ver §3) |
 
@@ -118,7 +118,7 @@ independentes de verificação**, cada uma capaz de derrubar a anterior:
 
 | Camada | O que pegou | O que **não** pegaria |
 |---|---|---|
-| `analyze` + 77 testes | regras de negócio, serialização, resiliência | qualquer coisa visual |
+| `analyze` + 88 testes | regras de negócio, serialização, resiliência | qualquer coisa visual |
 | Inspeção visual do build web | Resumo incoerente, insight contraditório, sobras do template | qualquer coisa nativa |
 | Teste em aparelho real | **o crash do arm/arm64** | detalhe de lógica |
 

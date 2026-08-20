@@ -59,6 +59,16 @@ Ao tocar na face, aparece o cartão de sugestão.
 
 Esse é o momento em que o pitch "aprende com você" deixa de ser promessa e vira tela.
 
+### Passo 3.5 — Apontar os chips de tipo de trabalho
+
+Antes de confirmar, mostre a linha **Acadêmico · Trabalho · Pessoal · Criativo**.
+
+> Fale: aqui está o que separa o Aura do resto. Forest e Toggl também deixam marcar a
+> categoria da sessão — isso é comum. Nenhum deles pergunta o **humor**. Cruzando as duas
+> coisas, o app responde uma pergunta que os outros não conseguem nem formular: *qual tipo de
+> trabalho me esgota, e por quanto tempo eu aguento cada um.* Vou mostrar essa descoberta
+> daqui a pouco.
+
 ### Passo 4 — Deixar o cronômetro rodar 3 segundos
 
 Depois de confirmar o humor, espere o halo começar a respirar em volta do anel antes de
@@ -70,7 +80,7 @@ seguir.
 
 ### Passo 5 — Ir para a aba Insights
 
-Mostre **"4 de 5 desbloqueadas"** — e volte nesse número, ele importa. Leia **em voz alta**
+Mostre **"5 de 6 desbloqueadas"** — e volte nesse número, ele importa. Leia **em voz alta**
 o primeiro card:
 
 > "Quando você começa animado, suas sessões duram em média X min. Quando começa pra baixo,
@@ -79,6 +89,13 @@ o primeiro card:
 > Fale: isso não é um ponto genérico, é uma frase sobre a pessoa. E cada descoberta fica
 > bloqueada até haver dados suficientes — uma conclusão tirada de duas sessões não seria uma
 > conclusão.
+
+Role até **"Onde você rende mais"** e leia os dois números em voz alta.
+
+> Fale: em Criativo esta pessoa sustenta 45 minutos e termina em 5/5. Em Trabalho, 28 minutos
+> e 3.6/5. **Não é falta de disciplina** — é que tipos de trabalho diferentes cobram preços
+> diferentes. Essa é a frase que nenhum concorrente consegue dizer, porque nenhum deles
+> pergunta como você está.
 
 Role até o cartão **trancado** ("Seu limite real — faltam 8 sessões") e pare nele um segundo.
 
@@ -95,7 +112,8 @@ As barras sobem junto com o humor inicial.
 
 ### Passo 7 — Aba Resumo: a ficha
 
-**Comece pela ficha**, no topo: a classe e os quatro atributos.
+**Comece pela ficha**, no topo: o nome, a classe com o tipo de trabalho, e os quatro
+atributos. Se der tempo, toque no lápis e mostre o perfil — três campos, todos opcionais.
 
 > Fale: isto é uma ficha de personagem, e é aqui que o Aura se separa dos concorrentes.
 > **Nenhum destes números é ponto de experiência.** A classe sai do método que a pessoa usa;
@@ -131,7 +149,7 @@ onboarding com quiz.
 ## 3. Se sobrar tempo (ou se perguntarem)
 
 **"Como você garantiu que funciona?"**
-77 testes automatizados, em dois SDKs diferentes. Mas testes não olham para a tela — a
+88 testes automatizados, em dois SDKs diferentes. Mas testes não olham para a tela — a
 interface foi conferida separadamente, servindo o build web num viewport de telefone. Foi
 essa conferência que achou a tela Resumo abrindo incoerente. Detalhes em
 [`RELATORIO-E2E.md`](RELATORIO-E2E.md).
@@ -142,11 +160,11 @@ antes de descobrirmos que era o alvo de build: `arm` gera binário de 32 bits, e
 arm64 a engine nativa não carrega. O app morria antes de qualquer código Dart rodar — por
 isso nenhuma instrumentação em Dart conseguia capturar. Está em [`DECISOES.md`](DECISOES.md) §6.
 
-**"Por que 4.280 linhas num arquivo só?"**
+**"Por que 4.774 linhas num arquivo só?"**
 Restrição declarada do ambiente de entrega: a especificação da atividade proíbe imports
 relativos, porque o FlutLab tem problemas com arquitetura multi-arquivo no navegador. A
 mitigação foi separar por **camada dentro do arquivo**: a lógica de negócio é escrita como
-funções puras que não importam nada do Flutter, e 54 dos 77 testes batem nela sem construir
+funções puras que não importam nada do Flutter, e 63 dos 88 testes batem nela sem construir
 uma única tela. Fora dessa restrição, a divisão em pastas seria o certo — e está registrada
 no roadmap, não esquecida. Detalhe em [`DECISOES.md`](DECISOES.md) §19.
 
@@ -197,10 +215,10 @@ Faça isso **até 22/08**, não na véspera.
 | | |
 |---|---|
 | Métodos de foco | 11 |
-| Descobertas desbloqueáveis | 5, uma delas trancada de propósito |
+| Descobertas desbloqueáveis | 6, uma delas trancada de propósito |
 | Estados da aura | 4 + neutro |
-| Testes automatizados | 77 (54 de lógica pura, 23 de interface) |
+| Testes automatizados | 88 (63 de lógica pura, 25 de interface) |
 | Dependências externas | 4, todas gratuitas |
-| Linhas de código | ~4.300, em arquivo único por exigência do FlutLab |
+| Linhas de código | ~4.800, em arquivo único por exigência do FlutLab |
 | Backend | nenhum |
 | Animações contínuas no app | 1, de propósito |

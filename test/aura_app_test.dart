@@ -79,7 +79,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Descobertas'), findsOneWidget);
-    expect(find.textContaining('4 de 5 desbloqueadas'), findsOneWidget);
+    expect(find.textContaining('5 de 6 desbloqueadas'), findsOneWidget);
 
     // Os gráficos ficam abaixo dos cards de insight; a ListView só os constrói
     // ao rolar, então rolar até eles é parte do teste.
@@ -102,6 +102,35 @@ void main() {
     expect(find.text('Minutos focados'), findsOneWidget);
   });
 
+  testWidgets('o check de humor pergunta o tipo de trabalho', (tester) async {
+    await bootApp(tester);
+
+    await tester.tap(find.text('Iniciar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Que tipo de trabalho é este?'), findsOneWidget);
+    for (final c in const ['Acadêmico', 'Trabalho', 'Criativo']) {
+      expect(find.text(c), findsOneWidget, reason: c);
+    }
+    // Opcional de propósito: quem só quer começar a focar não precisa digitar.
+    expect(find.text('O que você vai fazer? (opcional)'), findsOneWidget);
+  });
+
+  testWidgets('o perfil pode ser aberto a partir da própria ficha',
+      (tester) async {
+    await bootApp(tester);
+
+    await tester.tap(find.text('Resumo'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Editar perfil'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Seu perfil'), findsOneWidget);
+    expect(find.text('Tudo opcional, e nada disso sai do seu aparelho.'),
+        findsOneWidget);
+  });
+
   testWidgets('a aba Resumo abre pela ficha, com os quatro atributos',
       (tester) async {
     await bootApp(tester);
@@ -120,15 +149,15 @@ void main() {
     }
   });
 
-  testWidgets('a quinta descoberta aparece trancada, com o quanto falta',
+  testWidgets('a descoberta mais exigente aparece trancada, com o quanto falta',
       (tester) async {
     await bootApp(tester);
 
     await tester.tap(find.text('Insights'));
     await tester.pumpAndSettle();
 
-    // O ponto da quinta descoberta é ser vista trancada: sem isso o app não
-    // mostra nenhuma progressão para quem abre pela primeira vez.
+    // O ponto desta descoberta é ser vista trancada: sem isso o app não mostra
+    // nenhuma progressão para quem abre pela primeira vez.
     await tester.scrollUntilVisible(find.text('Seu limite real'), 300);
     expect(find.text('Seu limite real'), findsOneWidget);
     expect(find.textContaining('Faltam 8'), findsOneWidget);

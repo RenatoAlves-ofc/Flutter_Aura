@@ -40,7 +40,7 @@ método utilizado**. Todo o resto do app existe para alimentar ou expor esse mot
 |---|---|
 | **Foco** | Cronômetro com 11 métodos, check de humor antes e depois de cada sessão, sugestão adaptativa de método e vínculo opcional com uma tarefa |
 | **Tarefas** | Lista com prioridade (Alta/Média/Baixa), persistida localmente |
-| **Insights** | 5 descobertas desbloqueáveis + gráfico de correlação e ritmo semanal |
+| **Insights** | 6 descobertas desbloqueáveis + gráfico de correlação e ritmo semanal |
 | **Resumo** | Sua ficha (classe e atributos), clima pessoal, sequência com perdão e números |
 
 Mais a tela **Sobre**, com a mensagem de privacidade e o controle do dataset de demonstração.
@@ -52,10 +52,19 @@ Constância, Recuperação, Amplitude, Profundidade — **todos derivados das su
 reais**. Não existe ponto de experiência nem subir de nível: se o número sobe, é porque o seu
 comportamento mudou, não porque você abriu o app.
 
-**Insights desbloqueáveis.** Cinco comparações em Dart puro sobre as sessões salvas — sem IA,
-sem API, sem rede. Cada uma exige um volume mínimo (5, 5, 7, 6 e 30 sessões) e aparece
+**Insights desbloqueáveis.** Seis comparações em Dart puro sobre as sessões salvas — sem IA,
+sem API, sem rede. Cada uma exige um volume mínimo (5, 5, 7, 6, 8 e 30 sessões) e aparece
 bloqueada até lá, dizendo quantas faltam. A quinta é o objetivo de longo prazo e nasce
 trancada de propósito.
+
+**Tipo de trabalho, cruzado com humor.** Marcar a categoria da sessão é comum — Forest e
+Toggl fazem. Nenhum deles pergunta como você está. O Aura cruza as duas coisas e responde o
+que os outros não conseguem: **qual tipo de trabalho te esgota, e por quanto tempo você
+aguenta cada um.**
+
+**Seu perfil, opcional e local.** Nome, tipo de trabalho principal e o que você está focando
+neste período. Aparece na ficha, pré-marca o check de humor, e o app funciona igual sem nada
+preenchido.
 
 **Sugestão adaptativa de método.** Ao informar o humor antes da sessão, o app consulta as
 sessões que você começou naquele mesmo estado e sugere o método que historicamente termina
@@ -97,18 +106,18 @@ e podem ser removidas na tela **Sobre**.
 ```bash
 flutter pub get
 flutter analyze     # sem issues
-flutter test        # 77 testes
+flutter test        # 88 testes
 flutter run
 ```
 
 Para rodar ou buildar o APK **no FlutLab**, veja [docs/FLUTLAB.md](docs/FLUTLAB.md) — inclui
 os dois avisos que são esperados e por que o APK precisa ser gerado como `arm64`.
 
-O app inteiro vive em **`lib/main.dart`** (4.280 linhas), sem imports relativos, por
+O app inteiro vive em **`lib/main.dart`** (4.774 linhas), sem imports relativos, por
 exigência do ambiente. O mapa navegável do arquivo está em
 [docs/ARQUITETURA.md](docs/ARQUITETURA.md).
 
-Os 77 testes cobrem a lógica que não aparece na tela: a sequência com perdão, o motor de
+Os 88 testes cobrem a lógica que não aparece na tela: a sequência com perdão, o motor de
 insights e seus limiares, o clima pessoal, a serialização retrocompatível, a resiliência a
 dados corrompidos e o dataset de demonstração. Testes não olham para a tela — a interface
 foi conferida à parte, rodando o build web num viewport de telefone.
