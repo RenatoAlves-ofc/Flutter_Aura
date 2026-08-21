@@ -19,8 +19,8 @@ Android 16.
 
 | | |
 |---|---|
-| Linhas em `lib/main.dart` | 3.914 |
-| Testes automatizados | 70 (49 de lógica, 21 de interface) |
+| Linhas em `lib/main.dart` | 4.774 |
+| Testes automatizados | 88 (63 de lógica, 25 de interface) |
 | `flutter analyze` | sem nenhum aviso |
 | SDKs verificados | Flutter 3.32.8 (o do FlutLab) e 3.47.0 |
 | Métodos de foco | 11, incluindo Flowtime |
@@ -87,7 +87,7 @@ não pegariam.
 que o FlutLab usa, e o 3.47.0. Rodar nos dois não é redundância — foi assim que apareceu
 uma asserção de layout que só a versão nova emite (Seção 4).
 
-Os 70 testes cobrem deliberadamente a lógica que **não aparece na tela** e por isso não
+Os 88 testes cobrem deliberadamente a lógica que **não aparece na tela** e por isso não
 seria pega por inspeção visual: a regra de sequência com perdão, os limiares de desbloqueio
 dos insights, o clima pessoal, a serialização retrocompatível e a resiliência a dados
 corrompidos.
@@ -285,7 +285,77 @@ molas e paleta reconstruída.
 
 ---
 
-## 8. O que fica fora e por quê
+## 8. Ficha de personagem e progressão visível
+
+Depois da passada de design, restava um problema que nenhum teste e nenhuma inspeção visual
+pegariam: **o app estava sem graça**, e por motivos específicos.
+
+**O diagnóstico, com evidência:**
+
+| Sintoma | Evidência |
+|---|---|
+| Tudo estava no passado | **uma única** string em todo o app apontava para frente: `"Faltam N sessões"` |
+| A progressão era invisível | limiares de 5/5/7/6 contra 22 sessões de demonstração, com um teste *garantindo* que os quatro abrissem |
+| Os pontos não compravam nada | `_points` só era incrementado e exibido — e o README promete *"não pontos genéricos"* |
+| Nada era identidade | "minha sequência é 13" não é algo que se conte a alguém |
+
+**As duas correções:**
+
+1. **Uma quinta descoberta que nasce bloqueada** — "Seu limite real", exigindo 30 sessões. A
+   aba Insights passou a abrir em "4 de 5 desbloqueadas", com um cartão trancado e um
+   contador visível. Sem enfraquecer a demonstração: as quatro primeiras continuam abertas.
+
+2. **Uma ficha de personagem sem nenhum número inventado** — classe e quatro atributos
+   derivados das mesmas contas que alimentam os insights.
+
+**A parte que exigiu recusar o pedido literal.** A pergunta era "uma pegada de RPG", e a
+leitura óbvia seria XP, níveis e medalhas. Isso teria contradito o posicionamento do produto
+em dobro, já que o README critica pontos genéricos e o app já os tinha. A ficha derivada faz
+o oposto: transforma o motor de correlação — que já era o diferencial — na identidade
+visível do usuário. O registro completo está em [`DECISOES.md`](DECISOES.md) §20 e §21.
+
+---
+
+## 9. Personalização, e o que a torna diferencial
+
+O último pedido foi personalização: deixar a pessoa marcar se a sessão é acadêmica, de
+trabalho, pessoal, e descrever o que está fazendo.
+
+**A pesquisa mudou o que foi construído.** Categorizar sessão por tag é **table stakes**: o
+[Forest](https://forestapp.cc/) tem tags com filtro de analytics, o
+[Toggl Track](https://toggl.com/track/focused-work/) tem projetos e tags, o Focus To-Do tem
+projetos. Um seletor de "Acadêmico / Pessoal" sozinho empataria com o mercado.
+
+O que nenhum deles faz é cruzar a categoria com o humor — porque nenhum deles pergunta o
+humor. Por isso o campo e o insight que o consome entraram **na mesma mudança**:
+
+| Entregue | O que responde |
+|---|---|
+| `contextId` por sessão, com chips no check de humor | que tipo de trabalho era aquela sessão |
+| **"Onde você rende mais"** (8 sessões, 2+ contextos) | **qual tipo de trabalho te esgota, e por quanto tempo você aguenta cada um** |
+| Perfil: nome, tipo principal e foco atual | quem é você e o que está sendo feito |
+| Nota curta e opcional por sessão | o que era aquele bloco especificamente |
+
+Na demonstração isso aparece assim: *"em Criativo você sustenta 45 min e termina em 5/5; em
+Trabalho, 28.8 min e 3.6/5"*. É a frase que nenhum concorrente consegue formular.
+
+**O cuidado com atrito.** Os chips já vêm com o contexto do perfil marcado, a nota é
+opcional, e o check de humor **de depois** não pergunta nada disso — a pessoa acabou de
+focar, e cobrar digitação ali seria no momento errado.
+
+**Um defeito que a inspeção visual pegou.** O `_MoodSheet` não tinha rolagem. Com os chips e
+o campo novos, mais o cartão de sugestão aberto, o conteúdo passava da altura do sheet em
+420×940 e apareceria a faixa de estouro **na demonstração**. Nenhum teste olha para overflow;
+foi a conferência na tela que achou. Registro em [`DECISOES.md`](DECISOES.md) §23.
+
+**E um risco que exigiu teste próprio.** Dois campos novos em `StudySession` significam que
+quem já tem o app instalado tem dados no formato antigo. Há um teste que carrega um JSON sem
+`contextId` e sem `note` e verifica que ele abre com os padrões — sem isso, uma atualização
+deixaria essas pessoas sem app.
+
+---
+
+## 10. O que fica fora e por quê
 
 - **Build de APK neste repositório:** não há automação de CI. O APK é gerado no FlutLab,
   como a atividade exige.
@@ -298,7 +368,7 @@ molas e paleta reconstruída.
 
 ---
 
-## 9. Pendências para a entrega
+## 11. Pendências para a entrega
 
 Consolidadas em um documento só, com dono por item e o que fazer se algo falhar:
 **[`ENTREGA.md`](ENTREGA.md)**.

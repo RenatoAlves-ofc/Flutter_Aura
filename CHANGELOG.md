@@ -7,6 +7,96 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---
 
+## [1.5.1] — 2026-08-20
+
+Só documentação. O código está congelado para a apresentação de 24/08.
+
+### Adicionado
+
+- **[`docs/ROADMAP.md`](docs/ROADMAP.md)**: as cinco melhorias pedidas, cada uma com custo,
+  retorno e o que ela quebra. Três coisas que o documento registra e valem citar:
+  - **Os climas se parecem demais, e dá para medir**: a luminância dos cinco gradientes fica
+    entre 0,80 e 0,92 — amplitude de 0,12. São cinco pastéis quase brancos, e é por isso que
+    a aura muda pouco na tela.
+  - **`FocusMethod` não tem campo de descrição nenhum.** O app oferece "52/17" e "Ciclo
+    Ultradiano" sem explicar o que são, e escolher o método é a primeira decisão que ele
+    pede. É o item mais barato e de maior retorno do roadmap.
+  - **Frases motivacionais não precisam de API** — e a API contradiria o "sem IA, sem API,
+    sem rede" do README, exigiria chave extraível do APK, quebraria o uso offline e ainda
+    seria *menos* pessoal que gerar a frase do histórico real do usuário.
+
+## [1.5.0] — 2026-08-20
+
+Personalização — e a descoberta que ela desbloqueia, que é o ponto inteiro.
+
+### Adicionado
+
+- **Tipo de trabalho por sessão** (`contextId`): Acadêmico, Trabalho, Pessoal, Criativo e
+  Geral, escolhido em chips no check de humor. Já vem marcado com o do perfil, então quem não
+  quiser mudar não toca em nada.
+- **"Onde você rende mais"**, a sexta descoberta e o motivo de o campo acima existir: duração
+  sustentada e humor final por tipo de trabalho. Exige 8 sessões e 2 contextos com 3+ sessões
+  cada. A aba Insights abre em **"5 de 6 desbloqueadas"**.
+- **Perfil**: nome, tipo de trabalho principal e *"o que você está focando neste período"* —
+  tudo opcional, tudo local, editável pelo lápis na própria ficha. A ficha passou a mostrar
+  "Renato · Ritmista · Acadêmico" com a declaração de foco embaixo.
+- **Nota curta e opcional** por sessão, no check de humor de antes.
+- Onze testes novos, incluindo o que **carrega um JSON no formato antigo** — sem ele, uma
+  atualização deixaria sem app quem já tem sessões gravadas. **88 testes**.
+
+### Corrigido
+
+- **O check de humor não tinha rolagem.** Com os chips e o campo novos, mais o cartão de
+  sugestão aberto, o conteúdo passava da altura do sheet em 420×940 e apareceria a faixa de
+  estouro — na demonstração. Achado pela inspeção visual, porque nenhum teste olha overflow.
+
+### Detalhe que evitou uma regressão silenciosa
+
+O dataset de demonstração ganhou um **gerador de aleatórios próprio** para o contexto.
+Sortear do mesmo `Random` deslocaria toda a sequência seguinte, mudando métodos e durações de
+todas as sessões — e com elas os números já publicados na documentação e nos prints. Foi
+notado porque os números mudaram na tela; com dois geradores, a demonstração voltou a ser
+idêntica.
+
+### Sobre o pedido, e o que a pesquisa mudou nele
+
+Categorizar sessão por tag **é table stakes**: Forest, Toggl e Focus To-Do já fazem. Por isso
+o campo não entrou sozinho — entrou junto do insight que o transforma em algo que nenhum
+concorrente consegue dizer, porque nenhum deles pergunta o humor. Registro em
+[`DECISOES.md`](docs/DECISOES.md) §22.
+
+## [1.4.0] — 2026-08-19
+
+O app funcionava, era bonito e estava sem graça. Duas mudanças, e nenhuma delas é enfeite.
+
+### Adicionado
+
+- **Ficha de personagem** na aba Resumo: uma classe (Maratonista, Ritmista, Sprinter,
+  Explorador) e quatro atributos — Constância, Recuperação, Amplitude e Profundidade —
+  **todos derivados das sessões reais**. `buildCharacterSheet` reaproveita `effectiveStreak`,
+  `_moodBucket` e `methodById`; não precisou de dado novo.
+- **Quinta descoberta: "Seu limite real"** — acima de quantos minutos as sessões passam a
+  terminar pior. Exige 30 sessões e, com as 22 da demonstração, **nasce trancada** mostrando
+  "faltam 8". A aba Insights passou a abrir em **"4 de 5 desbloqueadas"**.
+- Sete testes novos: classe por método dominante, atributos dentro de 0–100, saturação em 100
+  sem estourar a barra, recuperação, ficha sem sessões, a quinta descoberta trancada com o
+  dataset demo, e a ficha aparecendo na tela. **77 testes**.
+
+### Alterado
+
+- **O texto dos pontos parou de mentir.** Dizia que eles eram "o combustível"; agora diz que
+  são contagem e que o que evolui é a ficha. O README sempre prometeu *"descobertas pessoais,
+  não pontos genéricos"* e o app entregava pontos genéricos — a contradição acabou.
+- O teste que exigia "nenhuma descoberta trancada" foi reescrito para exigir **exatamente
+  uma**. O que era garantia de tela cheia virou garantia de progressão visível.
+
+### O que foi recusado, e por quê
+
+O pedido era "uma pegada de RPG". **XP, níveis e medalhas foram descartados**: seriam a
+gamificação genérica contra a qual o produto se posiciona, e a pesquisa de concorrência do
+próprio projeto aponta que os apps do nicho erram exatamente aí. Registrado em
+[`DECISOES.md`](docs/DECISOES.md) §20.
+
 ## [1.3.1] — 2026-08-19
 
 Duas perguntas respondidas por escrito, sem tocar em código.

@@ -30,6 +30,7 @@ método utilizado**. Todo o resto do app existe para alimentar ou expor esse mot
 | [Manual do usuário](docs/MANUAL-DO-USUARIO.md) | Como usar cada tela |
 | [Roteiro de apresentação](docs/APRESENTACAO.md) | Demonstração passo a passo e números para os slides |
 | [Uso de IA](docs/USO-DE-IA.md) | Como o projeto foi construído com IA, e onde ela errou |
+| [Roadmap](docs/ROADMAP.md) | As próximas melhorias, com custo e o que cada uma quebra |
 | [Changelog](CHANGELOG.md) | Histórico de mudanças |
 
 ---
@@ -40,17 +41,31 @@ método utilizado**. Todo o resto do app existe para alimentar ou expor esse mot
 |---|---|
 | **Foco** | Cronômetro com 11 métodos, check de humor antes e depois de cada sessão, sugestão adaptativa de método e vínculo opcional com uma tarefa |
 | **Tarefas** | Lista com prioridade (Alta/Média/Baixa), persistida localmente |
-| **Insights** | 4 descobertas desbloqueáveis + gráfico de correlação e ritmo semanal |
-| **Resumo** | Clima pessoal (a aura), sequência com perdão, pontos e minutos focados |
+| **Insights** | 6 descobertas desbloqueáveis + gráfico de correlação e ritmo semanal |
+| **Resumo** | Sua ficha (classe e atributos), clima pessoal, sequência com perdão e números |
 
 Mais a tela **Sobre**, com a mensagem de privacidade e o controle do dataset de demonstração.
 
 ### Os diferenciais
 
-**Insights desbloqueáveis.** Quatro comparações em Dart puro sobre as sessões salvas — sem
-IA, sem API, sem rede. Cada uma exige um volume mínimo de dados (5, 5, 7 e 6 sessões) e
-aparece bloqueada até lá, dizendo quantas faltam. Uma descoberta tirada de duas sessões não
-seria uma descoberta.
+**Sua ficha.** Uma classe (Maratonista, Ritmista, Sprinter, Explorador) e quatro atributos —
+Constância, Recuperação, Amplitude, Profundidade — **todos derivados das suas sessões
+reais**. Não existe ponto de experiência nem subir de nível: se o número sobe, é porque o seu
+comportamento mudou, não porque você abriu o app.
+
+**Insights desbloqueáveis.** Seis comparações em Dart puro sobre as sessões salvas — sem IA,
+sem API, sem rede. Cada uma exige um volume mínimo (5, 5, 7, 6, 8 e 30 sessões) e aparece
+bloqueada até lá, dizendo quantas faltam. A quinta é o objetivo de longo prazo e nasce
+trancada de propósito.
+
+**Tipo de trabalho, cruzado com humor.** Marcar a categoria da sessão é comum — Forest e
+Toggl fazem. Nenhum deles pergunta como você está. O Aura cruza as duas coisas e responde o
+que os outros não conseguem: **qual tipo de trabalho te esgota, e por quanto tempo você
+aguenta cada um.**
+
+**Seu perfil, opcional e local.** Nome, tipo de trabalho principal e o que você está focando
+neste período. Aparece na ficha, pré-marca o check de humor, e o app funciona igual sem nada
+preenchido.
 
 **Sugestão adaptativa de método.** Ao informar o humor antes da sessão, o app consulta as
 sessões que você começou naquele mesmo estado e sugere o método que historicamente termina
@@ -92,35 +107,43 @@ e podem ser removidas na tela **Sobre**.
 ```bash
 flutter pub get
 flutter analyze     # sem issues
-flutter test        # 70 testes
+flutter test        # 88 testes
 flutter run
 ```
 
 Para rodar ou buildar o APK **no FlutLab**, veja [docs/FLUTLAB.md](docs/FLUTLAB.md) — inclui
 os dois avisos que são esperados e por que o APK precisa ser gerado como `arm64`.
 
-O app inteiro vive em **`lib/main.dart`** (3.914 linhas), sem imports relativos, por
+O app inteiro vive em **`lib/main.dart`** (4.774 linhas), sem imports relativos, por
 exigência do ambiente. O mapa navegável do arquivo está em
 [docs/ARQUITETURA.md](docs/ARQUITETURA.md).
 
-Os 70 testes cobrem a lógica que não aparece na tela: a sequência com perdão, o motor de
+Os 88 testes cobrem a lógica que não aparece na tela: a sequência com perdão, o motor de
 insights e seus limiares, o clima pessoal, a serialização retrocompatível, a resiliência a
 dados corrompidos e o dataset de demonstração. Testes não olham para a tela — a interface
 foi conferida à parte, rodando o build web num viewport de telefone.
 
 ---
 
-## Roadmap (fora do MVP)
+## Roadmap
 
-Ritual Semanal de fechamento, Modo Provas, arco fechado por temporada, compartilhamento de
-cartões de insight e onboarding com quiz de expectativa.
+O planejamento completo das próximas melhorias — **com custo, retorno e o que cada uma
+quebra** — está em [docs/ROADMAP.md](docs/ROADMAP.md):
 
-Mais a **divisão do `main.dart` em vários arquivos**, por camada — adiada por restrição
-declarada do ambiente de entrega, que proíbe imports relativos. O porquê inteiro, incluindo
-o que estaria certo fazer num projeto que continuasse, está em
-[docs/DECISOES.md](docs/DECISOES.md) §19.
+| Melhoria | Custo |
+|---|---|
+| Explicar os 11 métodos de estudo dentro do app | baixo |
+| Frase do dia, gerada dos seus próprios dados | baixo |
+| Tarefa presente durante a sessão | médio |
+| Cores: contraste, amplitude dos climas e modo escuro | alto |
+| Trocar a logo | médio |
 
-A **sugestão adaptativa de duração** também estava nesta lista e acabou implementada: ela
+Mais os itens que a especificação mandou não codar — Ritual Semanal, Modo Provas, arco por
+temporada, compartilhamento de cartões e onboarding com quiz — e a **divisão do `main.dart`
+em vários arquivos**, adiada por restrição do ambiente de entrega
+([docs/DECISOES.md](docs/DECISOES.md) §19).
+
+A **sugestão adaptativa de duração** também estava nessa lista e acabou implementada: ela
 reaproveitava o motor de correlação que já existia, então saiu barata.
 
 ---

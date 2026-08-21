@@ -16,7 +16,7 @@ proíbe imports relativos.
 **Decisão.** Todo o app em `lib/main.dart`, com a separação feita por banners de seção em
 vez de por pastas.
 
-**Consequência.** 3.914 linhas em um arquivo. Para compensar, a lógica de negócio é
+**Consequência.** 4.774 linhas em um arquivo. Para compensar, a lógica de negócio é
 escrita como funções puras que não importam nada do Flutter, e é atacada diretamente pelos
 testes. A ordem das seções é significativa: cada uma só depende das anteriores.
 
@@ -354,7 +354,7 @@ inventar uma para preencher o formato seria pior do que não desenhar nada.
 
 ## 19. O arquivo único ficou — e por que a crítica a ele é procedente
 
-**Contexto.** `lib/main.dart` tem 3.914 linhas. Em qualquer avaliação de código isso é o
+**Contexto.** `lib/main.dart` tem 4.774 linhas. Em qualquer avaliação de código isso é o
 primeiro apontamento, e com razão: arquivo único é prática ruim.
 
 **A crítica está certa no geral.** Num projeto que continuasse, a divisão correta seria por
@@ -377,7 +377,7 @@ lib/
 
 2. **Dividir arquivos não desacopla nada por si só.** Este é o ponto técnico que decide. O
    código **já é em camadas**: a faixa de lógica pura (562–1208) não importa nada do Flutter,
-   e 49 dos 70 testes batem nela sem construir uma única tela. Mover esse texto para pastas
+   e 63 dos 88 testes batem nela sem construir uma única tela. Mover esse texto para pastas
    sem mudar quem depende de quem deixaria o grafo de dependências **idêntico** — seria
    movimento, não arquitetura.
 
@@ -385,7 +385,7 @@ lib/
    longo de meses, com várias pessoas mexendo em paralelo e resolvendo conflitos de merge.
    Aqui é um autor e um prazo fechado.
 
-4. **O problema real que a crítica aponta já tem solução.** Navegar 3.914 linhas é ruim —
+4. **O problema real que a crítica aponta já tem solução.** Navegar 4.774 linhas é ruim —
    por isso existe o mapa de seções em [`ARQUITETURA.md`](ARQUITETURA.md) §1, com a linha de
    cada faixa e um `grep` que o reconstrói quando as linhas envelhecerem.
 
@@ -397,3 +397,151 @@ lib/
 Se o projeto continuar depois da entrega, o primeiro passo é confirmar se a restrição do
 FlutLab ainda é verdade: imports relativos dentro de `lib/` são Dart padrão, e essa proibição
 pode ter virado folclore. Dá para testar em uma branch descartável, sem risco para a `main`.
+
+---
+
+## 20. Ficha de personagem em vez de XP
+
+**Contexto.** O app estava sem graça, e o diagnóstico apontou motivos concretos, não falta de
+enfeite:
+
+- **Tudo estava no passado.** Havia **uma única** string em todo o app apontando para frente
+  (`"Faltam N sessões para desbloquear"`), e ela nunca aparecia — ver decisão 21.
+- **Os pontos não compravam nada.** `_points` só era incrementado e exibido. Pior: o README
+  afirma que o diferencial são *"descobertas pessoais, não pontos genéricos"*, e o app
+  entregava exatamente pontos genéricos. Contradizia o próprio posicionamento.
+- **Nada ali era identidade.** "Minha sequência é 13" não é algo que se conte a alguém.
+
+O pedido foi "uma pegada mais voltada a RPG". Isso se divide em duas coisas opostas.
+
+**O que foi recusado.** XP, níveis, medalhas e avatar. Seria a gamificação genérica contra a
+qual o produto se posiciona — e a pesquisa de concorrência do próprio projeto aponta que os
+apps do nicho erram justamente aí. Somar XP por cima de um app de correlação de humor
+deixaria o Aura *mais* parecido com os concorrentes, não menos, e contradiria o pitch em
+dobro.
+
+**Decisão.** Uma **ficha de personagem em que nenhum número é inventado**. Classe e atributos
+saem das mesmas contas que já alimentam os insights: método dominante, sequência efetiva,
+percentual de sessões que terminam melhor, diferença de duração entre faixas de humor e maior
+sessão sustentada.
+
+A frase que isso libera na apresentação é o ponto inteiro:
+> Outros apps te dão XP por existir. O Aura te dá uma ficha que é medição do seu
+> comportamento — se ela sobe, é porque você mudou, não porque você abriu o app.
+
+**Consequência.** A ficha **reforça** o diferencial em vez de diluí-lo, e não custou dado
+novo: `buildCharacterSheet` reaproveita `effectiveStreak`, `_moodBucket` e `methodById`.
+
+Dois detalhes que decorrem da escolha:
+
+- **Sem sessões, a ficha diz isso** em vez de mostrar quatro barras zeradas. Barra zerada
+  mente sobre não haver dado — é o mesmo erro que a tela Resumo já cometeu uma vez (§9).
+- **Cada atributo mostra o número real ao lado da barra.** A barra é leitura de relance; sem
+  o número ela vira uma escala vaga, que é o problema de metade das fichas de RPG digitais.
+  O valor satura em 100 e o número continua sendo dito por inteiro — há teste para isso.
+
+**Os pontos ficaram**, mas pararam de fingir que são o prêmio: o texto da tela agora diz que
+eles são contagem e que o que evolui é a ficha.
+
+---
+
+## 21. A quinta descoberta nasce bloqueada
+
+**Contexto.** Os quatro insights abrem com 5, 5, 7 e 6 sessões. O dataset de demonstração tem
+**22** — e havia um teste *garantindo* que os quatro abrissem, para nenhuma tela aparecer
+vazia na apresentação.
+
+O efeito colateral passou despercebido por muito tempo: **ninguém nunca via um cartão
+trancado.** Nem um usuário novo, nem a plateia do dia da apresentação. A mecânica de
+desbloqueio — que a especificação chama de núcleo inegociável — estava construída, testada, e
+invisível.
+
+**Decisão.** Uma quinta descoberta, **"Seu limite real"**, exigindo **30 sessões**: acima de
+quantos minutos as sessões passam a terminar pior. Com as 22 da demonstração ela fica
+trancada mostrando *"Faltam 8 sessões para desbloquear"*.
+
+**Por que 30 não é arbitrário.** Uma conclusão sobre *teto* de duração precisa de volume para
+não ser ruído: são três faixas de duração comparadas entre si, e o insight exige 3+ sessões
+em cada uma. Com pouco dado, uma única sessão longa e ruim decidiria o resultado — diria mais
+sobre aquele dia que sobre a pessoa.
+
+**Consequência.** A aba Insights passou a abrir em **"4 de 5 desbloqueadas"**, com um cartão
+visivelmente trancado e um contador. O app ganhou um "próximo" sem que nada precisasse ser
+enfraquecido: a demonstração continua rica, com quatro descobertas abertas.
+
+O teste que antes exigia "nenhuma trancada" foi reescrito para exigir **exatamente uma**, com
+o `id` e o número que falta. O que era garantia de tela cheia virou garantia de progressão
+visível.
+
+---
+
+## 22. Contexto de foco e o insight que o consome entram juntos
+
+**Contexto.** O pedido era personalização: deixar a pessoa marcar se a sessão é acadêmica,
+de trabalho, pessoal.
+
+A pesquisa mostrou que **isso é table stakes, não diferencial**. O
+[Forest](https://forestapp.cc/) tem tags (Study, Work, Writing) com filtro de analytics, o
+[Toggl Track](https://toggl.com/track/focused-work/) tem projetos e tags, o Focus To-Do tem
+projetos. Um seletor de "Acadêmico / Pessoal" sozinho **empata** com o mercado.
+
+O que nenhum deles faz é cruzar a categoria com o humor. Todos respondem *"onde foi o meu
+tempo"*. Nenhum responde:
+
+> **Qual tipo de trabalho me esgota, e por quanto tempo eu aguento cada um.**
+
+**Decisão.** O campo `contextId` e o insight *"Onde você rende mais"* entram **na mesma
+mudança**, nunca separados. Separados, o campo é commodity e o insight é impossível.
+
+O insight exige **8 sessões e 2 contextos com 3+ sessões cada**: comparar tipos de trabalho
+com base em uma ou duas tentativas diria mais sobre aqueles dias que sobre a pessoa.
+
+**Consequência.** Isto é o que o Aura tem de mais difícil de copiar — não porque a conta seja
+complexa, mas porque exige o check de humor, que os concorrentes não pedem. A frase de
+apresentação sai pronta: *"o Forest te diz onde o seu tempo foi; o Aura te diz qual trabalho
+te custa caro"*.
+
+**Dois detalhes que decorrem:**
+
+- **`geral` é o padrão e o destino dos dados antigos.** Quem já tem o app instalado tem
+  sessões gravadas sem este campo, e chamá-las de "Geral" é honesto — de fato não se sabe o
+  que elas eram. Há um teste que carrega um JSON no formato antigo, porque este é o risco
+  real de qualquer campo novo.
+- **O dataset de demonstração ganhou um gerador de aleatórios próprio** (`ctxRnd`). Sortear o
+  contexto do mesmo `rnd` deslocaria toda a sequência seguinte, mudando métodos e durações de
+  todas as sessões — e com elas os números já publicados na documentação e nos prints. Com
+  dois geradores, acrescentar o contexto não altera nada do que já existia.
+
+---
+
+## 23. Onde o perfil e a nota moram
+
+**Contexto.** O pedido incluía descrever "o que está sendo ou será feito". Isso pode virar
+duas coisas diferentes, e as duas foram implementadas por motivos distintos.
+
+**Decisão.**
+
+- **No perfil, uma declaração de foco atual** — *"o que você está focando neste período"*,
+  ex.: "TCC sobre visão computacional". Um campo só, que aparece na ficha e dá contexto ao
+  app inteiro sem repetir a aba Tarefas.
+- **Por sessão, uma nota curta e opcional** — no check de humor de **antes**, junto dos chips
+  de contexto.
+
+**O perfil se edita a partir da própria ficha**, por um lápis no cartão, e não numa tela de
+configurações escondida: ele é parte da ficha, e é ali que ele aparece. O botão existe também
+no estado vazio da ficha — sem ele, alguém sem sessão nenhuma não teria como preencher o
+perfil.
+
+**Consequência, e o cuidado com atrito.** O momento de começar a focar é o pior lugar
+possível para exigir digitação. Por isso:
+
+- os chips **já vêm com o contexto do perfil marcado** — zero toque para quem não quer mudar;
+- a nota é opcional e some do registro se ficar em branco;
+- o check de humor **de depois não pergunta nada disso**: a pessoa acabou de focar, e pedir
+  texto ali cobraria no momento de alívio.
+
+**Um defeito que isso quase criou.** O `_MoodSheet` era um `Column(mainAxisSize: min)` **sem
+rolagem**. Com os chips e o campo novos, mais o cartão de sugestão aberto, o conteúdo passa
+da altura do sheet em 420×940 — e apareceria a faixa amarela e preta de estouro, na
+demonstração. Virou `SingleChildScrollView`; a inspeção visual foi o que pegou isso, porque
+nenhum teste olha para overflow.

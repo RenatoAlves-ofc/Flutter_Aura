@@ -13,6 +13,7 @@ StudySession session({
   required int before,
   required int after,
   String method = 'pomodoro_classico',
+  String context = kDefaultContextId,
 }) =>
     StudySession(
       date: date,
@@ -20,6 +21,7 @@ StudySession session({
       moodBefore: before,
       moodAfter: after,
       methodId: method,
+      contextId: context,
     );
 
 void main() {
@@ -125,7 +127,7 @@ void main() {
   group('motor de insights', () {
     test('tudo fica bloqueado sem dados', () {
       final insights = buildInsights([]);
-      expect(insights.length, 4);
+      expect(insights.length, 6);
       expect(insights.every((i) => !i.unlocked), isTrue);
       expect(insights.first.missing, greaterThan(0));
     });
@@ -394,6 +396,177 @@ void main() {
     });
   });
 
+  group('contexto de foco', () {
+    test('sessão gravada por versão anterior continua abrindo', () {
+      // Este é o risco real desta mudança: quem já tem o app instalado tem
+      // sessões no formato antigo, sem contextId e sem note. Se o fromJson
+      // estourasse aqui, o app não abriria mais para essas pessoas.
+      final antiga = StudySession.fromJson({
+        'date': '2026-08-10T14:30:00.000',
+        'duration': 25,
+        'moodBefore': 3,
+        'moodAfter': 4,
+        'linkedTaskId': null,
+        'methodId': 'pomodoro_classico',
+        'isDemo': false,
+      });
+
+      expect(antiga.contextId, kDefaultContextId);
+      expect(antiga.note, isNull);
+      expect(antiga.durationMinutes, 25);
+    });
+
+    test('contexto e nota sobrevivem à ida e volta do JSON', () {
+      final s = StudySession(
+        date: DateTime(2026, 8, 10, 14, 30),
+        durationMinutes: 50,
+        moodBefore: 4,
+        moodAfter: 5,
+        methodId: 'pomodoro_longo',
+        contextId: 'academico',
+        note: 'Cap. 4 de Cálculo',
+      );
+      final volta = StudySession.fromJson(s.toJson());
+      expect(volta.contextId, 'academico');
+      expect(volta.note, 'Cap. 4 de Cálculo');
+    });
+
+    test('id de contexto desconhecido cai em Geral em vez de estourar', () {
+      expect(contextById('inexistente').id, kDefaultContextId);
+      expect(contextById('academico').name, 'Acadêmico');
+    });
+
+    test('não compara tipos de trabalho sem repetição suficiente', () {
+      final base = DateTime(2026, 8, 10);
+      // 8 sessões, mas um dos contextos aparece só duas vezes.
+      final sessions = [
+        for (var i = 0; i < 6; i++)
+          session(date: base, duration: 40, before: 4, after: 4, context: 'academico'),
+        for (var i = 0; i < 2; i++)
+          session(date: base, duration: 15, before: 2, after: 2, context: 'trabalho'),
+      ];
+      final insight = buildInsights(sessions).firstWhere((i) => i.id == 'context');
+      expect(insight.unlocked, isFalse,
+          reason: 'dois pontos não descrevem um tipo de trabalho');
+    });
+
+    test('aponta o tipo de trabalho que sustenta mais tempo', () {
+      final base = DateTime(2026, 8, 10);
+      final sessions = [
+        for (var i = 0; i < 4; i++)
+          session(date: base, duration: 50, before: 4, after: 5, context: 'academico'),
+        for (var i = 0; i < 4; i++)
+          session(date: base, duration: 15, before: 3, after: 2, context: 'trabalho'),
+      ];
+      final insight = buildInsights(sessions).firstWhere((i) => i.id == 'context');
+
+      expect(insight.unlocked, isTrue);
+      expect(insight.headline, 'Acadêmico');
+      expect(insight.comparison, isNotNull);
+      expect(insight.comparison!.highValue, closeTo(50, 0.01));
+      expect(insight.comparison!.lowValue, closeTo(15, 0.01));
+    });
+
+    test('a demonstração carrega a correlação entre tipo de trabalho e humor',
+        () {
+      final insight =
+          buildInsights(buildDemoSessions()).firstWhere((i) => i.id == 'context');
+      expect(insight.unlocked, isTrue,
+          reason: 'sem isto o diferencial não aparece na apresentação');
+    });
+  });
+
+  group('perfil', () {
+    test('a ficha funciona anônima, que é como o app abre', () {
+      final f = buildCharacterSheet(buildDemoSessions());
+      expect(f.name, isNull);
+      expect(f.focus, isNull);
+      expect(f.contextName, isNull, reason: 'Geral não vira rótulo');
+      expect(f.className, isNotEmpty);
+    });
+
+    test('nome, contexto e foco chegam à ficha', () {
+      final f = buildCharacterSheet(
+        buildDemoSessions(),
+        profile: const AuraProfile(
+          name: '  Renato  ',
+          contextId: 'academico',
+          focus: 'TCC sobre visão computacional',
+        ),
+      );
+      expect(f.name, 'Renato', reason: 'espaço em branco é aparado');
+      expect(f.contextName, 'Acadêmico');
+      expect(f.focus, 'TCC sobre visão computacional');
+    });
+
+    test('campo em branco conta como ausente, não como texto vazio', () {
+      final f = buildCharacterSheet(
+        buildDemoSessions(),
+        profile: const AuraProfile(name: '   ', focus: ''),
+      );
+      expect(f.name, isNull);
+      expect(f.focus, isNull);
+    });
+  });
+
+  group('ficha de personagem', () {
+    test('sem sessões, a ficha diz isso em vez de mostrar zeros', () {
+      final f = buildCharacterSheet([]);
+      expect(f.hasData, isFalse);
+      expect(f.attributes, isEmpty,
+          reason: 'quatro barras zeradas mentem sobre não haver dado nenhum');
+    });
+
+    test('a classe sai do método que a pessoa de fato usa', () {
+      final base = DateTime(2026, 8, 10);
+      CharacterSheet comMetodo(String id, int duracao) => buildCharacterSheet([
+            session(date: base, duration: duracao, before: 4, after: 4, method: id),
+            session(date: base, duration: duracao, before: 4, after: 4, method: id),
+            session(date: base, duration: duracao, before: 4, after: 4, method: id),
+          ]);
+
+      expect(comMetodo('ciclo_ultradiano', 90).className, 'Maratonista');
+      expect(comMetodo('micro_sessao', 15).className, 'Sprinter');
+      expect(comMetodo('pomodoro_classico', 25).className, 'Ritmista');
+      expect(comMetodo('flowtime', 42).className, 'Explorador');
+    });
+
+    test('todo atributo cabe na barra, de 0 a 100', () {
+      final f = buildCharacterSheet(buildDemoSessions());
+      expect(f.attributes.length, 4);
+      for (final a in f.attributes) {
+        expect(a.value, inInclusiveRange(0, 100), reason: a.name);
+        expect(a.display, isNotEmpty, reason: a.name);
+      }
+    });
+
+    test('o valor extremo satura em 100 em vez de estourar a barra', () {
+      final base = DateTime(2026, 8, 10);
+      final f = buildCharacterSheet([
+        // 240 min é muito acima do teto de 90 usado na normalização.
+        session(date: base, duration: 240, before: 4, after: 5),
+      ]);
+      final profundidade =
+          f.attributes.firstWhere((a) => a.name == 'Profundidade');
+      expect(profundidade.value, 100);
+      expect(profundidade.display, '240 min',
+          reason: 'a barra satura, mas o número real continua sendo dito');
+    });
+
+    test('recuperação conta as sessões que terminam melhor do que começaram',
+        () {
+      final base = DateTime(2026, 8, 10);
+      final f = buildCharacterSheet([
+        session(date: base, duration: 25, before: 2, after: 4),
+        session(date: base, duration: 25, before: 3, after: 5),
+        session(date: base, duration: 25, before: 4, after: 4),
+        session(date: base, duration: 25, before: 4, after: 2),
+      ]);
+      // 2 de 4 melhoraram.
+      expect(f.attributes.firstWhere((a) => a.name == 'Recuperação').value, 50);
+    });
+  });
+
   group('clima pessoal', () {
     final base = DateTime(2026, 8, 10);
 
@@ -441,14 +614,22 @@ void main() {
   group('dataset de demonstração', () {
     final demo = buildDemoSessions();
 
-    test('tem volume suficiente para desbloquear todos os insights', () {
+    test('abre cinco descobertas e deixa uma trancada, de propósito', () {
       final insights = buildInsights(demo);
       expect(demo.length, 22, reason: 'valor citado no README');
-      expect(
-        insights.where((i) => !i.unlocked).map((i) => i.title).toList(),
-        isEmpty,
-        reason: 'nenhuma tela pode aparecer vazia na apresentação',
-      );
+
+      final trancadas = insights.where((i) => !i.unlocked).toList();
+
+      // As cinco primeiras abrem: nenhuma tela pode aparecer vazia na
+      // apresentação.
+      expect(insights.where((i) => i.unlocked).length, 5);
+
+      // E exatamente uma fica trancada — sem isso o app não teria nada
+      // apontando para frente, que era o defeito que ela veio corrigir.
+      expect(trancadas.length, 1);
+      expect(trancadas.single.id, 'duration_ceiling');
+      expect(trancadas.single.missing, 8,
+          reason: '30 exigidas menos as 22 da demonstração');
     });
 
     test('vem todo marcado como demonstração, para poder ser removido', () {
