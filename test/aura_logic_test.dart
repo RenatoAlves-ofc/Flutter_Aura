@@ -6,6 +6,7 @@
 
 import 'package:aura/main.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 StudySession session({
   required DateTime date,
@@ -794,6 +795,131 @@ void main() {
 
     test('um id desconhecido cai no default em vez de estourar', () {
       expect(methodById('metodo_que_nao_existe').id, 'pomodoro_classico');
+    });
+  });
+
+  group('frase do dia', () {
+    test('sem sessões, o prompt ainda sai bem formado', () {
+      final prompt = buildDailyLinePrompt(
+        [],
+        const AuraProfile(),
+        buildCharacterSheet([]),
+        resolveClimate([]),
+      );
+      expect(prompt, contains('Clima atual: Aura em branco.'));
+      expect(prompt, isNot(contains('Classe:')),
+          reason: 'sem ficha, não inventa classe nenhuma');
+    });
+
+    test('com dados, o prompt cita a classe, o atributo mais forte e o '
+        'contexto', () {
+      final base = DateTime(2026, 8, 10);
+      // Uma sessão só, sem recuperação (before == after), para o atributo
+      // mais alto ser Profundidade sem empate com Recuperação — Constância e
+      // Amplitude ficam bem abaixo de propósito, para não depender de como
+      // o `reduce` desempata.
+      final sessions = [
+        session(
+          date: base,
+          duration: 90,
+          before: 3,
+          after: 3,
+          method: 'ciclo_ultradiano',
+        ),
+      ];
+      final sheet = buildCharacterSheet(
+        sessions,
+        profile: const AuraProfile(
+          contextId: 'academico',
+          focus: 'a prova de sexta',
+        ),
+      );
+      final prompt = buildDailyLinePrompt(
+          sessions, const AuraProfile(), sheet, resolveClimate(sessions));
+      expect(prompt, contains('Classe: Maratonista.'));
+      expect(prompt, contains('Ponto forte: Profundidade (90 min).'));
+      expect(prompt, contains('Acadêmico'));
+      expect(prompt, contains('a prova de sexta'));
+    });
+
+    test('o prompt nunca carrega humor bruto, sessão por sessão', () {
+      final base = DateTime(2026, 8, 10);
+      final prompt = buildDailyLinePrompt(
+        [session(date: base, duration: 25, before: 1, after: 5)],
+        const AuraProfile(),
+        buildCharacterSheet(
+            [session(date: base, duration: 25, before: 1, after: 5)]),
+        resolveClimate([session(date: base, duration: 25, before: 1, after: 5)]),
+      );
+      // O resumo derivado pode mencionar médias e classes, nunca os números
+      // de humor 1 a 5 direto — isso seria mandar o dado bruto para fora do
+      // aparelho, o que a decisão registrada em DECISOES.md §24 evita.
+      expect(prompt, isNot(contains('moodBefore')));
+      expect(prompt, isNot(contains('moodAfter')));
+    });
+
+    test('parseGroqDailyLine lê o formato de chat da Groq', () {
+      const corpo = '{"choices":[{"message":{"content":"  Um passo de cada '
+          'vez.  "}}]}';
+      expect(parseGroqDailyLine(corpo), 'Um passo de cada vez.');
+    });
+
+    test('parseGroqDailyLine devolve null para formato inesperado', () {
+      expect(parseGroqDailyLine('{"erro": "limite excedido"}'), isNull);
+      expect(parseGroqDailyLine('não é json'), isNull);
+      expect(parseGroqDailyLine('{"choices":[]}'), isNull);
+      expect(parseGroqDailyLine('{"choices":[{"message":{"content":""}}]}'),
+          isNull,
+          reason: 'string vazia é a mesma coisa que não ter resposta');
+    });
+
+    test('parseGeminiDailyLine lê o formato próprio da Gemini', () {
+      const corpo = '{"candidates":[{"content":{"parts":[{"text":'
+          '"Continue no seu ritmo."}]}}]}';
+      expect(parseGeminiDailyLine(corpo), 'Continue no seu ritmo.');
+    });
+
+    test('parseGeminiDailyLine devolve null para formato inesperado', () {
+      expect(parseGeminiDailyLine('{"promptFeedback":{"blockReason":"SAFETY"}}'),
+          isNull);
+      expect(parseGeminiDailyLine('{"candidates":[{"content":{"parts":[]}}]}'),
+          isNull);
+    });
+
+    test('sem chave configurada nem chamada desligada, ainda devolve null '
+        'em vez de arriscar uma exceção', () async {
+      // As duas chaves (_kGroqApiKey e _kGeminiApiKey) ficam em branco até
+      // a chave real chegar — ver o comentário no topo da seção FRASE DO DIA
+      // em lib/main.dart. Isto não é teste de rede: com as duas em branco,
+      // fetchDailyLine nunca chega a montar uma requisição.
+      final resultado = await fetchDailyLine('qualquer prompt');
+      expect(resultado, isNull);
+    });
+
+    test('debugDisableDailyLineNetwork força null sem tentar nada', () async {
+      final antes = debugDisableDailyLineNetwork;
+      debugDisableDailyLineNetwork = true;
+      addTearDown(() => debugDisableDailyLineNetwork = antes);
+      expect(await fetchDailyLine('qualquer prompt'), isNull);
+    });
+  });
+
+  group('cache da frase do dia', () {
+    setUp(() => SharedPreferences.setMockInitialValues({}));
+
+    test('nunca salva, não tem frase para hoje', () async {
+      expect(await AuraStore.loadDailyLineFor('2026-08-21'), isNull);
+    });
+
+    test('salva hoje, lê hoje', () async {
+      await AuraStore.saveDailyLine('2026-08-21', 'Continue assim.');
+      expect(await AuraStore.loadDailyLineFor('2026-08-21'), 'Continue assim.');
+    });
+
+    test('salva ontem, hoje não é a mesma data — cabe tentativa nova', () async {
+      await AuraStore.saveDailyLine('2026-08-20', 'Frase de ontem.');
+      expect(await AuraStore.loadDailyLineFor('2026-08-21'), isNull,
+          reason: 'uma tentativa por dia, não uma frase presa para sempre');
     });
   });
 }

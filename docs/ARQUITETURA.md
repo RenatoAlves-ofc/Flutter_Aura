@@ -8,7 +8,7 @@ dados passam e onde ficam as regras. Para o *porquê* de cada escolha, veja
 
 ## 1. Arquivo único, e o que isso obriga
 
-Todo o app vive em **`lib/main.dart`** (4.774 linhas). Não é preferência de estilo: o
+Todo o app vive em **`lib/main.dart`** (5.059 linhas). Não é preferência de estilo: o
 FlutLab tem problemas com arquitetura multi-arquivo no navegador, então a especificação
 proibiu imports relativos.
 
@@ -17,32 +17,35 @@ marcadas com banners. A ordem importa: cada faixa só depende das anteriores.
 
 ### Mapa navegável
 
-Um arquivo de 4.774 linhas é intransitável sem mapa. As linhas abaixo são os banners de
+Um arquivo de 5.059 linhas é intransitável sem mapa. As linhas abaixo são os banners de
 seção — abra o arquivo e pule direto para a faixa que interessa.
 
 | Linha | Seção | Camada |
 |---:|---|---|
 | 1 | `main()`, `AuraCrashReport`, `AuraApp`, `AuraErrorScreen` | infraestrutura |
-| **205** | `MODELOS` | dados puros |
-| **352** | `CONSTANTES DE APOIO` — `kBrandIndigo`, escalas, datas, formatação | dados puros |
-| **432** | `PERSISTÊNCIA (shared_preferences)` — `AuraStore` | persistência |
-| **562** | `SEQUÊNCIA COM PERDÃO` | **lógica pura** |
-| **677** | `MOTOR DE INSIGHTS` | **lógica pura** |
-| **1233** | `SUGESTÃO ADAPTATIVA DE DURAÇÃO` | **lógica pura** |
-| **1305** | `FICHA DE PERSONAGEM` — `buildCharacterSheet` | **lógica pura** |
-| **1455** | `CLIMA PESSOAL (a "aura")` | **lógica pura** |
-| **1545** | `DATASET DE DEMONSTRAÇÃO` | **lógica pura** |
-| **1654** | `SHELL PRINCIPAL` — `_HomeShellState` | estado |
-| **2082** | `TELA 1: FOCO` — cronômetro, método, check de humor | UI |
-| **3140** | `TELA 2: TAREFAS` | UI |
-| **3291** | `TELA 3: INSIGHTS` — motor de correlação e gráficos | UI |
-| **3770** | `TELA 4: RESUMO` — a ficha | UI |
-| **3975** | `TELA: SOBRE` | UI |
-| **4219** | `WIDGETS COMPARTILHADOS` — `AuraCard`, `AuraMark`, `EntranceFade` | UI |
+| **206** | `MODELOS` | dados puros |
+| **373** | `CONSTANTES DE APOIO` — `kBrandIndigo`, escalas, datas, formatação | dados puros |
+| **509** | `PERSISTÊNCIA (shared_preferences)` — `AuraStore` | persistência |
+| **688** | `SEQUÊNCIA COM PERDÃO` | **lógica pura** |
+| **803** | `MOTOR DE INSIGHTS` | **lógica pura** |
+| **1227** | `SUGESTÃO ADAPTATIVA DE DURAÇÃO` | **lógica pura** |
+| **1299** | `FICHA DE PERSONAGEM` — `buildCharacterSheet` | **lógica pura** |
+| **1475** | `CLIMA PESSOAL (a "aura")` | **lógica pura** |
+| **1565** | `FRASE DO DIA` — única exceção "sem rede", ver §11 | **rede** |
+| **1740** | `DATASET DE DEMONSTRAÇÃO` | **lógica pura** |
+| **1849** | `SHELL PRINCIPAL` — `_HomeShellState` | estado |
+| **2277** | `TELA 1: FOCO` — cronômetro, método, check de humor | UI |
+| **3335** | `TELA 2: TAREFAS` | UI |
+| **3486** | `TELA 3: INSIGHTS` — motor de correlação e gráficos | UI |
+| **3965** | `TELA 4: RESUMO` — a ficha | UI |
+| **4176** | `TELA: SOBRE` | UI |
+| **4420** | `WIDGETS COMPARTILHADOS` — `AuraCard`, `AuraMark`, `EntranceFade` | UI |
 
-A faixa do meio (562–1653) é a mais importante: **é lógica pura, sem nenhuma dependência de
-Flutter**. Funções que recebem `List<StudySession>` e devolvem números ou objetos de dados.
-É por isso que 63 dos 88 testes conseguem rodar sem construir uma única tela.
+A faixa do meio (688–1848) é a mais importante: quase toda ela é **lógica pura, sem nenhuma
+dependência de Flutter** — a única exceção é FRASE DO DIA, a única faixa do arquivo que
+importa `package:http`. Funções que recebem `List<StudySession>` e devolvem números ou
+objetos de dados. É por isso que 75 dos 100 testes conseguem rodar sem construir uma única
+tela.
 
 > As linhas envelhecem a cada edição. Se divergirem, o que vale são os banners no próprio
 > arquivo — `grep -n '^// [A-Z]\{4,\}' lib/main.dart` reconstrói esta tabela em um comando.
@@ -335,6 +338,9 @@ qualquer terceira cor na interface é um desvio da regra.
 A constante vive em `CONSTANTES DE APOIO` (linha 352) com a regra escrita na própria
 docstring, para quem for mexer no código não precisar achar este documento.
 
+O inventário completo — cada hex, onde aparece e duas coincidências de valor que a regra não
+previu — está em [`PALETA-DE-CORES.md`](PALETA-DE-CORES.md).
+
 ---
 
 ## 8. Animação, e a restrição que ela impõe aos testes
@@ -385,16 +391,19 @@ estar rodando.
 ## 10. Testes
 
 ```bash
-flutter test          # 88 testes
+flutter test          # 100 testes
 ```
 
 | Arquivo | Testes | Foco |
 |---|---|---|
-| `test/aura_logic_test.dart` | 63 | lógica pura: sequência, insights, sugestão, clima, dataset, serialização |
+| `test/aura_logic_test.dart` | 75 | lógica pura: sequência, insights, sugestão, clima, dataset, serialização, frase do dia |
 | `test/aura_app_test.dart` | 25 | interface: navegação, fluxo de humor, gráficos, animação, resiliência, tela de erro |
 
 Os testes de interface rodam num viewport de telefone (420×940) em vez do padrão 800×600 —
 foi assim que apareceu um estouro de layout que o padrão escondia.
+
+`aura_app_test.dart` liga `debugDisableDailyLineNetwork = true` no `setUp` — sem isso, todo
+teste que navega até a aba Resumo dispararia uma requisição de rede de verdade. Ver §11.
 
 > **Ao alternar entre SDKs, rode `flutter clean` antes.** Sem isso, o `build/` fica com o
 > `shaders/ink_sparkle.frag` de um SDK e o outro falha ao carregá-lo:
@@ -410,3 +419,42 @@ foi assim que apareceu um estouro de layout que o padrão escondia.
 
 Testes **não** cobrem aparência. A interface foi conferida separadamente, servindo o build
 web e navegando com captura de tela; ver [`RELATORIO-E2E.md`](RELATORIO-E2E.md) §3.2.
+
+---
+
+## 11. A única chamada de rede — FRASE DO DIA
+
+Todo o resto do arquivo é o que o banner do MOTOR DE INSIGHTS já dizia: "Dart puro, sem IA e
+sem API". A seção FRASE DO DIA (linha 1565) é a exceção deliberada — o porquê da reversão está
+em [`DECISOES.md` §24](DECISOES.md).
+
+**Fluxo:**
+
+```
+_DailyLineCard.initState()
+  → AuraStore.loadDailyLineFor(hoje)         [cache por data, shared_preferences]
+      ├─ achou → mostra, não chama rede
+      └─ não achou → buildDailyLinePrompt(sessions, profile, sheet, climate)
+                        → fetchDailyLine(prompt)
+                            → _tryGroq()   [timeout 6s]
+                                ├─ 200 + texto → salva no cache, mostra
+                                └─ falha       → _tryGemini()  [timeout 6s]
+                                                    ├─ 200 + texto → salva, mostra
+                                                    └─ falha       → null, cartão some
+```
+
+**Por que fica fora da faixa de lógica pura.** É a única função do arquivo que importa
+`package:http` — por isso vive numa faixa própria entre CLIMA PESSOAL e DATASET DE
+DEMONSTRAÇÃO, em vez de dentro de uma das duas. `buildDailyLinePrompt`,
+`parseGroqDailyLine` e `parseGeminiDailyLine` continuam puras e testadas sem rede — só
+`fetchDailyLine` (e as duas funções privadas que ela chama) toca `http`.
+
+**O que garante que a falha não aparece na tela.** `_DailyLineCard` (WIDGETS COMPARTILHADOS)
+não tem estado de erro — só `_text`, `null` até uma frase chegar. Sem frase, `build()` devolve
+`SizedBox.shrink()`. Não existe caminho de código que mostre um erro de rede ao usuário.
+
+**Por que o teste de widget precisa da trava.** `debugDisableDailyLineNetwork` (topo da seção)
+é uma variável top-level mutável, não uma constante — de propósito, para `aura_app_test.dart`
+poder ligá-la antes de cada teste. Sem ela, qualquer teste que monta a aba Resumo dispararia
+uma chamada real: `pumpAndSettle` não espera por uma requisição de rede, o teste terminaria com
+ela pendente, e o `setState` do retorno rodaria contra uma árvore de widgets já descartada.

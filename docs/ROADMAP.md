@@ -6,8 +6,12 @@ mandou não codar.
 Cada uma tem o mesmo tratamento: **o que é, por que vale, quanto custa e o que quebra**. Um
 roadmap que só lista desejos não ajuda ninguém a decidir — o que decide é o custo.
 
-> **O código está congelado para a apresentação.** Nada aqui foi implementado. O que falta
-> até 24/08 está em [`ENTREGA.md`](ENTREGA.md) e depende de acesso ao FlutLab e ao aparelho.
+> **O código está congelado para a apresentação — com uma exceção.** O item 4 (frase do dia)
+> foi implementado antes de 24/08 por pedido explícito do usuário, revertendo a recusa que
+> este documento originalmente registrava para ele — a decisão completa está em
+> [`DECISOES.md` §24](DECISOES.md). Os outros quatro itens continuam só planejados. O que
+> falta até 24/08 está em [`ENTREGA.md`](ENTREGA.md) e depende de acesso ao FlutLab e ao
+> aparelho — inclusive um novo rebuild do APK, já que o 4 mudou o código.
 
 ---
 
@@ -16,7 +20,7 @@ roadmap que só lista desejos não ajuda ninguém a decidir — o que decide é 
 | # | Item | Custo | Retorno | Invalida o APK? |
 |---|---|---|---|---|
 | 2 | Explicar os métodos de estudo | **baixo** | **alto** | não |
-| 4 | Frase do dia, gerada localmente | baixo | médio | não |
+| 4 | Frase do dia — **implementado, com API** (ver DECISOES.md §24) | baixo | médio | **sim** |
 | 5 | Tarefa presente durante a sessão | médio | médio | não |
 | 1 | Cores: contraste, climas e modo escuro | **alto** | alto | **sim** |
 | 3 | Trocar a logo | médio | baixo | **sim** |
@@ -134,9 +138,14 @@ a outra faz a abertura piscar, que é justamente o defeito que a v1.1.0 corrigiu
 
 ---
 
-## 4. Frase do dia — gerada localmente, não por API
+## 4. Frase do dia — implementada, com API (revertido em relação a este documento)
 
-O pedido original dizia "precisa de API". **Não precisa — e a API sairia cara em mais de um
+> **Este item foi implementado depois de escrito**, revertendo a recusa abaixo. O usuário
+> pediu explicitamente, mesmo depois de eu expor os riscos — a decisão completa, com o que
+> mudou e o que foi mantido, está em [`DECISOES.md` §24](DECISOES.md). Os motivos abaixo
+> continuam registrados como o argumento que quase venceu, não apagados.
+
+O pedido original dizia "precisa de API". **Não precisava — e a API saía cara em mais de um
 sentido.**
 
 ### Por que não a API
@@ -149,7 +158,7 @@ sentido.**
 | **Escopo** | a especificação limita as dependências do projeto |
 | **E não seria mais pessoal** | um modelo genérico, sem os dados do usuário, devolve motivação genérica |
 
-### O que fazer no lugar
+### O que fazer no lugar (não foi o que aconteceu — ver DECISOES.md §24)
 
 **O app já escreve frases pessoais.** Os insights são exatamente isso: frases tiradas do
 comportamento real. Uma "frase do dia" do mesmo motor é mais pessoal do que qualquer API
@@ -168,8 +177,12 @@ política de `suggestMethodForMood`, que prefere não dizer nada a chutar.
 **Custo:** baixo. Reaproveita `buildInsights`, `buildCharacterSheet` e `resolveClimate`, e é
 lógica pura — testável sem construir tela.
 
-> A alternativa com API fica aqui **registrada como avaliada e recusada**, com o motivo. Se
-> alguém quiser retomá-la, que seja sabendo o que ela custa ao posicionamento do produto.
+> Esta alternativa **não foi construída**. O usuário pediu a reversão do "sem API" mesmo
+> depois de eu apresentar os cinco motivos acima, mais dois que só apareceram ao investigar a
+> viabilidade técnica (repositório público, FlutLab sem mecanismo de build-secret). A versão
+> implementada tenta Groq e Gemini, chave de tier gratuito, cache de uma chamada por dia — o
+> desenho completo, com o que foi feito para conter o risco, está em
+> [`DECISOES.md` §24](DECISOES.md).
 
 ---
 

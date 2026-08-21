@@ -7,6 +7,43 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---
 
+## [1.6.0] — 2026-08-21
+
+Frase do dia — a primeira e única exceção ao "sem rede" do projeto, revertendo o item 4 do
+ROADMAP. Decisão completa, com o risco avaliado e o que foi feito para conter ele, em
+[`DECISOES.md` §24](docs/DECISOES.md).
+
+### Adicionado
+
+- **Cartão de frase do dia** na aba Resumo: uma frase curta de incentivo, gerada a partir do
+  resumo local (classe, clima, contexto, foco do momento) — nunca do humor bruto. Tenta a Groq
+  primeiro, a Gemini como reserva; sem resposta das duas, o cartão simplesmente não aparece.
+- Uma chamada por usuário por dia — `AuraStore` guarda a frase e a data, evitando repetir a
+  requisição a cada abertura de tela.
+- `debugDisableDailyLineNetwork`, ligada nos testes de widget para a chamada de rede real
+  nunca disparar durante `pumpAndSettle`.
+- Dependência nova: `http`. Permissão nova no manifest de release: `INTERNET`.
+- 12 testes novos (75 na suíte de lógica, 100 no total): o prompt nunca carrega humor bruto, os
+  dois parsers de resposta, e a regra de cache por data.
+
+### Mudou
+
+- A promessa de privacidade do README passou a descrever a exceção com precisão, em vez de um
+  "sem rede" que deixou de ser verdade para essa única funcionalidade.
+
+## [1.5.2] — 2026-08-21
+
+Só documentação. O código continua congelado para a apresentação de 24/08.
+
+### Adicionado
+
+- **[`docs/PALETA-DE-CORES.md`](docs/PALETA-DE-CORES.md)**: inventário da paleta atual,
+  valor por valor — não um plano de mudança, isso já está no ROADMAP §1. Duas coincidências
+  de valor que a regra de cor não previu ficaram registradas: o teal da pausa do cronômetro é
+  o mesmo hex de `moodColors[5]` ("Ótimo"), e o amber padrão de `AuraMark` é o mesmo hex de
+  `moodColors[3]` ("Neutro") — nenhuma das duas aparece na tela hoje, mas ambas eram
+  coincidência, não reaproveitamento deliberado.
+
 ## [1.5.1] — 2026-08-20
 
 Só documentação. O código está congelado para a apresentação de 24/08.

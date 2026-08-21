@@ -163,6 +163,16 @@ mudou — não porque você abriu o app.
 
 Ao lado de cada barra vai o número real. A barra é para bater o olho; o número é o dado.
 
+### Frase do dia
+
+Logo abaixo da ficha, um cartão com uma frase curta de incentivo — escrita a partir do seu
+resumo (classe, clima, contexto, foco do momento). É a única parte do app que fala com a
+internet; o [README](../README.md#privacidade) explica o que sai do aparelho e o que não sai.
+
+Sem internet, sem chave configurada, ou se as duas tentativas falharem, **o cartão
+simplesmente não aparece** — sem mensagem de erro, sem espaço vazio reservado. O resto do app
+funciona igual.
+
 ### Sua aura
 
 O fundo do app inteiro muda de cor conforme suas sessões recentes, em quatro estados:

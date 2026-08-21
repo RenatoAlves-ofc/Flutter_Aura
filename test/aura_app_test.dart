@@ -14,6 +14,11 @@ void main() {
     // AuraCrashReport é estado global: sem limpar, o erro registrado por um
     // teste vaza para o seguinte e o card da tela Sobre aparece onde não devia.
     AuraCrashReport.clear();
+    // Sem isto, a aba Resumo dispararia uma chamada de rede de verdade em
+    // todo teste que passa por ela. `pumpAndSettle` não espera por uma
+    // requisição — o teste terminaria com ela pendente, e o card tentaria um
+    // `setState` depois que a árvore já tivesse sido descartada.
+    debugDisableDailyLineNetwork = true;
   });
 
   /// O viewport padrão do teste (800x600) é mais baixo que qualquer celular e
@@ -188,7 +193,7 @@ void main() {
 
     expect(find.text('Privacidade'), findsOneWidget);
     expect(
-      find.textContaining('Seus dados de humor não saem do seu celular'),
+      find.textContaining('O Aura não tem login, não tem servidor'),
       findsOneWidget,
     );
     expect(find.text('Remover dados de demonstração'), findsOneWidget);

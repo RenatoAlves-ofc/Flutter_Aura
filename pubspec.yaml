@@ -27,6 +27,11 @@ dependencies:
   fl_chart: 1.0.0
   percent_indicator: ^4.2.5
   cupertino_icons: ^1.0.8
+  #
+  # http: única dependência de rede do projeto, usada só pela "frase do dia"
+  # (ver docs/DECISOES.md §24). Pacote estável, sem exigência de SDK acima do
+  # que os outros quatro já pedem.
+  http: ^1.2.0
 
 dev_dependencies:
   flutter_test:
