@@ -103,7 +103,20 @@ Item do checklist de ideação. O [USO-DE-IA.md](USO-DE-IA.md) foi escrito para 
 o ferramental, o processo e — principalmente — os três diagnósticos que a IA errou e como
 foram derrubados por evidência.
 
-### 3.6 Slides e ensaio
+### 3.6 A nova logo — **você pediu para ser lembrado**
+
+Ela está com outra pessoa e **não existe nenhum arquivo no repositório**. Enquanto não
+chegar, o item não anda — e ele é dos mais caros: invalida o APK e obriga a refazer todos os
+prints da documentação ([`PLANO-V2.md` §11](PLANO-V2.md)).
+
+- [ ] Cobrar a logo com quem está com ela
+- [ ] Me mandar o arquivo (PNG grande e quadrado, ou SVG) — eu gero as densidades do Android,
+      os 15 PNGs do iOS e a abertura nativa a partir dele
+
+**Se ela não chegar até 23/08, apresente com a atual.** Trocar a logo na véspera obriga a um
+rebuild do APK e a recapturar os prints, e não vale o risco.
+
+### 3.7 Slides e ensaio
 
 Números prontos para copiar em [APRESENTACAO.md §5](APRESENTACAO.md). Roteiro de
 demonstração em §2. **Ensaie uma vez cronometrando** — é a única forma de descobrir que a

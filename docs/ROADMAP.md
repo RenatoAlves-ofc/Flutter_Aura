@@ -6,6 +6,11 @@ mandou não codar.
 Cada uma tem o mesmo tratamento: **o que é, por que vale, quanto custa e o que quebra**. Um
 roadmap que só lista desejos não ajuda ninguém a decidir — o que decide é o custo.
 
+> **Existe uma rodada de planejamento mais nova.** O [`PLANO-V2.md`](PLANO-V2.md) tem dez
+> itens pedidos em 21/08, cada um verificado contra o código — e corrige um erro que este
+> documento tinha no item 5. Leia os dois: este tem o raciocínio de cores e métodos que
+> continua valendo; o outro tem o que vem agora.
+
 > **O código está congelado para a apresentação — com uma exceção.** O item 4 (frase do dia)
 > foi implementado antes de 24/08 por pedido explícito do usuário, revertendo a recusa que
 > este documento originalmente registrava para ele — a decisão completa está em
@@ -187,6 +192,15 @@ lógica pura — testável sem construir tela.
 ---
 
 ## 5. Tarefa presente durante a sessão
+
+> ### ⚠️ Correção: metade deste item já estava pronta
+>
+> O parágrafo abaixo dizia que a tarefa vinculada *"some"* depois do check de humor. **Isso
+> estava errado.** A verificação feita para o [`PLANO-V2.md`](PLANO-V2.md) mostrou que ela
+> **é exibida durante a sessão inteira**, embaixo do anel (`lib/main.dart:2812`, ícone de
+> link + título em itálico). O que falta é só a outra metade: concluir a tarefa sem sair da
+> aba Foco. O texto original fica abaixo, não apagado, porque o erro foi meu e o registro
+> serve para isso.
 
 Hoje `linkedTaskId` existe e aparece pouco: dá para vincular uma tarefa no check de humor, e
 depois disso ela some. A aba Tarefas e a aba Foco quase não se falam.

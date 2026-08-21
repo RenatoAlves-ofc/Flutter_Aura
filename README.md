@@ -32,6 +32,7 @@ método utilizado**. Todo o resto do app existe para alimentar ou expor esse mot
 | [Uso de IA](docs/USO-DE-IA.md) | Como o projeto foi construído com IA, e onde ela errou |
 | [Paleta de cores](docs/PALETA-DE-CORES.md) | Inventário da paleta atual, valor por valor |
 | [Roadmap](docs/ROADMAP.md) | As próximas melhorias, com custo e o que cada uma quebra |
+| [**Plano V2**](docs/PLANO-V2.md) | A rodada seguinte: dez itens, cada um verificado contra o código |
 | [Changelog](CHANGELOG.md) | Histórico de mudanças |
 
 ---
