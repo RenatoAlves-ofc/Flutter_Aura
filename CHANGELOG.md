@@ -7,6 +7,30 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---
 
+## [1.6.1] — 2026-08-21
+
+Só documentação. Segunda rodada de planejamento, com tudo verificado antes de planejar.
+
+### Adicionado
+
+- **[`docs/PLANO-V2.md`](docs/PLANO-V2.md)**: dez melhorias pedidas, cada uma conferida
+  contra o código antes de entrar. Três achados que mudaram o plano:
+  - **Trocar de aba mata a sessão em andamento.** O `AnimatedSwitcher` com
+    `KeyedSubtree(key: ValueKey(_index))` destrói a `FocusPage` — vai junto o cronômetro, o
+    humor inicial, a tarefa vinculada e a nota. É perda de dado, reproduzível em dois toques,
+    e o maior risco para a demonstração ao vivo.
+  - **O arco-íris dos gráficos sai de uma linha.** As barras de "Humor inicial × duração"
+    são pintadas com `moodColors`, que inclui verde e verde-azulado. Todo o resto da aba já
+    usa índigo. A inconsistência inteira é `lib/main.dart:3835`.
+  - **O inglês dos insights é o nome da aba.** Os textos, os títulos e os dias da semana já
+    estão em português; o que está em inglês é o rótulo `'Insights'`.
+
+### Corrigido
+
+- **`ROADMAP.md` §5 dizia algo falso.** Afirmava que a tarefa vinculada "some" depois do
+  check de humor. Ela é exibida durante a sessão inteira (`lib/main.dart:2812`) — metade do
+  item já estava pronta. A correção ficou registrada como correção, não apagada.
+
 ## [1.6.0] — 2026-08-21
 
 Frase do dia — a primeira e única exceção ao "sem rede" do projeto, revertendo o item 4 do
