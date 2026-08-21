@@ -7,6 +7,19 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---
 
+## [1.5.2] — 2026-08-21
+
+Só documentação. O código continua congelado para a apresentação de 24/08.
+
+### Adicionado
+
+- **[`docs/PALETA-DE-CORES.md`](docs/PALETA-DE-CORES.md)**: inventário da paleta atual,
+  valor por valor — não um plano de mudança, isso já está no ROADMAP §1. Duas coincidências
+  de valor que a regra de cor não previu ficaram registradas: o teal da pausa do cronômetro é
+  o mesmo hex de `moodColors[5]` ("Ótimo"), e o amber padrão de `AuraMark` é o mesmo hex de
+  `moodColors[3]` ("Neutro") — nenhuma das duas aparece na tela hoje, mas ambas eram
+  coincidência, não reaproveitamento deliberado.
+
 ## [1.5.1] — 2026-08-20
 
 Só documentação. O código está congelado para a apresentação de 24/08.

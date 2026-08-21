@@ -335,6 +335,9 @@ qualquer terceira cor na interface é um desvio da regra.
 A constante vive em `CONSTANTES DE APOIO` (linha 352) com a regra escrita na própria
 docstring, para quem for mexer no código não precisar achar este documento.
 
+O inventário completo — cada hex, onde aparece e duas coincidências de valor que a regra não
+previu — está em [`PALETA-DE-CORES.md`](PALETA-DE-CORES.md).
+
 ---
 
 ## 8. Animação, e a restrição que ela impõe aos testes

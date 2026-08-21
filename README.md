@@ -30,6 +30,7 @@ método utilizado**. Todo o resto do app existe para alimentar ou expor esse mot
 | [Manual do usuário](docs/MANUAL-DO-USUARIO.md) | Como usar cada tela |
 | [Roteiro de apresentação](docs/APRESENTACAO.md) | Demonstração passo a passo e números para os slides |
 | [Uso de IA](docs/USO-DE-IA.md) | Como o projeto foi construído com IA, e onde ela errou |
+| [Paleta de cores](docs/PALETA-DE-CORES.md) | Inventário da paleta atual, valor por valor |
 | [Roadmap](docs/ROADMAP.md) | As próximas melhorias, com custo e o que cada uma quebra |
 | [Changelog](CHANGELOG.md) | Histórico de mudanças |
 
