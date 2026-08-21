@@ -14,18 +14,28 @@ provaria nada sobre o método de trabalho.
 | Fez | Não fez |
 |---|---|
 | Escreveu o código a partir da especificação | Definiu o produto, o público-alvo ou o diferencial |
-| Escreveu os 88 testes | Testou em aparelho real — só o autor tinha o celular |
+| Escreveu os 100 testes | Testou em aparelho real — só o autor tinha o celular |
 | Escreveu esta documentação | Gerou o APK, o QR Code ou os slides |
 | Diagnosticou defeitos e propôs correções | Acertou todos os diagnósticos de primeira (ver §3) |
 
-**Dentro do app não há IA nenhuma.** Os "insights" são comparações aritméticas em Dart puro
-sobre as sessões salvas — média por faixa de humor, média por dia da semana, média por
-método. Nenhuma chamada de rede, nenhuma API, nenhum modelo. A pasta `.claude/` é ferramenta
-de desenvolvimento e não é compilada no APK.
+**Os insights não usam IA — e essa parte continua verdadeira sem ressalva.** As seis
+descobertas são comparações aritméticas em Dart puro sobre as sessões salvas — média por
+faixa de humor, média por dia da semana, média por método. Nenhuma chamada de rede, nenhuma
+API, nenhum modelo. A pasta `.claude/` é ferramenta de desenvolvimento e não é compilada no
+APK.
 
-Isso é uma escolha de produto defensável e vale dizer na apresentação: um app que promete
-privacidade não pode mandar o humor do usuário para um servidor de terceiros para "gerar
-insights".
+**Uma exceção, pedida depois e revertendo essa posição em um ponto só: a frase do dia fala
+com um modelo de IA de terceiros** (Groq, com a Gemini como reserva). O motivo, o risco
+avaliado e o que foi feito para conter ele estão em
+[`DECISOES.md` §24](DECISOES.md#24-a-frase-do-dia--a-reversão-do-sem-api-registrada) — em
+resumo, manda só um resumo derivado (classe, clima, contexto), nunca o humor bruto, e usa
+chave de tier gratuito sem saldo justamente porque o risco de exposição é real com o
+repositório público.
+
+O argumento abaixo continua certo para tudo, exceto essa única frase — e é por isso que ela
+foi a decisão mais cara deste projeto, não a mais barata: um app que promete privacidade não
+deveria mandar nada derivado do humor do usuário para um servidor de terceiros. O Aura faz
+isso agora, numa única funcionalidade, sabendo o que isso custa.
 
 ---
 
@@ -118,7 +128,7 @@ independentes de verificação**, cada uma capaz de derrubar a anterior:
 
 | Camada | O que pegou | O que **não** pegaria |
 |---|---|---|
-| `analyze` + 88 testes | regras de negócio, serialização, resiliência | qualquer coisa visual |
+| `analyze` + 100 testes | regras de negócio, serialização, resiliência | qualquer coisa visual |
 | Inspeção visual do build web | Resumo incoerente, insight contraditório, sobras do template | qualquer coisa nativa |
 | Teste em aparelho real | **o crash do arm/arm64** | detalhe de lógica |
 

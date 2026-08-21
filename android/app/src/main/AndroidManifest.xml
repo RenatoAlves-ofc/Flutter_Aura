@@ -1,4 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Só para a "frase do dia" (ver docs/DECISOES.md §24) — o resto do app
+         não usa rede. Sem isto o release não conseguiria abrir socket algum,
+         mesmo com o código pronto: debug/profile já trazem por padrão do
+         Flutter, mas o manifest principal (o do release) não tinha. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="Aura"
         android:name="${applicationName}"

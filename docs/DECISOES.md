@@ -16,7 +16,7 @@ proíbe imports relativos.
 **Decisão.** Todo o app em `lib/main.dart`, com a separação feita por banners de seção em
 vez de por pastas.
 
-**Consequência.** 4.774 linhas em um arquivo. Para compensar, a lógica de negócio é
+**Consequência.** 5.059 linhas em um arquivo. Para compensar, a lógica de negócio é
 escrita como funções puras que não importam nada do Flutter, e é atacada diretamente pelos
 testes. A ordem das seções é significativa: cada uma só depende das anteriores.
 
@@ -47,6 +47,10 @@ diferencial declarado do produto para um público jovem.
 **Consequência.** O app funciona offline e os dados somem se for desinstalado — o que a tela
 Sobre diz explicitamente. Também significa que dado corrompido é fatal se não for tratado;
 ver decisão 8.
+
+> **Atualização.** "Nenhuma rede" valeu até a frase do dia (§24), a única exceção — e só ela:
+> continua verdade para tarefas, sessões, ficha e os seis insights. O motivo da exceção, e o
+> que foi feito para conter o risco dela, estão em [§24](#24-a-frase-do-dia--a-reversão-do-sem-api-registrada).
 
 ---
 
@@ -354,7 +358,7 @@ inventar uma para preencher o formato seria pior do que não desenhar nada.
 
 ## 19. O arquivo único ficou — e por que a crítica a ele é procedente
 
-**Contexto.** `lib/main.dart` tem 4.774 linhas. Em qualquer avaliação de código isso é o
+**Contexto.** `lib/main.dart` tem 5.059 linhas. Em qualquer avaliação de código isso é o
 primeiro apontamento, e com razão: arquivo único é prática ruim.
 
 **A crítica está certa no geral.** Num projeto que continuasse, a divisão correta seria por
@@ -377,7 +381,7 @@ lib/
 
 2. **Dividir arquivos não desacopla nada por si só.** Este é o ponto técnico que decide. O
    código **já é em camadas**: a faixa de lógica pura (562–1208) não importa nada do Flutter,
-   e 63 dos 88 testes batem nela sem construir uma única tela. Mover esse texto para pastas
+   e 75 dos 100 testes batem nela sem construir uma única tela. Mover esse texto para pastas
    sem mudar quem depende de quem deixaria o grafo de dependências **idêntico** — seria
    movimento, não arquitetura.
 
@@ -385,7 +389,7 @@ lib/
    longo de meses, com várias pessoas mexendo em paralelo e resolvendo conflitos de merge.
    Aqui é um autor e um prazo fechado.
 
-4. **O problema real que a crítica aponta já tem solução.** Navegar 4.774 linhas é ruim —
+4. **O problema real que a crítica aponta já tem solução.** Navegar 5.059 linhas é ruim —
    por isso existe o mapa de seções em [`ARQUITETURA.md`](ARQUITETURA.md) §1, com a linha de
    cada faixa e um `grep` que o reconstrói quando as linhas envelhecerem.
 
@@ -545,3 +549,57 @@ rolagem**. Com os chips e o campo novos, mais o cartão de sugestão aberto, o c
 da altura do sheet em 420×940 — e apareceria a faixa amarela e preta de estouro, na
 demonstração. Virou `SingleChildScrollView`; a inspeção visual foi o que pegou isso, porque
 nenhum teste olha para overflow.
+
+## 24. A frase do dia — a reversão do "sem API", registrada
+
+**Contexto.** O item 4 do [`ROADMAP.md`](ROADMAP.md) argumentava **contra** uma frase
+motivacional por API, com cinco motivos — contradiz o "sem IA, sem API, sem rede" do README,
+chave embutida em app cliente é extraível, quebra o uso offline, a especificação limita
+dependências, e uma API sem os dados do usuário devolve motivação genérica. O usuário pediu a
+reversão mesmo assim, depois de eu expor três fatos que pioram o risco original:
+
+- **O repositório é público.** Uma chave em `lib/main.dart` fica visível a qualquer pessoa
+  assim que o push sai — não "extraível do APK depois que alguém descompilar", e sim visível
+  imediatamente, inclusive para bots que varrem pushes públicos atrás de chave de API.
+- **O FlutLab não tem mecanismo de build-secret.** `docs/FLUTLAB.md` não menciona
+  `--dart-define` nem variável de ambiente em lugar nenhum; o fluxo é só
+  Import → Get Packages → Run/Build. Não existe hoje um jeito de manter a chave fora do git e
+  ainda buildar pelo caminho que este projeto usa.
+- Diante disso, perguntei três vezes antes de codar — se era mesmo para o Aura, como seguir
+  com a chave exposta, e se reaproveitava a chave já colada no chat ou uma nova.
+
+**Decisão.**
+
+- **Só chave de tier gratuito, sem saldo vinculado** — Groq e Gemini, nunca DeepSeek ou
+  OpenRouter com saldo. O pior caso de a chave vazar (e ela vai vazar, o repo é público) vira
+  "a cota estoura e o recurso para de funcionar", nunca uma cobrança.
+- **Groq como principal, Gemini como reserva** — não para dividir carga (o cache por dia já
+  resolve isso, ver abaixo), mas para resiliência: se a Groq falhar, tenta a Gemini antes de
+  desistir. É a ideia original do usuário ("juntar para não bater limite"), restrita às duas
+  sem risco financeiro.
+- **Uma chamada por usuário por dia, não por abertura de tela.** `AuraStore` guarda a frase e
+  a data; se a data salva bate com hoje, nem tenta de novo. Com ~50 usuários isso soma ~50
+  chamadas/dia no total — folga confortável mesmo no tier gratuito mais apertado.
+- **O prompt manda só o resumo já calculado localmente** (classe, atributo mais forte, clima,
+  contexto, foco do momento) — nunca o histórico bruto de humor, sessão por sessão. Minimiza o
+  que sai do aparelho, já que a promessa de privacidade está sendo furada de qualquer forma.
+- **Falha em silêncio.** Sem evidência (as duas chamadas falharam, ou não há chave
+  configurada), o cartão simplesmente não aparece — mesma política de `suggestMethodForMood`.
+  Isso importa em especial no dia da apresentação: sem wifi no local, o app precisa continuar
+  parecendo inteiro, não expor um erro de rede na frente de quem avalia.
+- **A chamada de rede real é desligada nos testes** por uma variável top-level
+  (`debugDisableDailyLineNetwork`), ligada no `setUp` de `aura_app_test.dart`. Sem isso, os
+  testes que navegam até a aba Resumo disparariam uma requisição de verdade: `pumpAndSettle`
+  não espera por ela, o teste terminaria com a requisição pendente, e o card tentaria um
+  `setState` numa árvore já descartada.
+
+**O que ficou de fora.** Um proxy de backend segurando a chave do lado do servidor seria a
+forma correta de fazer isso — mas é infraestrutura nova, hospedagem, autenticação própria, e
+não cabe nos dias que restam até a apresentação. Fica registrado como o próximo passo real,
+não como solução aceita.
+
+**Nomes de modelo.** `openai/gpt-oss-20b` (Groq) e `gemini-2.5-flash` (Gemini) — conferidos
+por pesquisa em 21/08/2026, porque os dois modelos que eu ia usar de memória (Llama 3.1 8B da
+Groq, Gemini 2.0 Flash) tinham sido descontinuados no mesmo ano, em junho. Se a chamada parar
+de funcionar um dia, comece verificando se o modelo mudou de novo antes de suspeitar de outra
+coisa.

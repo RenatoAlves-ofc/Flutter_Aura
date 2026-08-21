@@ -12,6 +12,7 @@ import 'dart:math' as math;
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -523,6 +524,8 @@ class AuraStore {
   static const String kProfileName = 'profileName';
   static const String kProfileContext = 'profileContext';
   static const String kProfileFocus = 'profileFocus';
+  static const String kDailyLineDate = 'dailyLineDate';
+  static const String kDailyLineText = 'dailyLineText';
 
   /// Lê uma lista salva em JSON, descartando o conteúdo se ele estiver corrompido.
   ///
@@ -661,6 +664,23 @@ class AuraStore {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(kCustomFocus, focus);
     await prefs.setInt(kCustomBreak, rest);
+  }
+
+  /// `null` se nunca houve frase salva, ou se a salva é de outro dia — nos
+  /// dois casos cabe uma tentativa nova. Uma tentativa por dia é o que faz
+  /// "juntar Groq e Gemini para não bater limite" valer a pena de verdade:
+  /// 50 pessoas somam ~50 chamadas por dia no total, não 50 por abertura de
+  /// tela.
+  static Future<String?> loadDailyLineFor(String dateKey) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getString(kDailyLineDate) != dateKey) return null;
+    return prefs.getString(kDailyLineText);
+  }
+
+  static Future<void> saveDailyLine(String dateKey, String text) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(kDailyLineDate, dateKey);
+    await prefs.setString(kDailyLineText, text);
   }
 }
 
@@ -1539,6 +1559,181 @@ AuraClimate resolveClimate(List<StudySession> sessions) {
   if (avgAfter >= 3.4) return _climateFluindo;
   if (avgAfter >= 2.4) return _climateNublado;
   return _climateRecolhido;
+}
+
+// ============================================================
+// FRASE DO DIA (única chamada de rede do app — ver DECISOES.md §24)
+// ============================================================
+//
+// Todo o resto do Aura é Dart puro, sem rede (ver o banner de MOTOR DE
+// INSIGHTS, acima). Esta seção é a única exceção, e existe só para uma frase
+// curta de incentivo por dia. O app preferia não precisar dela — a decisão
+// registrada em DECISOES.md §24 explica o porquê e o que foi descartado.
+//
+// Tenta a Groq primeiro; se falhar (limite, timeout, rede fora), tenta a
+// Gemini como reserva. As duas são chave de tier gratuito, sem cartão
+// vinculado: como o repositório é público, a chave fica exposta a qualquer
+// pessoa assim que o commit sai — o pior caso de abuso é a cota estourar e o
+// recurso parar de funcionar, nunca uma cobrança.
+//
+// Nomes de modelo conferidos em 21/08/2026 (os dois trocaram de nome no
+// mesmo ano: a Groq descontinuou o Llama 3.1 8B em junho, a Gemini desligou
+// o 2.0 Flash no mesmo mês). Se algum dia a chamada parar de funcionar,
+// comece verificando se o modelo mudou de novo antes de suspeitar de outra
+// coisa — já aconteceu duas vezes este ano.
+
+/// Chave nova da Groq — não reaproveitar nenhuma chave que já tenha
+/// circulado fora do repositório (chat, print, etc.). Fica em branco até a
+/// chave chegar; enquanto estiver assim, [fetchDailyLine] não tenta nada.
+const String _kGroqApiKey = '';
+
+/// Reserva, só entra se a Groq falhar. Em branco desativa a reserva e usa
+/// só a Groq.
+const String _kGeminiApiKey = '';
+
+/// Desliga a chamada de rede real. A suíte de widgets liga isto antes de
+/// pumpar qualquer tela: um `pumpAndSettle` não espera por uma requisição de
+/// verdade, e o teste terminaria com ela ainda pendente — o card tentaria um
+/// `setState` depois que a árvore já tivesse sido descartada.
+bool debugDisableDailyLineNetwork = false;
+
+/// Monta o resumo que vira prompt. Pura, testável sem rede: manda só o que
+/// já foi calculado localmente (classe, atributo mais forte, clima,
+/// contexto, foco do momento) — nunca o histórico bruto de humor sessão por
+/// sessão. É o mínimo que sai do aparelho para a frase continuar pessoal sem
+/// expor mais do que precisa.
+String buildDailyLinePrompt(
+  List<StudySession> sessions,
+  AuraProfile profile,
+  CharacterSheet sheet,
+  AuraClimate climate,
+) {
+  final partes = <String>[];
+  if (sheet.hasData) {
+    partes.add('Classe: ${sheet.className}.');
+    final destaque =
+        sheet.attributes.reduce((a, b) => a.value >= b.value ? a : b);
+    partes.add('Ponto forte: ${destaque.name} (${destaque.display}).');
+  }
+  partes.add('Clima atual: ${climate.name}.');
+  if (sheet.contextName != null) {
+    partes.add('Contexto principal: ${sheet.contextName}.');
+  }
+  if (sheet.focus != null) {
+    partes.add('Está focando em: ${sheet.focus}.');
+  }
+  final resumo = partes.join(' ');
+  return 'Você escreve uma frase curta de incentivo (máximo 20 palavras, em '
+      'português do Brasil, sem emoji, sem aspas) para alguém que usa um app '
+      'de foco. Baseie-se só nisto, sem inventar nenhum outro detalhe: '
+      '$resumo Responda só com a frase, nada antes nem depois.';
+}
+
+/// Extrai o texto de uma resposta da Groq (formato de chat compatível com a
+/// API da OpenAI). `null` se o formato não bater com o esperado — o mesmo
+/// tratamento de qualquer outra falha, não um caso especial.
+String? parseGroqDailyLine(String body) {
+  try {
+    final decoded = jsonDecode(body) as Map<String, dynamic>;
+    final choices = decoded['choices'] as List<dynamic>?;
+    if (choices == null || choices.isEmpty) return null;
+    final message =
+        (choices.first as Map<String, dynamic>)['message'] as Map<String, dynamic>?;
+    final texto = (message?['content'] as String?)?.trim();
+    return (texto == null || texto.isEmpty) ? null : texto;
+  } catch (_) {
+    return null;
+  }
+}
+
+/// Extrai o texto de uma resposta da Gemini — formato próprio, diferente do
+/// da Groq. `null` se o formato não bater com o esperado.
+String? parseGeminiDailyLine(String body) {
+  try {
+    final decoded = jsonDecode(body) as Map<String, dynamic>;
+    final candidates = decoded['candidates'] as List<dynamic>?;
+    if (candidates == null || candidates.isEmpty) return null;
+    final content = (candidates.first as Map<String, dynamic>)['content']
+        as Map<String, dynamic>?;
+    final parts = content?['parts'] as List<dynamic>?;
+    if (parts == null || parts.isEmpty) return null;
+    final texto =
+        ((parts.first as Map<String, dynamic>)['text'] as String?)?.trim();
+    return (texto == null || texto.isEmpty) ? null : texto;
+  } catch (_) {
+    return null;
+  }
+}
+
+/// Tenta a Groq e, se falhar, tenta a Gemini. `null` se as duas falharem, se
+/// nenhuma chave estiver configurada, ou se [debugDisableDailyLineNetwork]
+/// estiver ligado — a mesma política de `suggestMethodForMood`: sem
+/// evidência, sem frase, nunca uma genérica no lugar.
+Future<String?> fetchDailyLine(String prompt) async {
+  if (debugDisableDailyLineNetwork) return null;
+
+  if (_kGroqApiKey.isNotEmpty) {
+    final texto = await _tryGroq(prompt);
+    if (texto != null) return texto;
+  }
+  if (_kGeminiApiKey.isNotEmpty) {
+    final texto = await _tryGemini(prompt);
+    if (texto != null) return texto;
+  }
+  return null;
+}
+
+Future<String?> _tryGroq(String prompt) async {
+  try {
+    final response = await http
+        .post(
+          Uri.parse('https://api.groq.com/openai/v1/chat/completions'),
+          headers: {
+            'Authorization': 'Bearer $_kGroqApiKey',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'model': 'openai/gpt-oss-20b',
+            'messages': [
+              {'role': 'user', 'content': prompt},
+            ],
+            'max_tokens': 60,
+            'temperature': 0.7,
+          }),
+        )
+        .timeout(const Duration(seconds: 6));
+    if (response.statusCode != 200) return null;
+    return parseGroqDailyLine(response.body);
+  } catch (_) {
+    return null;
+  }
+}
+
+Future<String?> _tryGemini(String prompt) async {
+  try {
+    final response = await http
+        .post(
+          Uri.parse(
+            'https://generativelanguage.googleapis.com/v1beta/models/'
+            'gemini-2.5-flash:generateContent?key=$_kGeminiApiKey',
+          ),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'contents': [
+              {
+                'parts': [
+                  {'text': prompt},
+                ],
+              },
+            ],
+          }),
+        )
+        .timeout(const Duration(seconds: 6));
+    if (response.statusCode != 200) return null;
+    return parseGeminiDailyLine(response.body);
+  } catch (_) {
+    return null;
+  }
 }
 
 // ============================================================
@@ -3815,6 +4010,12 @@ class SummaryPage extends StatelessWidget {
       children: [
         _CharacterSheetCard(sheet: sheet, onEditProfile: onEditProfile),
         const SizedBox(height: 12),
+        _DailyLineCard(
+          sessions: sessions,
+          profile: profile,
+          sheet: sheet,
+          climate: climate,
+        ),
         AuraCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -4079,10 +4280,13 @@ class _AboutPageState extends State<AboutPage> {
                             )),
                         const SizedBox(height: 6),
                         const Text(
-                          'Seus dados de humor não saem do seu celular. '
                           'O Aura não tem login, não tem servidor e não tem '
-                          'feed. Tudo fica no armazenamento local do aparelho, '
-                          'e some se você desinstalar o app.',
+                          'feed. Tudo fica no armazenamento local do '
+                          'aparelho, e some se você desinstalar o app. Uma '
+                          'exceção: a frase do dia manda um resumo curto '
+                          '(nunca o humor bruto) para gerar uma frase de '
+                          'incentivo — sem internet ou sem resposta, ela '
+                          'simplesmente não aparece.',
                           style: TextStyle(height: 1.4),
                         ),
                       ],
@@ -4710,6 +4914,87 @@ class _AttributeBar extends StatelessWidget {
         const SizedBox(height: 4),
         Text(attribute.note, style: theme.textTheme.bodySmall),
       ],
+    );
+  }
+}
+
+/// O cartão da frase do dia. Não aparece nada enquanto carrega nem se as
+/// duas chamadas falharem — sem spinner, sem mensagem de erro. Importa em
+/// especial no dia da apresentação: sem wifi no local, o app precisa
+/// continuar parecendo inteiro, não expor uma falha de rede na tela.
+class _DailyLineCard extends StatefulWidget {
+  final List<StudySession> sessions;
+  final AuraProfile profile;
+  final CharacterSheet sheet;
+  final AuraClimate climate;
+
+  const _DailyLineCard({
+    required this.sessions,
+    required this.profile,
+    required this.sheet,
+    required this.climate,
+  });
+
+  @override
+  State<_DailyLineCard> createState() => _DailyLineCardState();
+}
+
+class _DailyLineCardState extends State<_DailyLineCard> {
+  String? _text;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final hoje = dayOf(DateTime.now()).toIso8601String();
+    final salva = await AuraStore.loadDailyLineFor(hoje);
+    if (!mounted) return;
+    if (salva != null) {
+      setState(() => _text = salva);
+      return;
+    }
+    final prompt = buildDailyLinePrompt(
+      widget.sessions,
+      widget.profile,
+      widget.sheet,
+      widget.climate,
+    );
+    final texto = await fetchDailyLine(prompt);
+    if (texto == null) return; // sem evidência, sem frase — fica em silêncio
+    await AuraStore.saveDailyLine(hoje, texto);
+    if (!mounted) return;
+    setState(() => _text = texto);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_text == null) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    return AnimatedOpacity(
+      opacity: 1,
+      duration: const Duration(milliseconds: 400),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: AuraCard(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.auto_awesome, color: kBrandIndigo, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  _text!,
+                  style: theme.textTheme.bodyMedium
+                      ?.copyWith(fontStyle: FontStyle.italic),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

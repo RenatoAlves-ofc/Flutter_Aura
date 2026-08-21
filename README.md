@@ -89,13 +89,27 @@ Micro-sessão (15/5), 40/20, **Flowtime** (contagem progressiva, sem alvo) e
 **Personalizado**. Todos reaproveitam o mesmo cronômetro: são uma lista de dados, não 11
 telas.
 
+**Frase do dia.** Uma frase curta de incentivo, escrita a partir do seu resumo — classe,
+clima, contexto, foco do momento — nunca do histórico de humor bruto. É a única parte do app
+que fala com a internet; o motivo e o que isso muda estão na seção **Privacidade**, abaixo.
+Sem chave configurada, sem resposta das duas tentativas, ou sem internet, o cartão
+simplesmente não aparece — o app continua funcionando igual.
+
 ---
 
 ## Privacidade
 
-Seus dados de humor não saem do seu celular. O Aura não tem login, não tem servidor e não
-tem feed. Tudo fica em `shared_preferences` (armazenamento local do aparelho) e some se você
-desinstalar o app.
+O Aura não tem login, não tem feed, e a esmagadora maioria do app é local: tarefas, sessões,
+ficha, insights, clima — tudo fica em `shared_preferences` (armazenamento do aparelho) e some
+se você desinstalar o app.
+
+**Uma exceção, deliberada e pequena: a frase do dia fala com um provedor de IA.** Ela manda um
+resumo curto (classe, clima, contexto, foco do momento) para gerar uma frase de incentivo —
+nunca o humor bruto, sessão por sessão. Chave de tier gratuito, sem conta paga vinculada; sem
+resposta, o cartão não aparece, sem erro visível. O porquê da reversão do "sem rede" original
+e o que foi feito para conter o risco estão em
+[`docs/DECISOES.md` §24](docs/DECISOES.md#24-a-frase-do-dia--a-reversão-do-sem-api-registrada).
+Todo o resto do app — inclusive os seis insights — continua 100% local, sem exceção.
 
 Na primeira abertura o app semeia 22 sessões fictícias dos últimos 14 dias, com semente
 fixa, para que nenhuma tela apareça vazia. Elas são declaradas como fictícias dentro do app
@@ -108,18 +122,18 @@ e podem ser removidas na tela **Sobre**.
 ```bash
 flutter pub get
 flutter analyze     # sem issues
-flutter test        # 88 testes
+flutter test        # 100 testes
 flutter run
 ```
 
 Para rodar ou buildar o APK **no FlutLab**, veja [docs/FLUTLAB.md](docs/FLUTLAB.md) — inclui
 os dois avisos que são esperados e por que o APK precisa ser gerado como `arm64`.
 
-O app inteiro vive em **`lib/main.dart`** (4.774 linhas), sem imports relativos, por
+O app inteiro vive em **`lib/main.dart`** (5.059 linhas), sem imports relativos, por
 exigência do ambiente. O mapa navegável do arquivo está em
 [docs/ARQUITETURA.md](docs/ARQUITETURA.md).
 
-Os 88 testes cobrem a lógica que não aparece na tela: a sequência com perdão, o motor de
+Os 100 testes cobrem a lógica que não aparece na tela: a sequência com perdão, o motor de
 insights e seus limiares, o clima pessoal, a serialização retrocompatível, a resiliência a
 dados corrompidos e o dataset de demonstração. Testes não olham para a tela — a interface
 foi conferida à parte, rodando o build web num viewport de telefone.

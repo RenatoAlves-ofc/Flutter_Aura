@@ -132,8 +132,10 @@ Só então aponte o fundo colorido: a aura. Depois a sequência com perdão.
 
 Mostre a mensagem de privacidade.
 
-> Fale: os dados de humor não saem do aparelho. Sem login, sem servidor, sem feed. Para um
-> público cansado de coleta de dados, isso é posicionamento, não só uma limitação técnica.
+> Fale: sem login, sem servidor, sem feed — quase tudo fica só no aparelho. A única exceção é
+> a frase do dia, que manda um resumo curto (nunca o humor bruto) para gerar a frase; sem
+> internet, ela só não aparece. Para um público cansado de coleta de dados, dizer isso com
+> clareza é posicionamento, não só uma limitação técnica.
 
 ### Passo 9 — Fechamento: roadmap
 
@@ -149,7 +151,7 @@ onboarding com quiz.
 ## 3. Se sobrar tempo (ou se perguntarem)
 
 **"Como você garantiu que funciona?"**
-88 testes automatizados, em dois SDKs diferentes. Mas testes não olham para a tela — a
+100 testes automatizados, em dois SDKs diferentes. Mas testes não olham para a tela — a
 interface foi conferida separadamente, servindo o build web num viewport de telefone. Foi
 essa conferência que achou a tela Resumo abrindo incoerente. Detalhes em
 [`RELATORIO-E2E.md`](RELATORIO-E2E.md).
@@ -160,11 +162,11 @@ antes de descobrirmos que era o alvo de build: `arm` gera binário de 32 bits, e
 arm64 a engine nativa não carrega. O app morria antes de qualquer código Dart rodar — por
 isso nenhuma instrumentação em Dart conseguia capturar. Está em [`DECISOES.md`](DECISOES.md) §6.
 
-**"Por que 4.774 linhas num arquivo só?"**
+**"Por que 5.059 linhas num arquivo só?"**
 Restrição declarada do ambiente de entrega: a especificação da atividade proíbe imports
 relativos, porque o FlutLab tem problemas com arquitetura multi-arquivo no navegador. A
 mitigação foi separar por **camada dentro do arquivo**: a lógica de negócio é escrita como
-funções puras que não importam nada do Flutter, e 63 dos 88 testes batem nela sem construir
+funções puras que não importam nada do Flutter, e 75 dos 100 testes batem nela sem construir
 uma única tela. Fora dessa restrição, a divisão em pastas seria o certo — e está registrada
 no roadmap, não esquecida. Detalhe em [`DECISOES.md`](DECISOES.md) §19.
 
@@ -184,9 +186,13 @@ sem construir tela nenhuma.
 **"Você usou IA para fazer isso?"**
 Sim, e está documentado em [`USO-DE-IA.md`](USO-DE-IA.md) — inclusive os **três diagnósticos
 em que a IA errou** e o que provou o contrário em cada caso. Em dois deles foi teste no
-aparelho ou insistência minha que derrubou a resposta dela. Dentro do app não há IA nenhuma:
-os insights são aritmética em Dart puro, sem rede — o que é coerente com prometer
-privacidade.
+aparelho ou insistência minha que derrubou a resposta dela.
+
+**"E dentro do app, tem IA?"**
+Numa única funcionalidade: a frase do dia, que fala com a Groq (e a Gemini como reserva) para
+gerar uma frase de incentivo a partir do seu resumo — nunca do humor bruto. Os seis insights
+continuam 100% Dart puro, sem rede. A decisão de abrir essa exceção — com o risco avaliado e
+o que foi feito para conter ele — está em [`DECISOES.md` §24](DECISOES.md).
 
 **"O dataset de demonstração não é trapaça?"**
 Ele é declarado como fictício dentro do próprio app e pode ser removido em um toque na tela
@@ -217,7 +223,7 @@ Faça isso **até 22/08**, não na véspera.
 | Métodos de foco | 11 |
 | Descobertas desbloqueáveis | 6, uma delas trancada de propósito |
 | Estados da aura | 4 + neutro |
-| Testes automatizados | 88 (63 de lógica pura, 25 de interface) |
+| Testes automatizados | 100 (75 de lógica pura, 25 de interface) |
 | Dependências externas | 4, todas gratuitas |
 | Linhas de código | ~4.800, em arquivo único por exigência do FlutLab |
 | Backend | nenhum |

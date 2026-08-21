@@ -19,8 +19,8 @@ Android 16.
 
 | | |
 |---|---|
-| Linhas em `lib/main.dart` | 4.774 |
-| Testes automatizados | 88 (63 de lógica, 25 de interface) |
+| Linhas em `lib/main.dart` | 5.059 |
+| Testes automatizados | 100 (75 de lógica, 25 de interface) |
 | `flutter analyze` | sem nenhum aviso |
 | SDKs verificados | Flutter 3.32.8 (o do FlutLab) e 3.47.0 |
 | Métodos de foco | 11, incluindo Flowtime |
@@ -87,7 +87,7 @@ não pegariam.
 que o FlutLab usa, e o 3.47.0. Rodar nos dois não é redundância — foi assim que apareceu
 uma asserção de layout que só a versão nova emite (Seção 4).
 
-Os 88 testes cobrem deliberadamente a lógica que **não aparece na tela** e por isso não
+Os 100 testes cobrem deliberadamente a lógica que **não aparece na tela** e por isso não
 seria pega por inspeção visual: a regra de sequência com perdão, os limiares de desbloqueio
 dos insights, o clima pessoal, a serialização retrocompatível e a resiliência a dados
 corrompidos.
