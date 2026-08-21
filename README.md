@@ -30,6 +30,7 @@ método utilizado**. Todo o resto do app existe para alimentar ou expor esse mot
 | [Manual do usuário](docs/MANUAL-DO-USUARIO.md) | Como usar cada tela |
 | [Roteiro de apresentação](docs/APRESENTACAO.md) | Demonstração passo a passo e números para os slides |
 | [Uso de IA](docs/USO-DE-IA.md) | Como o projeto foi construído com IA, e onde ela errou |
+| [Roadmap](docs/ROADMAP.md) | As próximas melhorias, com custo e o que cada uma quebra |
 | [Changelog](CHANGELOG.md) | Histórico de mudanças |
 
 ---
@@ -124,17 +125,25 @@ foi conferida à parte, rodando o build web num viewport de telefone.
 
 ---
 
-## Roadmap (fora do MVP)
+## Roadmap
 
-Ritual Semanal de fechamento, Modo Provas, arco fechado por temporada, compartilhamento de
-cartões de insight e onboarding com quiz de expectativa.
+O planejamento completo das próximas melhorias — **com custo, retorno e o que cada uma
+quebra** — está em [docs/ROADMAP.md](docs/ROADMAP.md):
 
-Mais a **divisão do `main.dart` em vários arquivos**, por camada — adiada por restrição
-declarada do ambiente de entrega, que proíbe imports relativos. O porquê inteiro, incluindo
-o que estaria certo fazer num projeto que continuasse, está em
-[docs/DECISOES.md](docs/DECISOES.md) §19.
+| Melhoria | Custo |
+|---|---|
+| Explicar os 11 métodos de estudo dentro do app | baixo |
+| Frase do dia, gerada dos seus próprios dados | baixo |
+| Tarefa presente durante a sessão | médio |
+| Cores: contraste, amplitude dos climas e modo escuro | alto |
+| Trocar a logo | médio |
 
-A **sugestão adaptativa de duração** também estava nesta lista e acabou implementada: ela
+Mais os itens que a especificação mandou não codar — Ritual Semanal, Modo Provas, arco por
+temporada, compartilhamento de cartões e onboarding com quiz — e a **divisão do `main.dart`
+em vários arquivos**, adiada por restrição do ambiente de entrega
+([docs/DECISOES.md](docs/DECISOES.md) §19).
+
+A **sugestão adaptativa de duração** também estava nessa lista e acabou implementada: ela
 reaproveitava o motor de correlação que já existia, então saiu barata.
 
 ---

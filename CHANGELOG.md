@@ -7,6 +7,24 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---
 
+## [1.5.1] — 2026-08-20
+
+Só documentação. O código está congelado para a apresentação de 24/08.
+
+### Adicionado
+
+- **[`docs/ROADMAP.md`](docs/ROADMAP.md)**: as cinco melhorias pedidas, cada uma com custo,
+  retorno e o que ela quebra. Três coisas que o documento registra e valem citar:
+  - **Os climas se parecem demais, e dá para medir**: a luminância dos cinco gradientes fica
+    entre 0,80 e 0,92 — amplitude de 0,12. São cinco pastéis quase brancos, e é por isso que
+    a aura muda pouco na tela.
+  - **`FocusMethod` não tem campo de descrição nenhum.** O app oferece "52/17" e "Ciclo
+    Ultradiano" sem explicar o que são, e escolher o método é a primeira decisão que ele
+    pede. É o item mais barato e de maior retorno do roadmap.
+  - **Frases motivacionais não precisam de API** — e a API contradiria o "sem IA, sem API,
+    sem rede" do README, exigiria chave extraível do APK, quebraria o uso offline e ainda
+    seria *menos* pessoal que gerar a frase do histórico real do usuário.
+
 ## [1.5.0] — 2026-08-20
 
 Personalização — e a descoberta que ela desbloqueia, que é o ponto inteiro.
