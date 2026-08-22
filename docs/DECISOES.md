@@ -87,7 +87,7 @@ ninguém "modernizar" isso de volta sem entender o motivo.
 
 ---
 
-## 5. NDK fixada na 27
+## 5. NDK: fixada, revertida, fixada de novo — e revertida de vez
 
 **Contexto.** O build do FlutLab avisa que `shared_preferences_android` exige a NDK
 `27.0.12077973`, enquanto o Flutter 3.32 usa a 26.3.11579264. Na época, a hipótese para o
@@ -96,15 +96,29 @@ r27 é a primeira que alinha as libs nativas nesse tamanho.
 
 **Decisão inicial.** Fixar `ndkVersion = "27.0.12077973"`.
 
-**Atualização.** A causa real do crash era outra (decisão 6), mas o aviso vermelho do
-FlutLab continuava confundindo a leitura do build. A decisão atual é fixar
-`ndkVersion = "27.0.12077973"` em `android/app/build.gradle.kts` para explicitar a exigência
-do `shared_preferences_android` e reduzir ruído na entrega.
+**Primeira reversão.** A causa real do crash era outra (decisão 6). Com ela conhecida, o pin
+perdeu o benefício e sobrou o risco, então voltou para `flutter.ndkVersion`.
 
-**Consequência.** O ambiente que buildar o APK precisa ter a NDK 27 instalada. Se o FlutLab
-usado não tiver essa versão, há duas saídas: instalar/selecionar a NDK 27 no ambiente ou
-reverter temporariamente para `flutter.ndkVersion` sabendo que o build pode continuar
-gerando APK, mas com o aviso.
+**O pin voltou uma segunda vez** — para "reduzir o ruído vermelho na entrega" — **e foi
+revertido de novo em 22/08.** O que decidiu foi a evidência, conferida no
+`~/.pub-cache/hosted/pub.dev/shared_preferences_android-2.4.13`:
+
+| O que se procurou | O que se achou |
+|---|---|
+| `.c`, `.cpp`, `.h`, `.so`, `CMakeLists.txt`, `.mk` | **nada** — o plugin não tem uma linha de código nativo |
+| `ndkVersion` no `android/build.gradle` dele | **não existe** — o plugin não declara NDK nenhuma |
+
+**Não existe `.so` do plugin para a NDK proteger.** O aviso é comparação de metadado entre
+números de versão declarados, e o pin não muda nada do que entra no APK.
+
+**Decisão atual.** `ndkVersion = flutter.ndkVersion`. O aviso vermelho reaparece e está
+documentado como esperado em [FLUTLAB.md §4.1](FLUTLAB.md).
+
+**Por que o ruído cosmético perde para o risco.** Fixar a 27 exige aquela NDK instalada no
+ambiente de build — o que não dá para garantir no FlutLab, e sem ela o build **falha antes de
+compilar**. O APK que funciona no aparelho foi gerado **sem** o pin. Trocar um aviso que já
+está explicado na documentação por uma chance de build quebrado às vésperas da apresentação
+não compensa.
 
 ---
 
@@ -641,3 +655,20 @@ em tooltip — só o rótulo "Sua aura hoje" na aba Resumo. Criar um texto novo 
 (`test/aura_logic_test.dart:187-188`, checando `'começa animado'`/`'começa pra baixo'` no
 corpo de `mood_duration`) e foram atualizados para a nova redação — nenhum teste foi
 removido, e nenhum precisou ser criado, porque os `id`s dos insights não mudaram.
+
+**Atualização de 22/08 — a fundamentação chegou, e ela não reverteu esta decisão.** O autor
+trouxe as fontes que faltavam: a **Attentional Control Theory** (Eysenck, Derakshan, Santos &
+Calvo, em *Emotion*/APA), o relatório **On Edge** (Making Caring Common, Harvard), a pesquisa
+**Stress in America** (APA) e a literatura de *dark patterns* sobre *streak anxiety*. Elas
+estão agora em [`PRODUTO.md` §1 e §7](PRODUTO.md).
+
+Isso resolve a objeção que originou este reposicionamento — a de que os números não eram
+rastreáveis. Mas a **outra** objeção continua de pé, e por isso a decisão fica como está: o
+Aura não se apresenta como ferramenta de saúde mental.
+
+O encaixe funcionou porque a fonte principal ajuda dos dois lados: a Attentional Control
+Theory é **ciência cognitiva de desempenho**, não clínica. Ela explica por que o estado de
+entrada consome memória de trabalho e derruba inibição e flexibilidade cognitiva — ou seja,
+**fundamenta exatamente a tese de performance** que este reposicionamento adotou, em vez de
+puxar de volta para o território que ele quis evitar. Harvard e APA entram só como contexto da
+pressão sobre o público, sem nenhuma afirmação clínica.

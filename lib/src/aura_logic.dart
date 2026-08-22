@@ -901,14 +901,14 @@ AuraClimate resolveClimate(List<StudySession> sessions) {
 // comece verificando se o modelo mudou de novo antes de suspeitar de outra
 // coisa — já aconteceu duas vezes este ano.
 
-/// Chave nova da Groq — não reaproveitar nenhuma chave que já tenha
-/// circulado fora do repositório (chat, print, etc.). Fica em branco até a
-/// chave chegar; enquanto estiver assim, [fetchDailyLine] não tenta nada.
-const String _kGroqApiKey = '';
+/// Chave de tier gratuito, sem saldo vinculado — exposta de propósito, o
+/// repositório é público. Ver DECISOES.md §24 para o porquê e o que isso
+/// custa se vazar (a cota estoura, nunca uma cobrança).
+const String _kGroqApiKey = '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';
 
 /// Reserva, só entra se a Groq falhar. Em branco desativa a reserva e usa
 /// só a Groq.
-const String _kGeminiApiKey = '';
+const String _kGeminiApiKey = 'AQ.Ab8RN6LAS5HfP484Ab2irxvjJLhklRiytN4BTmk_5C8jAjrIbQ';
 
 /// Desliga a chamada de rede real. A suíte de widgets liga isto antes de
 /// pumpar qualquer tela: um `pumpAndSettle` não espera por uma requisição de

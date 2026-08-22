@@ -13,7 +13,7 @@ evidência está no [relatório ponta a ponta](RELATORIO-E2E.md).
 | | Item | Evidência |
 |---|---|---|
 | ✅ | Os 8 itens da Definição de Pronto | [RELATORIO-E2E.md §2](RELATORIO-E2E.md), item a item |
-| ✅ | 101 testes automatizados passando | `flutter test`, em Flutter 3.32.8 e 3.47.0 |
+| ✅ | 100 testes automatizados passando | `flutter test`, em Flutter 3.32.8 e 3.47.0 |
 | ✅ | `flutter analyze` sem nenhum aviso | nos dois SDKs |
 | ✅ | App instalado e rodando em celular real | Android 16, APK arm64 — feito com uma versão anterior; o APK final ainda precisa ser instalado, item 3.1 |
 | ✅ | Identidade própria: `applicationId`, ícone e abertura | [DECISOES.md §11, §12, §16](DECISOES.md) |
@@ -56,21 +56,17 @@ APK. Foi o caso da rodada anterior a esta.
 
 ## 3. Depende de você — o que falta
 
-### 3.1 Colar a chave real da Groq no código — **bloqueante**
+### 3.1 Chaves da Groq e da Gemini — ✅ feito
 
-`_kGroqApiKey` em `lib/main.dart` (seção FRASE DO DIA) está em branco de propósito — eu não
-tinha uma chave seguindeira para colar (ver [DECISOES.md §24](DECISOES.md)). Sem ela, a
-função guarda e devolve `null` antes de tentar qualquer requisição: o app funciona igual, só
-que sem o cartão de frase.
+`_kGroqApiKey` e `_kGeminiApiKey` em **`lib/src/aura_logic.dart`** (o refactor moveu a seção
+FRASE DO DIA para lá) já têm chaves reais, novas — nenhuma reaproveitada das que circularam
+antes (ver [DECISOES.md §24](DECISOES.md)). A Groq é a principal; a Gemini entra só se a Groq
+falhar.
 
-- [ ] Gere uma chave **nova** na Groq — não a que foi colada no chat, ela já está exposta por
-      outro canal
-- [ ] Cole em `_kGroqApiKey`, faça o commit e o push
-- [ ] Opcional: se quiser a reserva da Gemini também, gere uma chave nova lá e cole em
-      `_kGeminiApiKey` (fica em branco = reserva desativada, só a Groq roda)
-
-Sem este passo, os passos 2 e 3.2 abaixo continuam valendo normalmente — o app não quebra por
-faltar chave, só não mostra a frase.
+> **O push destas chaves é bloqueado pelo GitHub.** A proteção de segredos reconhece as duas
+> e recusa o push, devolvendo um link de liberação por chave. Só o dono do repositório pode
+> clicar. É coerente com a decisão já registrada — o §24 já aceitava a exposição — mas o
+> GitHub confirma antes, em vez de depois.
 
 ### 3.2 Instalar no celular e conferir cinco coisas — **bloqueante**
 

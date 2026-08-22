@@ -79,20 +79,34 @@ neste projeto, e leva menos de um minuto.
 Nenhuma das três impede o build, e nenhuma é problema deste projeto. As duas primeiras são
 avisos; a terceira parece um desastre e não é.
 
-### 4.1 Aba Build — NDK 27
+### 4.1 Aba Build — aviso sobre a NDK
 
-O projeto agora fixa no `android/app/build.gradle.kts`:
-
-```kotlin
-ndkVersion = "27.0.12077973"
+```
+Your project is configured with Android NDK 26.3.11579264, but the following
+plugin(s) depend on a different Android NDK version:
+- shared_preferences_android requires Android NDK 27.0.12077973
 ```
 
-Isso atende ao aviso emitido pelo `shared_preferences_android` no FlutLab e evita que a
-saída em vermelho pareça erro fatal quando o APK foi gerado corretamente. Se o ambiente não
-tiver essa NDK instalada, o build pode falhar antes de compilar; nesse caso, instale/ative a
-NDK 27 no ambiente ou, apenas como contingência, volte temporariamente para
-`ndkVersion = flutter.ndkVersion` e aceite o aviso documentado no histórico de
-[DECISOES.md §5](DECISOES.md).
+**O aviso é sobre metadado, não sobre compilação.** Isso não é opinião — é o que se vê
+abrindo o plugin que dispara o aviso, no `~/.pub-cache`:
+
+| O que se procurou em `shared_preferences_android` | O que se achou |
+|---|---|
+| `.c`, `.cpp`, `.h`, `.so`, `CMakeLists.txt`, `.mk` | **nada** — o plugin não tem uma linha de código nativo |
+| `ndkVersion` no `android/build.gradle` dele | **não existe** |
+
+Ou seja: o Flutter compara dois números de versão declarados e avisa quando diferem. Como o
+plugin não compila nada nativo, **nenhuma `.so` dele entra no APK** — as únicas vêm da engine
+do Flutter, que já cuida do próprio alinhamento.
+
+**Não fixe a NDK para silenciar isso.** O pin já foi aplicado duas vezes neste projeto e
+revertido nas duas ([DECISOES.md §5](DECISOES.md)): ele exige aquela NDK instalada no
+ambiente de build, o que não dá para garantir no FlutLab, e sem ela o build **falha antes de
+compilar**. O APK que funciona no aparelho foi gerado **sem** o pin.
+
+> Se um dia quiser silenciar mesmo assim, teste numa **branch separada** e builde no FlutLab
+> antes de mergear. Se a NDK 27 não estiver lá, o build quebra — e é justamente esse risco
+> que fez o pin ser revertido as duas vezes.
 
 ### 4.1.1 A linha do tree-shaking, que aparece junto e assusta pelo mesmo motivo
 
