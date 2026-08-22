@@ -470,7 +470,7 @@ não ser ruído: são três faixas de duração comparadas entre si, e o insight
 em cada uma. Com pouco dado, uma única sessão longa e ruim decidiria o resultado — diria mais
 sobre aquele dia que sobre a pessoa.
 
-**Consequência.** A aba Insights passou a abrir em **"4 de 5 desbloqueadas"**, com um cartão
+**Consequência.** A aba Descobertas passou a abrir em **"4 de 5 desbloqueadas"**, com um cartão
 visivelmente trancado e um contador. O app ganhou um "próximo" sem que nada precisasse ser
 enfraquecido: a demonstração continua rica, com quatro descobertas abertas.
 
@@ -590,7 +590,7 @@ reversão mesmo assim, depois de eu expor três fatos que pioram o risco origina
   parecendo inteiro, não expor um erro de rede na frente de quem avalia.
 - **A chamada de rede real é desligada nos testes** por uma variável top-level
   (`debugDisableDailyLineNetwork`), ligada no `setUp` de `aura_app_test.dart`. Sem isso, os
-  testes que navegam até a aba Resumo disparariam uma requisição de verdade: `pumpAndSettle`
+  testes que navegam até a aba Ficha disparariam uma requisição de verdade: `pumpAndSettle`
   não espera por ela, o teste terminaria com a requisição pendente, e o card tentaria um
   `setState` numa árvore já descartada.
 
@@ -648,7 +648,7 @@ não sentimento narrado.
 
 **O que não foi feito.** Um tooltip de "leitura de prontidão" para o Clima Pessoal foi
 cogitado, mas não existe hoje nenhum texto explicativo sobre o Clima Pessoal na tela Sobre ou
-em tooltip — só o rótulo "Sua aura hoje" na aba Resumo. Criar um texto novo iria além de
+em tooltip — só o rótulo "Sua aura hoje" na aba Ficha. Criar um texto novo iria além de
 "editar texto existente", e ficou registrado como pendência em aberto, não como feito.
 
 **Consequência.** Dois testes citavam a redação antiga por conteúdo

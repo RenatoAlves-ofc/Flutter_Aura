@@ -78,7 +78,7 @@ seguir.
 > técnica, não estética — animação contínua trava a suíte de testes, então existe uma só, e
 > ela para junto com a sessão.
 
-### Passo 5 — Ir para a aba Insights
+### Passo 5 — Ir para a aba Descobertas
 
 Mostre **"5 de 6 desbloqueadas"** — e volte nesse número, ele importa. Leia **em voz alta**
 o primeiro card:
@@ -110,7 +110,7 @@ As barras sobem junto com o humor inicial.
 > Fale: é a tese do app em uma imagem. Quanto melhor a pessoa chega, mais tempo ela
 > sustenta — e isso não é força de vontade, é um padrão que dá para observar.
 
-### Passo 7 — Aba Resumo: a ficha
+### Passo 7 — Aba Ficha
 
 **Comece pela ficha**, no topo: o nome, a classe com o tipo de trabalho, e os quatro
 atributos. Se der tempo, toque no lápis e mostre o perfil — três campos, todos opcionais.

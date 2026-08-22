@@ -76,7 +76,7 @@ falhar.
 - [ ] A **abertura é em índigo com a marca** — se piscar branco, o APK é de uma versão antiga
 - [ ] As quatro abas abrem com conteúdo (nenhuma vazia)
 - [ ] O cronômetro roda, pede o humor antes e depois, e o halo respira em volta do anel
-- [ ] Na aba Resumo, a **frase do dia** aparece (com internet e chave colada) — e, tirando a
+- [ ] Na aba Ficha, a **frase do dia** aparece (com internet e chave colada) — e, tirando a
       internet do aparelho, o app continua abrindo normal, só sem o cartão
 
 Se o app **fechar ao abrir**, o alvo do build foi `arm` e não `arm64`. Confirme abrindo o
@@ -140,7 +140,7 @@ tempo de refazer o build com o alvo certo. Se deixar para o dia 23, não tem.
 | Telas vazias | dados de demonstração removidos | Restaurar na tela **Sobre** |
 | Insight bloqueado | falta volume de dados | É o comportamento esperado — explique como decisão de produto |
 | Não aparece sugestão adaptativa | poucas sessões naquele humor | Tente com **"Ótimo"**, a faixa com mais dados na demonstração |
-| Frase do dia não aparece na aba Resumo | sem internet no local, ou chave não configurada | Comportamento esperado, não é defeito — o app não mostra erro nenhum, só o cartão some ([DECISOES.md §24](DECISOES.md)) |
+| Frase do dia não aparece na aba Ficha | sem internet no local, ou chave não configurada | Comportamento esperado, não é defeito — o app não mostra erro nenhum, só o cartão some ([DECISOES.md §24](DECISOES.md)) |
 | Build cheio de stack traces Java | cache do Gradle do FlutLab corrompido | Nada — se terminar com `Build completed successfully`, o APK é válido ([FLUTLAB.md §4.3](FLUTLAB.md)) |
 
 ---

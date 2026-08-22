@@ -72,10 +72,10 @@ flowchart TD
     J --> L["pointsFromSessions()"]
     J --> M["resolveClimate()"]
     J --> N["buildInsights()"]
-    K --> O["Aba Resumo"]
+    K --> O["Aba Ficha"]
     L --> O
     M --> P["Gradiente do app inteiro"]
-    N --> Q["Aba Insights + gráficos"]
+    N --> Q["Aba Descobertas + gráficos"]
 ```
 
 `_recordSession` ser o **único** ponto de entrada é o que garante isso. Quando o dataset de
@@ -378,7 +378,7 @@ Os testes de interface rodam num viewport de telefone (420×940) em vez do padr�
 foi assim que apareceu um estouro de layout que o padrão escondia.
 
 `aura_app_test.dart` liga `debugDisableDailyLineNetwork = true` no `setUp` — sem isso, todo
-teste que navega até a aba Resumo dispararia uma requisição de rede de verdade. Ver §11.
+teste que navega até a aba Ficha dispararia uma requisição de rede de verdade. Ver §11.
 
 > **Ao alternar entre SDKs, rode `flutter clean` antes.** Sem isso, o `build/` fica com o
 > `shaders/ink_sparkle.frag` de um SDK e o outro falha ao carregá-lo:
@@ -430,6 +430,6 @@ não tem estado de erro — só `_text`, `null` até uma frase chegar. Sem frase
 
 **Por que o teste de widget precisa da trava.** `debugDisableDailyLineNetwork` (topo da seção)
 é uma variável top-level mutável, não uma constante — de propósito, para `aura_app_test.dart`
-poder ligá-la antes de cada teste. Sem ela, qualquer teste que monta a aba Resumo dispararia
+poder ligá-la antes de cada teste. Sem ela, qualquer teste que monta a aba Ficha dispararia
 uma chamada real: `pumpAndSettle` não espera por uma requisição de rede, o teste terminaria com
 ela pendente, e o `setState` do retorno rodaria contra uma árvore de widgets já descartada.
