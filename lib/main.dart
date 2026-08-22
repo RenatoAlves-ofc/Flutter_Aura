@@ -587,31 +587,15 @@ class _HomeShellState extends State<HomeShell> {
             const SizedBox(width: 4),
           ],
         ),
-        // Troca de aba com dissolvência e um deslize curto, para a navegação
-        // não ser um corte seco. A duração é curta de propósito: passar de aba
-        // precisa continuar parecendo instantâneo.
+        // As abas ficam montadas para preservar o estado interno delas. Isso é
+        // crítico para a aba Foco: trocar para Tarefas/Insights não pode cancelar
+        // o Timer nem esquecer humor inicial, tarefa vinculada, contexto e nota da
+        // sessão em andamento.
         body: SafeArea(
           top: false,
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 260),
-            switchInCurve: Curves.easeOut,
-            switchOutCurve: Curves.easeIn,
-            transitionBuilder: (child, animation) => FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0, 0.02),
-                  end: Offset.zero,
-                ).animate(animation),
-                child: child,
-              ),
-            ),
-            // A chave é o que faz o AnimatedSwitcher enxergar a troca: sem ela
-            // as abas são todas "o mesmo widget" e nada anima.
-            child: KeyedSubtree(
-              key: ValueKey<int>(_index),
-              child: pages[_index],
-            ),
+          child: IndexedStack(
+            index: _index,
+            children: pages,
           ),
         ),
         bottomNavigationBar: NavigationBar(

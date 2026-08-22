@@ -151,7 +151,7 @@ onboarding com quiz.
 ## 3. Se sobrar tempo (ou se perguntarem)
 
 **"Como você garantiu que funciona?"**
-100 testes automatizados, em dois SDKs diferentes. Mas testes não olham para a tela — a
+101 testes automatizados, em dois SDKs diferentes. Mas testes não olham para a tela — a
 interface foi conferida separadamente, servindo o build web num viewport de telefone. Foi
 essa conferência que achou a tela Resumo abrindo incoerente. Detalhes em
 [`RELATORIO-E2E.md`](RELATORIO-E2E.md).
@@ -221,7 +221,7 @@ Faça isso **até 22/08**, não na véspera.
 | Métodos de foco | 11 |
 | Descobertas desbloqueáveis | 6, uma delas trancada de propósito |
 | Estados da aura | 4 + neutro |
-| Testes automatizados | 100 (75 de lógica pura, 25 de interface) |
+| Testes automatizados | 101 (75 de lógica pura, 26 de interface) |
 | Dependências externas | 4, todas gratuitas |
 | Organização do código | `main.dart` + `part` files em `lib/src/` |
 | Backend | nenhum |

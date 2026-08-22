@@ -13,7 +13,7 @@ evidência está no [relatório ponta a ponta](RELATORIO-E2E.md).
 | | Item | Evidência |
 |---|---|---|
 | ✅ | Os 8 itens da Definição de Pronto | [RELATORIO-E2E.md §2](RELATORIO-E2E.md), item a item |
-| ✅ | 100 testes automatizados passando | `flutter test`, em Flutter 3.32.8 e 3.47.0 |
+| ✅ | 101 testes automatizados passando | `flutter test`, em Flutter 3.32.8 e 3.47.0 |
 | ✅ | `flutter analyze` sem nenhum aviso | nos dois SDKs |
 | ✅ | App instalado e rodando em celular real | Android 16, APK arm64 — feito com uma versão anterior; o APK final ainda precisa ser instalado, item 3.1 |
 | ✅ | Identidade própria: `applicationId`, ícone e abertura | [DECISOES.md §11, §12, §16](DECISOES.md) |

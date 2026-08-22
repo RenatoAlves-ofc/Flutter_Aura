@@ -20,7 +20,7 @@ custo e o que quebra**. Um plano que só lista desejos não ajuda a decidir.
 | 2 | Explicar os métodos de estudo | **não feito** — `FocusMethod` não tem campo de descrição |
 | 3 | Frase motivacional após o cronômetro | **motor pronto**, falta a chave e mudar o lugar |
 | 4 | Juntar tarefa ao temporizador | **metade já existe** — ver a correção na §5 |
-| 5 | Cronômetro em segundo plano | **não feito** — e são **dois** defeitos, não um |
+| 5 | Cronômetro em segundo plano | **parcial** — trocar de aba foi corrigido; sair do app ainda precisa de relógio real |
 | 6 | Subir o popup | **não feito** — causa isolada, achada |
 | 7 | Renomear "Resumo" (RPG) | **não feito** — decidido: **Ficha** |
 | 8 | Lugar para editar o perfil | **não feito** — hoje só existe um caminho |
@@ -140,9 +140,9 @@ faz sentido.
 
 São **dois defeitos independentes**, e o primeiro é pior do que o pedido sugere.
 
-### 6.1 Trocar de aba mata a sessão
+### 6.1 Trocar de aba matava a sessão — **corrigido**
 
-`lib/main.dart:2250`:
+Antes da correção, `lib/main.dart` usava:
 
 ```dart
 child: KeyedSubtree(
@@ -156,11 +156,10 @@ Flutter tratar cada aba como um widget **diferente**. Resultado: sair da aba Foc
 `_FocusPageState`** — e com ele o `Timer`, os segundos restantes, o humor inicial já
 informado, a tarefa vinculada, o contexto e a nota.
 
-**Não é só o cronômetro parar: é perder a sessão em andamento.** Basta tocar em "Tarefas" com
-o foco rodando. É reproduzível em dois toques.
-
-> **Isto é um risco direto para a apresentação.** Se durante a demonstração você iniciar o
-> cronômetro e passar para outra aba para mostrar algo, a sessão morre na frente da plateia.
+**Correção aplicada.** A troca de abas passou a usar `IndexedStack`, mantendo as abas
+montadas. Assim, a `FocusPage` não é descartada quando o usuário abre Tarefas, Insights ou
+Resumo, e o estado da sessão em andamento continua vivo. Há teste de regressão cobrindo
+este fluxo em `test/aura_app_test.dart`.
 
 ### 6.2 Sair do app faz o tempo derreter
 
@@ -182,7 +181,7 @@ estrangulados, e o cronômetro **atrasa em relação ao relógio real**.
 
 | Defeito | Correção | Dependência nova? |
 |---|---|---|
-| 6.1 trocar de aba | tirar o estado do cronômetro de dentro da `FocusPage` — subir para o `_HomeShellState`, que sobrevive à troca | não |
+| 6.1 trocar de aba | **feito por contenção**: `IndexedStack` mantém a `FocusPage` montada; uma futura extração para `_HomeShellState` ainda pode melhorar a arquitetura | não |
 | 6.2 sair do app | guardar o **horário de término** (`DateTime`) e recalcular o restante a partir do relógio, com um `WidgetsBindingObserver` para recalcular ao voltar | não |
 
 **O que este plano deliberadamente NÃO faz: notificar com o app fechado.** Isso exigiria

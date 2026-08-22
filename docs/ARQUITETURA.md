@@ -366,7 +366,7 @@ estar rodando.
 ## 10. Testes
 
 ```bash
-flutter test          # 100 testes
+flutter test          # 101 testes
 ```
 
 | Arquivo | Testes | Foco |
