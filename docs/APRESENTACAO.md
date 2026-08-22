@@ -3,6 +3,12 @@
 Apoio para a apresentação de **24/08/2026**. Serve como roteiro de demonstração e checklist
 de véspera.
 
+> ### ⏱ Se você tem 10 minutos, comece pelo [ROTEIRO-10MIN.md](ROTEIRO-10MIN.md)
+>
+> Este documento é o material **completo**: 9 passos de demonstração e 8 perguntas
+> respondidas. Ele **não cabe em 10 minutos**. O `ROTEIRO-10MIN.md` é o corte, com relógio
+> corrido, marcos de atraso e plano B — e aponta de volta para cá o que não coube.
+
 ---
 
 ## 1. Pitch de abertura (~30 segundos)
@@ -221,8 +227,8 @@ Faça isso **até 22/08**, não na véspera.
 | Métodos de foco | 11 |
 | Descobertas desbloqueáveis | 6, uma delas trancada de propósito |
 | Estados da aura | 4 + neutro |
-| Testes automatizados | 101 (75 de lógica pura, 26 de interface) |
-| Dependências externas | 4, todas gratuitas |
+| Testes automatizados | 100 (74 de lógica pura, 26 de interface) |
+| Dependências externas | 5, todas gratuitas |
 | Organização do código | `main.dart` + `part` files em `lib/src/` |
 | Backend | nenhum |
 | Animações contínuas no app | 1, de propósito |

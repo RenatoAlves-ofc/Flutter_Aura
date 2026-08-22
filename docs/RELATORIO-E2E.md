@@ -20,11 +20,11 @@ Android 16.
 | | |
 |---|---|
 | Linhas em `lib/main.dart` | 5.059 |
-| Testes automatizados | 101 (75 de lógica, 26 de interface) |
+| Testes automatizados | 100 (74 de lógica, 26 de interface) |
 | `flutter analyze` | sem nenhum aviso |
 | SDKs verificados | Flutter 3.32.8 (o do FlutLab) e 3.47.0 |
 | Métodos de foco | 11, incluindo Flowtime |
-| Dependências externas | 4, todas gratuitas do pub.dev |
+| Dependências externas | 5, todas gratuitas do pub.dev |
 
 ---
 

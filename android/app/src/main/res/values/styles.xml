@@ -13,6 +13,9 @@
 
          This Theme is only used starting with V2 of Flutter's Android embedding. -->
     <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
-        <item name="android:windowBackground">?android:colorBackground</item>
+        <!-- Era ?android:colorBackground, que neste parent resolve para branco.
+             O app é claro, então aqui a diferença é pequena — mas o valor certo
+             é a cor do próprio app, não a do tema do sistema. Ver DECISOES.md §26. -->
+        <item name="android:windowBackground">@color/aura_window_background</item>
     </style>
 </resources>

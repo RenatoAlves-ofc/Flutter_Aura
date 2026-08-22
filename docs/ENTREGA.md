@@ -15,7 +15,7 @@ evidência está no [relatório ponta a ponta](RELATORIO-E2E.md).
 | ✅ | Os 8 itens da Definição de Pronto | [RELATORIO-E2E.md §2](RELATORIO-E2E.md), item a item |
 | ✅ | 100 testes automatizados passando | `flutter test`, em Flutter 3.32.8 e 3.47.0 |
 | ✅ | `flutter analyze` sem nenhum aviso | nos dois SDKs |
-| ✅ | App instalado e rodando em celular real | Android 16, APK arm64 — feito com uma versão anterior; o APK final ainda precisa ser instalado, item 3.1 |
+| ✅ | App instalado e rodando em celular real | Android 16, APK arm64 — feito com uma versão anterior; o APK final ainda precisa ser instalado, item 3.2 |
 | ✅ | Identidade própria: `applicationId`, ícone e abertura | [DECISOES.md §11, §12, §16](DECISOES.md) |
 | ✅ | Item de roadmap implementado (sugestão adaptativa) | [RELATORIO-E2E.md §5](RELATORIO-E2E.md) |
 | ✅ | Documentação do repositório | este diretório |
@@ -68,20 +68,47 @@ falhar.
 > clicar. É coerente com a decisão já registrada — o §24 já aceitava a exposição — mas o
 > GitHub confirma antes, em vez de depois.
 
-### 3.2 Instalar no celular e conferir cinco coisas — **bloqueante**
+### 3.2 Instalar no celular e conferir — **bloqueante**
 
 É o único item que ainda pode revelar um problema. Faça hoje, não no dia 23.
 
-- [ ] O **ícone do Aura** aparece na tela inicial, não o do Flutter
-- [ ] A **abertura é em índigo com a marca** — se piscar branco, o APK é de uma versão antiga
-- [ ] As quatro abas abrem com conteúdo (nenhuma vazia)
-- [ ] O cronômetro roda, pede o humor antes e depois, e o halo respira em volta do anel
-- [ ] Na aba Ficha, a **frase do dia** aparece (com internet e chave colada) — e, tirando a
-      internet do aparelho, o app continua abrindo normal, só sem o cartão
+> **Um conserto entrou antes deste build, de propósito.** A abertura terminava num flash
+> **preto** em aparelho no modo escuro: o `NormalTheme` do Android ficava com a cor do tema do
+> sistema, e o Aura não tem tema escuro. Está corrigido em
+> [DECISOES.md §26](DECISOES.md). Entrou agora porque você ia refazer o APK de qualquer jeito
+> — descoberto depois de instalar, custaria outro ciclo inteiro.
 
-Se o app **fechar ao abrir**, o alvo do build foi `arm` e não `arm64`. Confirme abrindo o
-próprio arquivo — o procedimento está em [FLUTLAB.md §3.1](FLUTLAB.md): renomeie para `.zip`
-e veja se dentro de `lib/` está `arm64-v8a` (certo) ou `armeabi-v7a` (errado).
+#### O que já foi conferido aqui — você não precisa caçar isto
+
+Rodado em **22/08**, no Flutter 3.32.8 (o mesmo do FlutLab):
+
+| | O que foi conferido | Como |
+|---|---|---|
+| ✅ | O ícone **não** é o do Flutter | `sha256` dos 5 `mipmap-*/ic_launcher.png` comparado com o do template do Flutter — todos diferentes. O adaptativo (`ic_launcher.xml`, o que o Android 16 usa) aponta para a arte do Aura |
+| ✅ | A abertura tem a marca em todas as densidades | `launch_image.png` presente em mdpi→xxxhdpi, e `launch_gradient.xml` no índigo `#8B84FF`→`#4A41C7` |
+| ✅ | As quatro abas abrem com conteúdo | suíte de widgets: uma asserção por aba |
+| ✅ | Cronômetro, humor antes e depois, halo respirando | suíte de widgets, incluindo *"o halo respira durante a sessão e para ao pausar"* |
+| ✅ | Sem internet o app abre normal, só sem o cartão | `debugDisableDailyLineNetwork`, mais os testes dos dois parsers |
+| ✅ | O `Get Packages` do FlutLab vai passar | `flutter pub get` resolveu limpo no 3.32.8 |
+| ✅ | 100 testes verdes, `analyze` sem aviso | no 3.32.8 |
+
+#### O que **só** o aparelho responde
+
+Sobrou pouco, e é pouco de propósito — cada um destes depende de algo que não existe neste
+ambiente (tela, GPU, rede de verdade, ABI do build):
+
+- [ ] **O app abre.** Se fechar na hora, o alvo do build foi `arm` e não `arm64` — é o defeito
+      mais caro deste projeto ([DECISOES.md §6](DECISOES.md)). Confirme sem depender do
+      aparelho: renomeie o `.apk` para `.zip` e veja se dentro de `lib/` está `arm64-v8a`
+      (certo) ou `armeabi-v7a` (errado). Procedimento em [FLUTLAB.md §3.1](FLUTLAB.md)
+- [ ] **O ícone do Aura na tela inicial.** Os arquivos estão certos; o que não dá para
+      conferir daqui é o launcher desenhando
+- [ ] **A abertura não pisca.** Este é o teste do conserto acima. Se der, **teste com o
+      aparelho no modo escuro** — era ali que o flash aparecia
+- [ ] **A frase do dia aparece na aba Ficha**, com internet. Repare: os testes provam que o
+      app abre bem **sem** ela; que ela **aparece** nenhum teste prova, porque isso exige
+      chamada de rede real. É o único item sem rede de proteção nenhuma
+- [ ] **O halo respira** — o teste prova que o ticker roda, não que fica bonito na tela
 
 ### 3.3 Refazer os prints — **eles estão desatualizados**
 
@@ -134,9 +161,21 @@ rebuild do APK e a recapturar os prints, e não vale o risco.
 
 ### 3.8 Slides e ensaio
 
-Números prontos para copiar em [APRESENTACAO.md §5](APRESENTACAO.md). Roteiro de
-demonstração em §2. **Ensaie uma vez cronometrando** — é a única forma de descobrir que a
-demonstração não cabe no tempo.
+**Use o [ROTEIRO-10MIN.md](ROTEIRO-10MIN.md)**, escrito para os 10 minutos que você tem, com
+demonstração ao vivo no celular: orçamento bloco a bloco com relógio corrido, marcos para
+conferir de relance se está atrasado, o que cortar quando estiver, e o plano B para o
+espelhamento falhar.
+
+O [APRESENTACAO.md](APRESENTACAO.md) continua sendo o material completo — 9 passos de
+demonstração, 8 perguntas respondidas e os números do §5. Ele **não cabe em 10 minutos**, e é
+por isso que o roteiro cortado existe.
+
+**Ensaie uma vez cronometrando.** É a única forma de descobrir que a demonstração não cabe —
+e a hora de descobrir isso não é no dia 24.
+
+> Dois números do §5 estavam errados e foram corrigidos agora: a suíte é de **100** testes
+> (dizia 101) e são **5** dependências externas (dizia 4, de antes de a `http` entrar). Se
+> você já tinha copiado algum para algum lugar, vale conferir.
 
 ---
 
@@ -145,7 +184,7 @@ demonstração não cabe no tempo.
 O passo de maior risco — gerar o APK, que depende de serviço externo e já falhou duas vezes
 neste projeto por motivos diferentes — **já está feito**, com folga de 5 dias.
 
-O que sobra de risco está no **3.1**: instalar e conferir. Se o app não abrir, você ainda tem
+O que sobra de risco está no **3.2**: instalar e conferir. Se o app não abrir, você ainda tem
 tempo de refazer o build com o alvo certo. Se deixar para o dia 23, não tem.
 
 ---
@@ -155,7 +194,7 @@ tempo de refazer o build com o alvo certo. Se deixar para o dia 23, não tem.
 | Sintoma | Causa | O que fazer |
 |---|---|---|
 | App fecha ao abrir | APK gerado como `arm` | Refazer como `arm64` |
-| Abertura pisca branco | APK de versão anterior à abertura própria | Reimportar do GitHub e gerar de novo |
+| Abertura pisca branco ou preto | ou o APK é anterior à abertura própria, ou é anterior ao conserto do `NormalTheme` ([§26](DECISOES.md)) — **as duas se resolvem igual** | Reimportar do GitHub e gerar de novo |
 | Ícone do Flutter na tela inicial | idem | idem |
 | Telas vazias | dados de demonstração removidos | Restaurar na tela **Sobre** |
 | Insight bloqueado | falta volume de dados | É o comportamento esperado — explique como decisão de produto |
