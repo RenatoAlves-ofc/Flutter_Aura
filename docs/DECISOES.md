@@ -7,18 +7,26 @@ Formato: contexto → decisão → consequência.
 
 ---
 
-## 1. Tudo em um arquivo só
+## 1. Tudo em um arquivo só — histórico, depois parcelado
 
 **Contexto.** O app roda no FlutLab.io, um IDE Flutter no navegador. A especificação do
-projeto registra que o FlutLab tem problemas com arquitetura multi-arquivo no navegador e
-proíbe imports relativos.
+projeto registrava risco com arquitetura multi-arquivo no navegador e proibia imports
+relativos.
 
-**Decisão.** Todo o app em `lib/main.dart`, com a separação feita por banners de seção em
-vez de por pastas.
+**Decisão inicial.** Todo o app em `lib/main.dart`, com a separação feita por banners de
+seção em vez de por pastas.
 
-**Consequência.** 5.062 linhas em um arquivo. Para compensar, a lógica de negócio é
-escrita como funções puras que não importam nada do Flutter, e é atacada diretamente pelos
-testes. A ordem das seções é significativa: cada uma só depende das anteriores.
+**Atualização.** A manutenção de mais de 5 mil linhas no mesmo arquivo ficou cara demais. A
+primeira refatoração segura separou o código em arquivos `part`: `main.dart` preserva a
+entrada, o shell e as telas, enquanto `lib/src/aura_models.dart`, `lib/src/aura_store.dart`
+e `lib/src/aura_logic.dart` guardam modelos, persistência e regras. Como `part` mantém uma
+única biblioteca, os testes que importam `package:aura/main.dart` continuam enxergando a
+mesma API pública.
+
+**Consequência.** A organização melhora sem uma migração grande para múltiplas bibliotecas.
+Se uma instância específica do FlutLab rejeitar arquivos `part`, a contingência é
+concatenar os três arquivos de `lib/src/` de volta no `main.dart`, na ordem modelos → store
+→ lógica.
 
 ---
 
@@ -79,7 +87,7 @@ ninguém "modernizar" isso de volta sem entender o motivo.
 
 ---
 
-## 5. NDK fixada na 27 — e depois revertida
+## 5. NDK fixada na 27
 
 **Contexto.** O build do FlutLab avisa que `shared_preferences_android` exige a NDK
 `27.0.12077973`, enquanto o Flutter 3.32 usa a 26.3.11579264. Na época, a hipótese para o
@@ -88,15 +96,15 @@ r27 é a primeira que alinha as libs nativas nesse tamanho.
 
 **Decisão inicial.** Fixar `ndkVersion = "27.0.12077973"`.
 
-**Reversão.** A causa real do crash era outra (decisão 6). Com ela conhecida, o pin perdeu o
-benefício e sobrou o risco: fixar a 27 exige que o ambiente de build tenha essa NDK
-instalada, o que não dá para garantir no FlutLab, e o APK arm64 que funciona no aparelho foi
-gerado **sem** o pin. O projeto também não traz nenhuma dependência com código nativo
-próprio — as únicas libs `.so` vêm da engine do Flutter, que já cuida do alinhamento.
+**Atualização.** A causa real do crash era outra (decisão 6), mas o aviso vermelho do
+FlutLab continuava confundindo a leitura do build. A decisão atual é fixar
+`ndkVersion = "27.0.12077973"` em `android/app/build.gradle.kts` para explicitar a exigência
+do `shared_preferences_android` e reduzir ruído na entrega.
 
-**Consequência.** Voltou para `flutter.ndkVersion`. O aviso continua aparecendo no FlutLab e
-está documentado no README como esperado. Trocar duas linhas de aviso por uma possível
-falha de build às vésperas da apresentação não compensava.
+**Consequência.** O ambiente que buildar o APK precisa ter a NDK 27 instalada. Se o FlutLab
+usado não tiver essa versão, há duas saídas: instalar/selecionar a NDK 27 no ambiente ou
+reverter temporariamente para `flutter.ndkVersion` sabendo que o build pode continuar
+gerando APK, mas com o aviso.
 
 ---
 
@@ -228,7 +236,7 @@ afirmava que os dois "nunca se contradizem", o que era falso.
 
 ## 14. Avisos do FlutLab que ficam como estão
 
-**Aviso da NDK** (aba Build): explicado na decisão 5. Ignorado de propósito.
+**Aviso da NDK** (aba Build): a decisão 5 passou a fixar a NDK 27 para silenciar o aviso quando o ambiente a tiver instalada.
 
 **Aviso do Analyzer** sobre `no_wildcard_variable_uses` e `type_literal_in_constant_pattern`
 não serem regras reconhecidas: vem do analisador do FlutLab, não do projeto. As duas regras
@@ -356,13 +364,13 @@ inventar uma para preencher o formato seria pior do que não desenhar nada.
 
 ---
 
-## 19. O arquivo único ficou — e por que a crítica a ele é procedente
+## 19. O arquivo único foi parcelado em `part`
 
-**Contexto.** `lib/main.dart` tem 5.062 linhas. Em qualquer avaliação de código isso é o
-primeiro apontamento, e com razão: arquivo único é prática ruim.
+**Contexto.** `lib/main.dart` passava de 5 mil linhas. Em qualquer avaliação de código isso
+é o primeiro apontamento, e com razão: arquivo único é prática ruim.
 
-**A crítica está certa no geral.** Num projeto que continuasse, a divisão correta seria por
-camada, com a lógica pura virando um pacote próprio, sem nenhuma dependência de Flutter:
+**Crítica aceita.** A divisão ideal de longo prazo continuaria sendo por camada, com lógica
+pura em bibliotecas próprias e UI separada em telas/widgets:
 
 ```
 lib/
@@ -372,35 +380,14 @@ lib/
 └── ui/            HomeShell + as 5 telas + widgets compartilhados
 ```
 
-**Decisão: manter o arquivo único.** Cinco motivos, em ordem de peso:
+**Decisão atual.** Fazer uma etapa intermediária e segura: manter uma única biblioteca Dart,
+mas repartir o conteúdo em `part` files. Assim `lib/main.dart` continua sendo a entrada do
+app e os testes não mudam de import, enquanto modelos, persistência e lógica saem do arquivo
+principal.
 
-1. **A especificação da atividade proíbe.** §8 do `INSTRUCOES_PARA_CLAUDE_CODE.md`:
-   *"Arquivo único: entregar tudo em `lib/main.dart`, sem imports relativos — o FlutLab tem
-   problemas com arquitetura multi-arquivo no navegador."* É restrição declarada do ambiente
-   de entrega, não preferência de estilo.
-
-2. **Dividir arquivos não desacopla nada por si só.** Este é o ponto técnico que decide. O
-   código **já é em camadas**: a faixa de lógica pura (562–1208) não importa nada do Flutter,
-   e 75 dos 100 testes batem nela sem construir uma única tela. Mover esse texto para pastas
-   sem mudar quem depende de quem deixaria o grafo de dependências **idêntico** — seria
-   movimento, não arquitetura.
-
-3. **O benefício não se realiza dentro da vida útil do projeto.** Separar arquivos paga ao
-   longo de meses, com várias pessoas mexendo em paralelo e resolvendo conflitos de merge.
-   Aqui é um autor e um prazo fechado.
-
-4. **O problema real que a crítica aponta já tem solução.** Navegar 5.062 linhas é ruim —
-   por isso existe o mapa de seções em [`ARQUITETURA.md`](ARQUITETURA.md) §1, com a linha de
-   cada faixa e um `grep` que o reconstrói quando as linhas envelhecerem.
-
-5. **Seria a mudança de maior risco por unidade de benefício disponível.** Toca todas as
-   linhas do app, obriga a refazer o APK e a reverificar tudo, e o resultado visível para o
-   usuário final é exatamente nenhum.
-
-**Consequência.** A divisão está registrada como item de roadmap, não como dívida esquecida.
-Se o projeto continuar depois da entrega, o primeiro passo é confirmar se a restrição do
-FlutLab ainda é verdade: imports relativos dentro de `lib/` são Dart padrão, e essa proibição
-pode ter virado folclore. Dá para testar em uma branch descartável, sem risco para a `main`.
+**Consequência.** A base fica mais navegável e categorizada sem trocar todo o grafo de
+dependências em uma única mudança. A etapa seguinte, se o FlutLab permitir, é transformar os
+`part` files em bibliotecas reais com imports explícitos e separar a UI por telas.
 
 ---
 
