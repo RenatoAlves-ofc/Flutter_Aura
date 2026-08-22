@@ -97,9 +97,9 @@ vai trabalhar, e essa informação fica junto da sessão.
 
 ---
 
-## Aba Insights
+## Aba Descobertas
 
-![Aba Insights](img/05-insights.png)
+![Aba Descobertas](img/05-insights.png)
 
 O coração do app. Seis descobertas, calculadas a partir das suas sessões:
 
@@ -129,9 +129,9 @@ faixa de humor, e a altura é quanto tempo você sustentou em média começando 
 
 ---
 
-## Aba Resumo
+## Aba Ficha
 
-![Aba Resumo](img/07-resumo.png)
+![Aba Ficha](img/07-resumo.png)
 
 ### Sua ficha
 
@@ -197,7 +197,7 @@ deveria apagar três semanas de esforço.
 ### Pontos
 
 10 por sessão de foco concluída, 5 por tarefa. São só contagem: o que realmente evolui é a
-sua ficha, e o que importa mesmo são as descobertas na aba Insights.
+sua ficha, e o que importa mesmo são as descobertas na aba Descobertas.
 
 ---
 

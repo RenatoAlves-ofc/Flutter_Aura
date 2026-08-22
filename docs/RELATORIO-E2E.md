@@ -39,7 +39,7 @@ ou o teste feito no aparelho.
 | 1 | Escolher um método entre os 11 e rodar uma sessão completa | ✅ | Teste `métodos de foco são os 11 prometidos`; testes de interface `o app abre na aba Foco com o método padrão` e `trocar para Flowtime muda o cronômetro para contagem crescente`; print `01-foco.png` |
 | 2 | Humor registrado antes e depois da sessão | ✅ | Teste de interface `tocar em Iniciar pede o humor antes de rodar o cronômetro`, que verifica também que o botão Confirmar só libera após escolher; prints `02-humor.png` e `03-humor-sugestao.png` |
 | 3 | Ao menos 1 insight exibindo comparação real | ✅ | **5 das 6** descobertas abrem com o dataset de demonstração — o print `05-insights.png` mostra "5 de 6 desbloqueadas · 22 sessões registradas". A sexta ("Seu limite real", 30 sessões) nasce trancada de propósito. Grupo de testes `motor de insights` (6 testes) cobre os limiares |
-| 4 | Gráfico de correlação em `fl_chart` sem erro | ✅ | Teste de interface `a aba Insights renderiza os gráficos com o dataset demo`, que rola até cada gráfico e confirma `BarChart` e `LineChart` na árvore; print `06-graficos.png` |
+| 4 | Gráfico de correlação em `fl_chart` sem erro | ✅ | Teste de interface `a aba Descobertas renderiza os gráficos com o dataset demo`, que rola até cada gráfico e confirma `BarChart` e `LineChart` na árvore; print `06-graficos.png` |
 | 5 | Clima Pessoal mudando entre pelo menos 2 estados | ✅ | Grupo `clima pessoal` (4 testes) cobre os 4 estados; observado na prática: os prints mostram **Radiante** (dourado) antes de um ajuste no dataset e **Fluindo** (verde-azulado) depois |
 | 6 | Sequência não quebra ao faltar um dia | ✅ | Teste `faltar exatamente um dia com token guardado não quebra a sequência`, mais 7 outros no grupo `sequência com perdão` cobrindo teto de tokens, buraco grande e duas sessões no mesmo dia |
 | 7 | APK builda no FlutLab e abre em celular real | ✅ | Instalado e aberto em aparelho **Android 16**, a partir de um build de 8,3 MB. O **APK final** foi gerado em 19/08 do commit `48b7e72` — 8,5 MB, alvo `arm64`, já com a abertura e a animação. Exige o alvo **`android arm64`** — ver Seção 4 |
@@ -207,7 +207,7 @@ Decisões que valem registro:
 - **Não sugere Flowtime nem Personalizado.** Um não tem duração alvo, o outro depende da
   configuração do usuário — recomendá-los por duração média prometeria um número que a
   sessão não cumpriria.
-- **Não contradiz a aba Insights.** Usa o mesmo mínimo por método do insight "o método que
+- **Não contradiz a aba Descobertas.** Usa o mesmo mínimo por método do insight "o método que
   mais te sustenta", mas restrito à faixa de humor, porque a pergunta é outra: não é "o que
   funciona no geral", é "o que funciona quando estou assim".
 
@@ -302,7 +302,7 @@ pegariam: **o app estava sem graça**, e por motivos específicos.
 **As duas correções:**
 
 1. **Uma quinta descoberta que nasce bloqueada** — "Seu limite real", exigindo 30 sessões. A
-   aba Insights passou a abrir em "4 de 5 desbloqueadas", com um cartão trancado e um
+   aba Descobertas passou a abrir em "4 de 5 desbloqueadas", com um cartão trancado e um
    contador visível. Sem enfraquecer a demonstração: as quatro primeiras continuam abertas.
 
 2. **Uma ficha de personagem sem nenhum número inventado** — classe e quatro atributos

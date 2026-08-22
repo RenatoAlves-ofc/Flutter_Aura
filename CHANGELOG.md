@@ -7,6 +7,33 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---
 
+## [1.8.0] — 2026-08-22
+
+Os quatro itens que faltavam do corte recomendado do [`PLANO-V2.md` §12](docs/PLANO-V2.md)
+para antes de 24/08. O quinto (cronômetro ao trocar de aba) já tinha saído na 1.7.0.
+
+### Alterado
+
+- **As barras do gráfico de humor × duração agora são índigo**, não o arco-íris de
+  `moodColors`. A altura da barra representa a **duração**, não o estado de entrada — quem diz
+  o estado é o eixo, onde as faces seguem coloridas porque ali a cor *é* a informação
+  ([`ARQUITETURA.md` §7](docs/ARQUITETURA.md)). Pintar a barra por humor codificava a mesma
+  coisa duas vezes, e era só isso que punha verde ao lado do roxo.
+- **Os sheets abrem mais altos.** Os três (humor antes, humor depois, perfil) usavam
+  `isScrollControlled: true` **sem restrição de altura** — podiam ocupar a tela toda, mas só
+  cresciam até o conteúdo, ficando encolhidos e colados no rodapé. Agora têm altura mínima de
+  58% da tela e `useSafeArea`.
+- **A aba "Resumo" virou "Ficha"** — a palavra que o app já usava dentro dela, e o termo de
+  RPG de mesa em português.
+- **A aba "Insights" virou "Descobertas"** — era o único texto em inglês da interface. O
+  **título da página já dizia "Descobertas"** desde sempre; só o rótulo da aba destoava.
+
+### Detalhe que um teste pegou
+
+Depois da renomeação, `find.text('Descobertas')` passou a achar **duas** ocorrências — o
+rótulo da aba e o título da página, que agora coincidem. Foi assim que ficou provado que o
+título já estava em português, e a asserção virou `findsNWidgets(2)` com o motivo escrito.
+
 ## [1.7.0] — 2026-08-22
 
 Estabiliza a `main`, que estava vermelha, e fundamenta a problemática com as fontes

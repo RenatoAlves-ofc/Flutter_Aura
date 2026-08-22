@@ -12,7 +12,7 @@ método utilizado**. Todo o resto do app existe para alimentar ou expor esse mot
 <p align="center">
   <img src="docs/img/01-foco.png" width="200" alt="Aba Foco">
   <img src="docs/img/03-humor-sugestao.png" width="200" alt="Check de humor com sugestão adaptativa">
-  <img src="docs/img/05-insights.png" width="200" alt="Aba Insights">
+  <img src="docs/img/05-insights.png" width="200" alt="Aba Descobertas">
   <img src="docs/img/06-graficos.png" width="200" alt="Gráfico de correlação">
 </p>
 
@@ -44,8 +44,8 @@ método utilizado**. Todo o resto do app existe para alimentar ou expor esse mot
 |---|---|
 | **Foco** | Cronômetro com 11 métodos, check de humor antes e depois de cada sessão, sugestão adaptativa de método e vínculo opcional com uma tarefa |
 | **Tarefas** | Lista com prioridade (Alta/Média/Baixa), persistida localmente |
-| **Insights** | 6 descobertas desbloqueáveis + gráfico de correlação e ritmo semanal |
-| **Resumo** | Sua ficha (classe e atributos), clima pessoal, sequência com perdão e números |
+| **Descobertas** | 6 descobertas desbloqueáveis + gráfico de correlação e ritmo semanal |
+| **Ficha** | Sua ficha (classe e atributos), clima pessoal, sequência com perdão e números |
 
 Mais a tela **Sobre**, com a mensagem de privacidade e o controle do dataset de demonstração.
 

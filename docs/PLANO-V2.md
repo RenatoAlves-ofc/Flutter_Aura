@@ -16,15 +16,15 @@ custo e o que quebra**. Um plano que só lista desejos não ajuda a decidir.
 
 | # | Item | Estado real, verificado |
 |---|---|---|
-| 1 | Padronizar as cores dos dados | **não feito** — causa isolada, 1 linha |
+| 1 | Padronizar as cores dos dados | ✅ **feito** — a barra virou índigo |
 | 2 | Explicar os métodos de estudo | **não feito** — `FocusMethod` não tem campo de descrição |
-| 3 | Frase motivacional após o cronômetro | **motor pronto**, falta a chave e mudar o lugar |
+| 3 | Frase motivacional após o cronômetro | **motor pronto, chaves coladas** — falta só mudar o lugar |
 | 4 | Juntar tarefa ao temporizador | **metade já existe** — ver a correção na §5 |
 | 5 | Cronômetro em segundo plano | **parcial** — trocar de aba foi corrigido; sair do app ainda precisa de relógio real |
-| 6 | Subir o popup | **não feito** — causa isolada, achada |
-| 7 | Renomear "Resumo" (RPG) | **não feito** — decidido: **Ficha** |
+| 6 | Subir o popup | ✅ **feito** — altura mínima de 58% da tela nos três sheets |
+| 7 | Renomear "Resumo" (RPG) | ✅ **feito** — virou **Ficha** |
 | 8 | Lugar para editar o perfil | **não feito** — hoje só existe um caminho |
-| 9 | Insights em português + humor final | **não feito** — o inglês é o nome da aba |
+| 9 | Insights em português + humor final | **parcial** — a aba virou **Descobertas**; o gráfico de humor final continua pendente |
 | 10 | Nova logo | **bloqueado** — o arquivo não existe ainda (§11) |
 
 ---
@@ -88,7 +88,7 @@ Faltam **duas coisas diferentes**:
 **(a) A chave ainda está em branco.** `_kGroqApiKey` continua vazia — nenhuma das que
 circularam no chat foi reaproveitada, de propósito. Sem ela o cartão nunca aparece.
 
-**(b) O lugar.** Hoje o cartão vive na aba Resumo. O pedido é que a frase venha **depois do
+**(b) O lugar.** Hoje o cartão vive na aba Ficha. O pedido é que a frase venha **depois do
 cronômetro**, que é o momento de recompensa.
 
 > ### Uma decisão que precisa ser tomada antes de codar
@@ -238,7 +238,7 @@ ficha"), é o termo de RPG de mesa em português, e cabe na barra de navegação
 ## 9. Um lugar melhor para editar o perfil
 
 **Hoje existe um caminho só.** O lápis no cartão da ficha, em dois estados
-(`lib/main.dart:4769` e `4796`) — os dois dentro da aba Resumo. Para mexer no perfil é preciso
+(`lib/main.dart:4769` e `4796`) — os dois dentro da aba Ficha. Para mexer no perfil é preciso
 saber que ele mora lá dentro.
 
 **Plano.** Acrescentar um caminho que se ache sem procurar — um ícone na `AppBar` (que já

@@ -111,14 +111,17 @@ void main() {
         reason: 'a sessão em andamento precisa sobreviver à troca de aba');
   });
 
-  testWidgets('a aba Insights renderiza os gráficos com o dataset demo',
+  testWidgets('a aba Descobertas renderiza os gráficos com o dataset demo',
       (tester) async {
     await bootApp(tester);
 
-    await tester.tap(find.text('Insights'));
+    await tester.tap(find.text('Descobertas').last);
     await tester.pumpAndSettle();
 
-    expect(find.text('Descobertas'), findsOneWidget);
+    // Duas ocorrências de propósito: o título da página já dizia "Descobertas"
+    // desde sempre — o rótulo da aba é que estava em inglês ("Insights") e foi
+    // traduzido para a mesma palavra. Agora as duas coincidem.
+    expect(find.text('Descobertas'), findsNWidgets(2));
     expect(find.textContaining('5 de 6 desbloqueadas'), findsOneWidget);
 
     // Os gráficos ficam abaixo dos cards de insight; a ListView só os constrói
@@ -131,10 +134,10 @@ void main() {
     expect(find.byType(LineChart), findsOneWidget);
   });
 
-  testWidgets('a aba Resumo mostra a aura e a sequência', (tester) async {
+  testWidgets('a aba Ficha mostra a aura e a sequência', (tester) async {
     await bootApp(tester);
 
-    await tester.tap(find.text('Resumo'));
+    await tester.tap(find.text('Ficha'));
     await tester.pumpAndSettle();
 
     expect(find.text('Sua aura hoje'), findsOneWidget);
@@ -160,7 +163,7 @@ void main() {
       (tester) async {
     await bootApp(tester);
 
-    await tester.tap(find.text('Resumo'));
+    await tester.tap(find.text('Ficha'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byTooltip('Editar perfil'));
@@ -171,11 +174,11 @@ void main() {
         findsOneWidget);
   });
 
-  testWidgets('a aba Resumo abre pela ficha, com os quatro atributos',
+  testWidgets('a aba Ficha abre pela ficha, com os quatro atributos',
       (tester) async {
     await bootApp(tester);
 
-    await tester.tap(find.text('Resumo'));
+    await tester.tap(find.text('Ficha'));
     await tester.pumpAndSettle();
 
     expect(find.text('Sua ficha'), findsOneWidget);
@@ -193,7 +196,7 @@ void main() {
       (tester) async {
     await bootApp(tester);
 
-    await tester.tap(find.text('Insights'));
+    await tester.tap(find.text('Descobertas'));
     await tester.pumpAndSettle();
 
     // O ponto desta descoberta é ser vista trancada: sem isso o app não mostra

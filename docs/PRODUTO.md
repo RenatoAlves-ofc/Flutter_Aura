@@ -149,7 +149,7 @@ marcado.
 | **Prioridade** | Alta, Média e Baixa, com marcador colorido |
 | **Persistência local** | Sobrevive ao fechamento do app |
 
-### 3.3 Aba Insights
+### 3.3 Aba Descobertas
 
 > A aba se chama **"Insights"** hoje. A troca para **"Descobertas"** está planejada em
 > [`PLANO-V2.md` §10](PLANO-V2.md) e ainda não foi feita.
@@ -183,7 +183,7 @@ mostra "faltam 8", que é como a mecânica de desbloqueio fica visível.
 > Um gráfico com o **humor final** está planejado ([`PLANO-V2.md` §10.2](PLANO-V2.md)) e ainda
 > não existe — hoje o humor final aparece só dentro do texto de uma descoberta.
 
-### 3.4 Aba Resumo
+### 3.4 Aba Ficha
 
 > A aba se chama **"Resumo"** hoje. A troca para **"Ficha"** está decidida em
 > [`PLANO-V2.md` §8](PLANO-V2.md) e ainda não foi feita.

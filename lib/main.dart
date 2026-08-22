@@ -20,6 +20,23 @@ import 'package:shared_preferences/shared_preferences.dart';
 part 'src/aura_models.dart';
 part 'src/aura_store.dart';
 part 'src/aura_logic.dart';
+
+/// Altura mínima dos sheets, como fração da tela.
+///
+/// Sem isto os sheets abriam **baixo demais**: com `isScrollControlled: true`
+/// eles *podem* ocupar a tela toda, mas só crescem até o tamanho do conteúdo —
+/// e o conteúdo é uma `Column(mainAxisSize: min)`. O resultado era um sheet
+/// encolhido, colado no rodapé, com a metade de cima da tela vazia.
+///
+/// Quem passa disto continua rolando normalmente: o conteúdo já vive dentro de
+/// um `SingleChildScrollView`.
+const double kSheetMinHeightFactor = 0.58;
+
+/// Restrição de altura mínima para `showModalBottomSheet`, calculada da tela.
+BoxConstraints sheetConstraints(BuildContext context) => BoxConstraints(
+      minHeight: MediaQuery.of(context).size.height * kSheetMinHeightFactor,
+    );
+
 void main() {
   // Sem isto, qualquer exceção na inicialização derruba o app e o Android mostra
   // apenas "o app tem um bug", sem dizer qual. Num aparelho sem cabo e sem logcat
@@ -243,6 +260,8 @@ class _HomeShellState extends State<HomeShell> {
     final atualizado = await showModalBottomSheet<AuraProfile>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
+      constraints: sheetConstraints(context),
       backgroundColor: Colors.transparent,
       builder: (_) => _ProfileSheet(profile: _profile),
     );
@@ -608,9 +627,9 @@ class _HomeShellState extends State<HomeShell> {
             NavigationDestination(
                 icon: Icon(Icons.checklist_outlined), label: 'Tarefas'),
             NavigationDestination(
-                icon: Icon(Icons.auto_graph_outlined), label: 'Insights'),
+                icon: Icon(Icons.auto_graph_outlined), label: 'Descobertas'),
             NavigationDestination(
-                icon: Icon(Icons.person_outline), label: 'Resumo'),
+                icon: Icon(Icons.person_outline), label: 'Ficha'),
           ],
         ),
       ),
@@ -898,6 +917,8 @@ class _FocusPageState extends State<FocusPage>
     return showModalBottomSheet<_MoodResult>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
+      constraints: sheetConstraints(context),
       backgroundColor: Colors.transparent,
       builder: (sheetContext) => _MoodSheet(
         asksContext: true,
@@ -916,6 +937,8 @@ class _FocusPageState extends State<FocusPage>
     final result = await showModalBottomSheet<_MoodResult>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
+      constraints: sheetConstraints(context),
       backgroundColor: Colors.transparent,
       builder: (sheetContext) => const _MoodSheet(
         title: 'E agora, como você está?',
@@ -2177,7 +2200,14 @@ class _MoodDurationChart extends StatelessWidget {
                             BarChartRodData(
                               toY: e.value,
                               width: 22,
-                              color: moodColors[e.key],
+                              // Índigo, não a cor do humor. A altura da barra
+                              // representa a DURAÇÃO, não o estado de entrada —
+                              // quem diz o estado é o eixo, embaixo, onde as
+                              // faces seguem coloridas porque ali a cor É a
+                              // informação (ARQUITETURA.md §7). Pintar a barra
+                              // por humor codificava a mesma coisa duas vezes,
+                              // e era só isso que punha verde ao lado do roxo.
+                              color: kBrandIndigo,
                               borderRadius: const BorderRadius.vertical(
                                   top: Radius.circular(6)),
                             ),
