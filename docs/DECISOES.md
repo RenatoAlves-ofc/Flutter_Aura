@@ -672,3 +672,67 @@ entrada consome memória de trabalho e derruba inibição e flexibilidade cognit
 **fundamenta exatamente a tese de performance** que este reposicionamento adotou, em vez de
 puxar de volta para o território que ele quis evitar. Harvard e APA entram só como contexto da
 pressão sobre o público, sem nenhuma afirmação clínica.
+
+---
+
+## 26. A abertura terminava num flash preto em aparelho no modo escuro
+
+O §16 cuidou da **tela de abertura** e concluiu que *"a passagem de uma para a outra não
+pisca"*, porque a tela nativa e a tela Flutter compartilham o mesmo degradê. Isso está certo
+para o `LaunchTheme` — e é só metade do caminho.
+
+O que o `AndroidManifest.xml` faz depois:
+
+```xml
+<meta-data android:name="io.flutter.embedding.android.NormalTheme"
+           android:resource="@style/NormalTheme" />
+```
+
+Com esse `meta-data`, a `FlutterActivity` **troca de `LaunchTheme` para `NormalTheme` ainda no
+`onCreate`**, antes de o Flutter desenhar o primeiro frame. Então quem aparece na tela nesse
+intervalo não é o `launch_background` corrigido: é o `windowBackground` do `NormalTheme`.
+
+E os dois `NormalTheme` estavam como vieram do template:
+
+| Arquivo | Parent | `?android:colorBackground` resolve para |
+|---|---|---|
+| `values/styles.xml` | `Theme.Light.NoTitleBar` | branco |
+| `values-night/styles.xml` | `Theme.Black.NoTitleBar` | **preto** |
+
+O caso do modo escuro é o grave. O Aura **não tem tema escuro** — `brightness: Brightness.light`
+está fixo no `ThemeData` de `lib/main.dart`, e os cinco climas da aura são todos degradês
+claros. Num aparelho em modo escuro a sequência era:
+
+```
+índigo (LaunchTheme)  →  PRETO (NormalTheme)  →  app claro (primeiro frame)
+```
+
+Um flash preto entre duas telas claras, em cima de uma abertura que existe justamente para a
+transição ser contínua. No modo claro o mesmo defeito existe, mas quase não se vê: branco
+contra `#F4F2FB` é diferença pequena.
+
+**Decisão:** os dois `NormalTheme` passam a usar `@color/aura_window_background`, novo em
+`values/colors.xml`, com o valor `#F4F2FB` — o primeiro tom do degradê do app. A janela atrás
+da interface passa a ser a cor do app em vez da cor do tema do sistema, e o modo escuro para
+de receber um valor que o app nunca usa.
+
+### O que foi verificado, e o que não foi
+
+**Não vi o flash.** Não há aparelho neste ambiente, e emulador tampouco — o `flutter doctor`
+aqui não acha Android SDK nenhum. O que está verificado é a leitura do caminho: o `meta-data`
+existe no manifest, os dois parents são os que a tabela acima diz, e o `ThemeData` do app é
+claro e fixo.
+
+Isso muda um item do [`ENTREGA.md` §3.2](ENTREGA.md), que dizia:
+
+> A abertura é em índigo com a marca — **se piscar branco, o APK é de uma versão antiga**
+
+O diagnóstico não separava as duas causas. Um APK **correto** podia piscar por causa do
+`NormalTheme`, e a conclusão seria refazer o build na véspera à toa. O §3.2 foi reescrito.
+
+**A hora de corrigir era esta.** O APK vai ser refeito de qualquer forma antes da
+apresentação; entrando junto, o conserto custa zero. Descoberto depois da instalação, custaria
+um ciclo inteiro de reimportar, buildar e instalar de novo.
+
+É também a única mudança fora de `docs/` aceita nesta altura do projeto: é recurso Android,
+não toca em `lib/`, e por isso não mexe em nada que os 100 testes cobrem.

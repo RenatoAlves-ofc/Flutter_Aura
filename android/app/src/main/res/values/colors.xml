@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Cor da janela que fica ATRÁS da interface do Flutter, entre a tela de
+         abertura sair e o primeiro frame ser desenhado.
+
+         É o primeiro tom do degradê do app (o clima "Aura em branco", em
+         lib/src/aura_logic.dart). Os cinco climas começam todos em tons claros
+         próximos deste, então ele serve para qualquer um sem saltar à vista.
+
+         Ver docs/DECISOES.md §26 para o motivo de isto existir. -->
+    <color name="aura_window_background">#F4F2FB</color>
+</resources>

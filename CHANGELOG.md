@@ -7,6 +7,53 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---
 
+## [1.9.0] — 2026-08-22
+
+Preparação final para a apresentação de 24/08: o conserto de abertura que precisava entrar
+**antes** do último APK, e o roteiro cortado para o tempo real de apresentação.
+
+### Corrigido
+
+- **A abertura terminava num flash preto em aparelho no modo escuro.** O `LaunchTheme` já
+  estava certo desde a abertura própria, mas o `AndroidManifest.xml` manda a `FlutterActivity`
+  trocar para o **`NormalTheme`** ainda no `onCreate`, e os dois `NormalTheme` seguiam com
+  `?android:colorBackground` — que resolve para **preto** sob `Theme.Black.NoTitleBar`, em
+  `values-night`. Como o Aura não tem tema escuro (`brightness: Brightness.light`, fixo), a
+  sequência era índigo → preto → app claro. Agora os dois usam `@color/aura_window_background`
+  (`#F4F2FB`, o primeiro tom do degradê do app), novo em `values/colors.xml`.
+  [`DECISOES.md` §26](docs/DECISOES.md).
+- **`APRESENTACAO.md` §5 — "Números para os slides" — tinha dois números errados**, e é de lá
+  que os slides são copiados: dizia **101 testes (75 + 26)** com a suíte em **100 (74 + 26)**,
+  e **4 dependências** quando o `pubspec.yaml` tem **5** (a `http` entrou com a frase do dia e
+  ninguém voltou na tabela). Os mesmos dois erros estavam no `RELATORIO-E2E.md`.
+
+### Adicionado
+
+- **[`docs/ROTEIRO-10MIN.md`](docs/ROTEIRO-10MIN.md)** — roteiro cronometrado para 10 minutos
+  com demonstração ao vivo no celular. Orçamento bloco a bloco com relógio corrido, marcos
+  para conferir de relance se está atrasado, quais blocos cortar quando estiver, plano B para
+  o espelhamento falhar e as três perguntas mais prováveis com resposta de ~20s. O
+  `APRESENTACAO.md` continua sendo o material completo — 9 passos e 8 perguntas —, que **não
+  cabe em 10 minutos**.
+- **[`tool/captura_prints.mjs`](tool/captura_prints.mjs)** — script de captura dos prints, com
+  o diagnóstico de por que ele **não funciona em container headless**: o CanvasKit não obtém
+  contexto WebGL sem GPU e falha em silêncio, sem erro no console. Escreve em `/tmp` e aborta
+  se nenhuma `flutter-view` montar, depois de quase ter sobrescrito os prints bons com PNGs em
+  branco.
+
+### Alterado
+
+- **`ENTREGA.md` §3.2 reescrito.** O checklist dizia *"se piscar branco, o APK é de uma versão
+  antiga"* — diagnóstico que não separava APK velho de `NormalTheme` branco, e que faria
+  refazer o build à toa. Agora separa o que **já foi conferido aqui** (ícone comparado por
+  `sha256` com o template do Flutter, assets de abertura, abas, cronômetro, `pub get`,
+  `analyze`, 100 testes — tudo no 3.32.8, o SDK do FlutLab) do que **só o aparelho responde**.
+- **`tool/verifica_docs.sh` ganhou conferência de número em célula de tabela.** O padrão antigo
+  (`[0-9][0-9]\+ testes`) exigia a palavra logo depois do número e por isso não via
+  `| Testes automatizados | 101 (75 de lógica...) |` — foi assim que os dois erros acima
+  passaram. As novas conferências leem a célula e comparam contra os arquivos de teste e o
+  `pubspec.yaml`. Provado reintroduzindo os números velhos: o script reprova com saída 1.
+
 ## [1.8.0] — 2026-08-22
 
 Os quatro itens que faltavam do corte recomendado do [`PLANO-V2.md` §12](docs/PLANO-V2.md)
