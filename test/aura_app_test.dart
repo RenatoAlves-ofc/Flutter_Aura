@@ -76,6 +76,34 @@ void main() {
     expect(find.text('Pausar'), findsOneWidget);
   });
 
+  testWidgets('trocar de aba não cancela uma sessão em andamento',
+      (tester) async {
+    await bootApp(tester);
+
+    await tester.tap(find.text('Iniciar'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Ótimo'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Confirmar'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('Pausar'), findsOneWidget);
+
+    await tester.tap(find.text('Tarefas'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Pausar'), findsNothing,
+        reason: 'a aba Foco fica fora da tela quando Tarefas está selecionada');
+    expect(find.textContaining('Nenhuma tarefa ainda'), findsOneWidget);
+
+    await tester.tap(find.text('Foco'));
+    await tester.pump();
+
+    expect(find.text('Pausar'), findsOneWidget,
+        reason: 'a sessão em andamento precisa sobreviver à troca de aba');
+  });
+
   testWidgets('a aba Insights renderiza os gráficos com o dataset demo',
       (tester) async {
     await bootApp(tester);

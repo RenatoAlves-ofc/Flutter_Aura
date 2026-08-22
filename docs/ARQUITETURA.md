@@ -6,49 +6,24 @@ dados passam e onde ficam as regras. Para o *porquê* de cada escolha, veja
 
 ---
 
-## 1. Arquivo único, e o que isso obriga
+## 1. Organização parcelada
 
-Todo o app vive em **`lib/main.dart`** (5.062 linhas). Não é preferência de estilo: o
-FlutLab tem problemas com arquitetura multi-arquivo no navegador, então a especificação
-proibiu imports relativos.
+O app deixou de concentrar tudo em um único arquivo de mais de 5 mil linhas. A divisão foi
+feita com `part`/`part of` para ser incremental: os símbolos continuam pertencendo à mesma
+biblioteca de `main.dart`, então os testes e as telas não precisam mudar de import.
 
-Sem pastas para separar responsabilidades, a separação é feita por **faixas do arquivo**,
-marcadas com banners. A ordem importa: cada faixa só depende das anteriores.
+| Arquivo | Responsabilidade | Camada |
+|---|---|---|
+| `lib/main.dart` | entrada do app, tratamento de erro, shell, telas e widgets compartilhados | infraestrutura + UI |
+| `lib/src/aura_models.dart` | `TaskItem`, `StudySession`, `FocusMethod`, perfil, contextos, constantes e formatação | modelos + dados puros |
+| `lib/src/aura_store.dart` | `AuraStore` e chaves de `shared_preferences` | persistência |
+| `lib/src/aura_logic.dart` | sequência com perdão, insights, sugestão adaptativa, ficha, clima, frase do dia e dataset demo | lógica pura + rede opcional |
 
-### Mapa navegável
-
-Um arquivo de 5.062 linhas é intransitável sem mapa. As linhas abaixo são os banners de
-seção — abra o arquivo e pule direto para a faixa que interessa.
-
-| Linha | Seção | Camada |
-|---:|---|---|
-| 1 | `main()`, `AuraCrashReport`, `AuraApp`, `AuraErrorScreen` | infraestrutura |
-| **206** | `MODELOS` | dados puros |
-| **373** | `CONSTANTES DE APOIO` — `kBrandIndigo`, escalas, datas, formatação | dados puros |
-| **509** | `PERSISTÊNCIA (shared_preferences)` — `AuraStore` | persistência |
-| **688** | `SEQUÊNCIA COM PERDÃO` | **lógica pura** |
-| **803** | `MOTOR DE INSIGHTS` | **lógica pura** |
-| **1227** | `SUGESTÃO ADAPTATIVA DE DURAÇÃO` | **lógica pura** |
-| **1299** | `FICHA DE PERSONAGEM` — `buildCharacterSheet` | **lógica pura** |
-| **1475** | `CLIMA PESSOAL (a "aura")` | **lógica pura** |
-| **1565** | `FRASE DO DIA` — única exceção "sem rede", ver §11 | **rede** |
-| **1740** | `DATASET DE DEMONSTRAÇÃO` | **lógica pura** |
-| **1849** | `SHELL PRINCIPAL` — `_HomeShellState` | estado |
-| **2277** | `TELA 1: FOCO` — cronômetro, método, check de humor | UI |
-| **3335** | `TELA 2: TAREFAS` | UI |
-| **3486** | `TELA 3: INSIGHTS` — motor de correlação e gráficos | UI |
-| **3965** | `TELA 4: RESUMO` — a ficha | UI |
-| **4176** | `TELA: SOBRE` | UI |
-| **4420** | `WIDGETS COMPARTILHADOS` — `AuraCard`, `AuraMark`, `EntranceFade` | UI |
-
-A faixa do meio (688–1848) é a mais importante: quase toda ela é **lógica pura, sem nenhuma
-dependência de Flutter** — a única exceção é FRASE DO DIA, a única faixa do arquivo que
-importa `package:http`. Funções que recebem `List<StudySession>` e devolvem números ou
-objetos de dados. É por isso que 75 dos 100 testes conseguem rodar sem construir uma única
-tela.
-
-> As linhas envelhecem a cada edição. Se divergirem, o que vale são os banners no próprio
-> arquivo — `grep -n '^// [A-Z]\{4,\}' lib/main.dart` reconstrói esta tabela em um comando.
+Essa é a primeira etapa de organização: separa o que muda por regra de negócio do que muda
+por interface, mas evita uma migração grande para múltiplas bibliotecas com imports públicos
+novos. Se o FlutLab usado na entrega rejeitar arquivos `part`, o caminho de contingência é
+concatenar esses três arquivos de volta abaixo dos imports de `main.dart`, mantendo a ordem
+modelos → store → lógica → UI.
 
 ---
 
@@ -376,7 +351,7 @@ e para ao pausar.
 
 | Restrição | Como aparece no código |
 |---|---|
-| Arquivo único, sem imports relativos | tudo em `lib/main.dart` |
+| Organização parcelada com `part` | `lib/main.dart` + arquivos em `lib/src/` |
 | Sem `.withOpacity()` (depreciado) | `.withValues(alpha:)` em todo lugar |
 | Sem `CardTheme`/`CardThemeData` | `AuraCard` é `Container` + `BoxDecoration` |
 | Dependências enxutas | 4 pacotes; mais que isso degrada o Hot Preview |
@@ -391,7 +366,7 @@ estar rodando.
 ## 10. Testes
 
 ```bash
-flutter test          # 100 testes
+flutter test          # 101 testes
 ```
 
 | Arquivo | Testes | Foco |

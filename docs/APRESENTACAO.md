@@ -151,7 +151,7 @@ onboarding com quiz.
 ## 3. Se sobrar tempo (ou se perguntarem)
 
 **"Como você garantiu que funciona?"**
-100 testes automatizados, em dois SDKs diferentes. Mas testes não olham para a tela — a
+101 testes automatizados, em dois SDKs diferentes. Mas testes não olham para a tela — a
 interface foi conferida separadamente, servindo o build web num viewport de telefone. Foi
 essa conferência que achou a tela Resumo abrindo incoerente. Detalhes em
 [`RELATORIO-E2E.md`](RELATORIO-E2E.md).
@@ -162,13 +162,11 @@ antes de descobrirmos que era o alvo de build: `arm` gera binário de 32 bits, e
 arm64 a engine nativa não carrega. O app morria antes de qualquer código Dart rodar — por
 isso nenhuma instrumentação em Dart conseguia capturar. Está em [`DECISOES.md`](DECISOES.md) §6.
 
-**"Por que 5.062 linhas num arquivo só?"**
-Restrição declarada do ambiente de entrega: a especificação da atividade proíbe imports
-relativos, porque o FlutLab tem problemas com arquitetura multi-arquivo no navegador. A
-mitigação foi separar por **camada dentro do arquivo**: a lógica de negócio é escrita como
-funções puras que não importam nada do Flutter, e 75 dos 100 testes batem nela sem construir
-uma única tela. Fora dessa restrição, a divisão em pastas seria o certo — e está registrada
-no roadmap, não esquecida. Detalhe em [`DECISOES.md`](DECISOES.md) §19.
+**"Por que o código foi parcelado agora?"**
+Porque manter mais de 5 mil linhas em `main.dart` dificultava manutenção e avaliação. A
+refatoração foi feita por `part` files: conserva uma única biblioteca Dart e a mesma API dos
+testes, mas separa modelos, persistência e lógica em `lib/src/`. É uma etapa segura antes de
+uma divisão completa por bibliotecas. Detalhe em [`DECISOES.md`](DECISOES.md) §19.
 
 **"E aqueles avisos no log do build?"**
 Nenhum deles é erro. O da NDK é comparação de número de versão: o plugin que o dispara
@@ -223,8 +221,8 @@ Faça isso **até 22/08**, não na véspera.
 | Métodos de foco | 11 |
 | Descobertas desbloqueáveis | 6, uma delas trancada de propósito |
 | Estados da aura | 4 + neutro |
-| Testes automatizados | 100 (75 de lógica pura, 25 de interface) |
+| Testes automatizados | 101 (75 de lógica pura, 26 de interface) |
 | Dependências externas | 4, todas gratuitas |
-| Linhas de código | ~4.800, em arquivo único por exigência do FlutLab |
+| Organização do código | `main.dart` + `part` files em `lib/src/` |
 | Backend | nenhum |
 | Animações contínuas no app | 1, de propósito |
