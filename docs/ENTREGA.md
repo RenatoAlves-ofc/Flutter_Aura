@@ -83,23 +83,43 @@ Se o app **fechar ao abrir**, o alvo do build foi `arm` e não `arm64`. Confirme
 próprio arquivo — o procedimento está em [FLUTLAB.md §3.1](FLUTLAB.md): renomeie para `.zip`
 e veja se dentro de `lib/` está `arm64-v8a` (certo) ou `armeabi-v7a` (errado).
 
-### 3.3 Salvar o arquivo APK
+### 3.3 Refazer os prints — **eles estão desatualizados**
+
+Os PNGs de `docs/img/` são de **20/08** e não mostram mais o app. Mudou depois deles:
+
+| O que mudou | Afeta |
+|---|---|
+| Aba "Insights" → **Descobertas** e "Resumo" → **Ficha** | **quase todos** — a barra de navegação aparece em quase toda captura |
+| Títulos e ordem das descobertas (reposicionamento) | `05-insights.png` |
+| Barras do gráfico viraram índigo | `06-graficos.png` |
+| Sheets abrem mais altos | `02-humor.png`, `03-humor-sugestao.png` |
+
+**Tire os prints no próprio celular**, com o APK instalado — é mais rápido que montar
+ambiente de captura, e é evidência mais forte para a apresentação do que um build web.
+
+> **Por que eu não refiz aqui.** Tentei, e não dá neste container: o CanvasKit não consegue
+> contexto WebGL em navegador headless sem GPU e sai tela branca, sem erro nenhum no console.
+> O diagnóstico completo, incluindo a flag `--no-web-resources-cdn` que resolve a parte de
+> rede, está no topo de [`tool/captura_prints.mjs`](../tool/captura_prints.mjs). O script
+> escreve em `/tmp` de propósito, para nunca sobrescrever um print bom com um em branco.
+
+### 3.4 Salvar o arquivo APK
 
 Guarde o `.apk` fora do FlutLab. No dia da apresentação você não quer depender de um serviço
 online estar no ar. É também a hora certa de fazer a conferência da ABI acima, de uma vez.
 
-### 3.4 Gerar e testar o QR Code
+### 3.5 Gerar e testar o QR Code
 
 Gerado pelo FlutLab junto com o APK. **Teste escaneando com outro aparelho** — um QR Code que
 ninguém testou é um QR Code que não funciona.
 
-### 3.5 Comprovante da interação com IA
+### 3.6 Comprovante da interação com IA
 
 Item do checklist de ideação. O [USO-DE-IA.md](USO-DE-IA.md) foi escrito para isso: registra
 o ferramental, o processo e — principalmente — os três diagnósticos que a IA errou e como
 foram derrubados por evidência.
 
-### 3.6 A nova logo — **você pediu para ser lembrado**
+### 3.7 A nova logo — **você pediu para ser lembrado**
 
 Ela está com outra pessoa e **não existe nenhum arquivo no repositório**. Enquanto não
 chegar, o item não anda — e ele é dos mais caros: invalida o APK e obriga a refazer todos os
@@ -112,7 +132,7 @@ prints da documentação ([`PLANO-V2.md` §11](PLANO-V2.md)).
 **Se ela não chegar até 23/08, apresente com a atual.** Trocar a logo na véspera obriga a um
 rebuild do APK e a recapturar os prints, e não vale o risco.
 
-### 3.7 Slides e ensaio
+### 3.8 Slides e ensaio
 
 Números prontos para copiar em [APRESENTACAO.md §5](APRESENTACAO.md). Roteiro de
 demonstração em §2. **Ensaie uma vez cronometrando** — é a única forma de descobrir que a
