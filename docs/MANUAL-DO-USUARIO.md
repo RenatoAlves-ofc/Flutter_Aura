@@ -223,7 +223,7 @@ Sim, na tela Sobre. As suas sessões reais permanecem, e dá para restaurar a de
 depois.
 
 **Por que um insight está bloqueado?**
-Falta volume de dados. O card diz quantas sessões faltam. A quinta descoberta ("Seu limite
+Falta volume de dados. O card diz quantas sessões faltam. A sexta descoberta ("Seu limite
 real") exige 30 sessões e é normal que ela fique trancada por um bom tempo — ela é o objetivo
 de longo prazo do app.
 

@@ -66,7 +66,7 @@ dois arquivos.
 | Demonstração determinística e removível | `buildDemoSessions` — 1073 | `é determinístico, para a apresentação ser sempre igual`, `vem todo marcado como demonstração` |
 | Dado corrompido não impede o app de abrir | `AuraStore._loadList` — 419 | `abre normalmente com sessões corrompidas no armazenamento`, +3 |
 | Dados salvos por versões antigas continuam abrindo | `StudySession.fromJson`, `TaskItem.fromJson` — 205+ | `sessão antiga sem methodId cai no Pomodoro Clássico`, `tarefa salva antes do campo id ganha um id na leitura` |
-| 11 métodos sobre o mesmo cronômetro | `kFocusMethods` — 352+ | `são os 11 prometidos`, `só o Flowtime não tem duração fixa` |
+| 11 métodos sobre o mesmo cronômetro | `focusMethods`, em `lib/src/aura_models.dart` | `são os 11 prometidos`, `só o Flowtime não tem duração fixa` |
 | Uma única animação contínua | `EntranceFade` — 3462, `_breath` na tela Foco | `o halo respira durante a sessão e para ao pausar`, `a tela de carregamento não deixa animação presa` |
 | A tela de erro nunca depende de ancestrais | `AuraErrorScreen` — 1+ | `desenha sem MaterialApp em volta` |
 
@@ -102,7 +102,7 @@ captura de cada aba. Foi essa camada que revelou:
 
 - um estouro horizontal na linha de botões do cronômetro, quando o rótulo vira
   "Iniciar pausa";
-- a tela Resumo abrindo incoerente, com "0 dias de sequência" e "0 pontos" ao lado de
+- a aba Ficha (então chamada Resumo) abrindo incoerente, com "0 dias de sequência" e "0 pontos" ao lado de
   "20 sessões totais";
 - o insight de humor se contradizendo, com "+0.3" e 50% das sessões;
 - sobras do template do FlutLab: `hello_world` no título da página e "Hello World" como
@@ -301,9 +301,12 @@ pegariam: **o app estava sem graça**, e por motivos específicos.
 
 **As duas correções:**
 
-1. **Uma quinta descoberta que nasce bloqueada** — "Seu limite real", exigindo 30 sessões. A
+1. **Uma quinta descoberta que nasce bloqueada** — "Seu limite real", exigindo 30 sessões. A <!-- historico -->
    aba Descobertas passou a abrir em "4 de 5 desbloqueadas", com um cartão trancado e um
    contador visível. Sem enfraquecer a demonstração: as quatro primeiras continuam abertas.
+
+   > Este parágrafo é o registro da época. Depois dele entrou **"Onde você rende mais"**, e
+   > hoje "Seu limite real" é a **sexta** de seis — a aba abre em "5 de 6 desbloqueadas".
 
 2. **Uma ficha de personagem sem nenhum número inventado** — classe e quatro atributos
    derivados das mesmas contas que alimentam os insights.

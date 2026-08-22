@@ -151,9 +151,6 @@ marcado.
 
 ### 3.3 Aba Descobertas
 
-> A aba se chama **"Insights"** hoje. A troca para **"Descobertas"** está planejada em
-> [`PLANO-V2.md` §10](PLANO-V2.md) e ainda não foi feita.
-
 **Seis descobertas desbloqueáveis**, todas em Dart puro sobre as sessões salvas — sem IA, sem
 rede. Cada uma exige um volume mínimo e aparece **bloqueada até lá, dizendo quantas faltam**:
 

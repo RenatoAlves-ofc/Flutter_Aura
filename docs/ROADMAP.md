@@ -197,8 +197,8 @@ lógica pura — testável sem construir tela.
 >
 > O parágrafo abaixo dizia que a tarefa vinculada *"some"* depois do check de humor. **Isso
 > estava errado.** A verificação feita para o [`PLANO-V2.md`](PLANO-V2.md) mostrou que ela
-> **é exibida durante a sessão inteira**, embaixo do anel (`lib/main.dart:2812`, ícone de
-> link + título em itálico). O que falta é só a outra metade: concluir a tarefa sem sair da
+> **é exibida durante a sessão inteira**, embaixo do anel (`_FocusPageState`, no bloco que
+> usa `_linkedTaskId` — ícone de link + título em itálico). O que falta é só a outra metade: concluir a tarefa sem sair da
 > aba Foco. O texto original fica abaixo, não apagado, porque o erro foi meu e o registro
 > serve para isso.
 

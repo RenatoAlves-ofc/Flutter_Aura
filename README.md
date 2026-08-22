@@ -30,6 +30,7 @@ método utilizado**. Todo o resto do app existe para alimentar ou expor esse mot
 | [Rodando no FlutLab](docs/FLUTLAB.md) | Importar, buildar o APK e os avisos que são esperados |
 | [Manual do usuário](docs/MANUAL-DO-USUARIO.md) | Como usar cada tela |
 | [Roteiro de apresentação](docs/APRESENTACAO.md) | Demonstração passo a passo e números para os slides |
+| [**Roteiro de 10 minutos**](docs/ROTEIRO-10MIN.md) | O corte cronometrado para o tempo real, com marcos de atraso e plano B |
 | [Uso de IA](docs/USO-DE-IA.md) | Como o projeto foi construído com IA, e onde ela errou |
 | [Paleta de cores](docs/PALETA-DE-CORES.md) | Inventário da paleta atual, valor por valor |
 | [Roadmap](docs/ROADMAP.md) | As próximas melhorias, com custo e o que cada uma quebra |
@@ -58,8 +59,8 @@ comportamento mudou, não porque você abriu o app.
 
 **Insights desbloqueáveis.** Seis comparações em Dart puro sobre as sessões salvas — sem IA,
 sem API, sem rede. Cada uma exige um volume mínimo (5, 5, 7, 6, 8 e 30 sessões) e aparece
-bloqueada até lá, dizendo quantas faltam. A quinta é o objetivo de longo prazo e nasce
-trancada de propósito.
+bloqueada até lá, dizendo quantas faltam. A **sexta** — "Seu limite real", que exige 30
+sessões — é o objetivo de longo prazo e nasce trancada de propósito.
 
 **Tipo de trabalho, cruzado com humor.** Marcar a categoria da sessão é comum — Forest e
 Toggl fazem. Nenhum deles pergunta como você está. O Aura cruza as duas coisas e responde o
@@ -129,7 +130,8 @@ flutter run
 ```
 
 Para rodar ou buildar o APK **no FlutLab**, veja [docs/FLUTLAB.md](docs/FLUTLAB.md) — inclui
-os avisos que podem aparecer, a exigência da NDK 27 e por que o APK precisa ser gerado como `arm64`.
+os avisos que podem aparecer (inclusive o da NDK, que é para **ignorar**, não para silenciar) e
+por que o APK precisa ser gerado como `arm64`.
 
 O app agora usa uma separação parcelada por `part`: `lib/main.dart` fica com a
 entrada, o shell e as telas, enquanto modelos, persistência e lógica pura vivem em
@@ -152,7 +154,6 @@ quebra** — está em [docs/ROADMAP.md](docs/ROADMAP.md):
 | Melhoria | Custo |
 |---|---|
 | Explicar os 11 métodos de estudo dentro do app | baixo |
-| Frase do dia, gerada dos seus próprios dados | baixo |
 | Tarefa presente durante a sessão | médio |
 | Cores: contraste, amplitude dos climas e modo escuro | alto |
 | Trocar a logo | médio |
@@ -167,4 +168,10 @@ reaproveitava o motor de correlação que já existia, então saiu barata.
 
 ---
 
-Atribuição de material de terceiros: [`NOTICE.md`](NOTICE.md).
+## Licença
+
+O Aura é **[MIT](LICENSE)** — use, copie, modifique e distribua à vontade, mantendo o aviso de
+copyright. © 2026 Renato Alves.
+
+O material de **terceiros** que viaja no repositório (o ferramental em `.claude/`, sob
+Apache-2.0) tem atribuição própria em [`NOTICE.md`](NOTICE.md) — são duas coisas diferentes.

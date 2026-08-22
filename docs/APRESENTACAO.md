@@ -159,7 +159,7 @@ onboarding com quiz.
 **"Como você garantiu que funciona?"**
 100 testes automatizados, em dois SDKs diferentes. Mas testes não olham para a tela — a
 interface foi conferida separadamente, servindo o build web num viewport de telefone. Foi
-essa conferência que achou a tela Resumo abrindo incoerente. Detalhes em
+essa conferência que achou a aba Ficha — então chamada Resumo — abrindo incoerente. Detalhes em
 [`RELATORIO-E2E.md`](RELATORIO-E2E.md).
 
 **"Qual foi o problema mais difícil?"**

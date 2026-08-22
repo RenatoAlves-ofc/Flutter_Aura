@@ -10,6 +10,18 @@ custo e o que quebra**. Um plano que só lista desejos não ajuda a decidir.
 > **A apresentação é 24/08.** Faltam 3 dias, e este documento tem 10 itens. A §12 propõe o
 > corte: o que protege a demonstração e o que pode esperar. Não dá para fazer os dez.
 
+> ### ⚠️ As linhas citadas aqui são de **antes** do refactor em `part`
+>
+> Este documento é o registro de um planejamento feito em 21/08, quando `lib/main.dart` tinha
+> mais de 5 mil linhas. Depois disso, modelos, persistência e lógica saíram para `lib/src/`
+> ([`DECISOES.md` §19](DECISOES.md)), e **toda citação de `lib/main.dart:NNN` abaixo aponta
+> para o lugar errado** — algumas para linhas que nem existem mais.
+>
+> Ficam como estão de propósito: é um documento histórico, e reescrevê-lo apagaria o que ele
+> registra. **Para achar o código, procure pelo nome do símbolo, não pela linha.** É por
+> causa deste apodrecimento que a documentação viva do projeto passou a citar arquivo e
+> símbolo, e que o `tool/verifica_docs.sh` recusa `arquivo.dart:NNN` em todo lugar menos aqui.
+
 ---
 
 ## 1. Onde cada item está, antes de qualquer coisa
