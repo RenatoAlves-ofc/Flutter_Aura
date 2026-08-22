@@ -28,9 +28,9 @@ estiver dentro de uma subpasta. O projeto já esteve em `Aura/` e precisou ser m
 4. **Run/Build** → Web para o Hot Preview, ou **APK** para o celular
 
 **Alternativa sem VCS:** crie um **New Project** com o template Flutter básico e substitua
-o conteúdo de `pubspec.yaml` e `lib/main.dart` pelos deste repositório. Como o app é um
-arquivo único, isso funciona — mas você perde `android/` e `ios/`, e com eles o ícone e a
-abertura própria.
+o conteúdo de `pubspec.yaml`, `lib/main.dart` e da pasta `lib/src/` pelos deste repositório.
+Se copiar só o `main.dart`, o build falha porque ele referencia arquivos `part`. Você também
+perde `android/` e `ios/`, e com eles o ícone e a abertura própria.
 
 > ### O GitHub e o FlutLab não sincronizam sozinhos
 >
@@ -79,34 +79,20 @@ neste projeto, e leva menos de um minuto.
 Nenhuma das três impede o build, e nenhuma é problema deste projeto. As duas primeiras são
 avisos; a terceira parece um desastre e não é.
 
-### 4.1 Aba Build — aviso sobre a NDK
+### 4.1 Aba Build — NDK 27
 
+O projeto agora fixa no `android/app/build.gradle.kts`:
+
+```kotlin
+ndkVersion = "27.0.12077973"
 ```
-Your project is configured with Android NDK 26.3.11579264, but the following
-plugin(s) depend on a different Android NDK version:
-- shared_preferences_android requires Android NDK 27.0.12077973
-```
 
-**O aviso é sobre metadado, não sobre compilação.** Isso não é opinião — é o que se vê
-abrindo o plugin que dispara o aviso, no `~/.pub-cache`:
-
-| O que se procurou em `shared_preferences_android` | O que se achou |
-|---|---|
-| `.c`, `.cpp`, `.h`, `.so`, `CMakeLists.txt`, `.mk` | **nada** — o plugin não tem uma linha de código nativo |
-| `ndkVersion` no `android/build.gradle` dele | **não existe** |
-| De onde vem então a exigência da 27 | do **AGP 8.12.1**, que o plugin declara no `classpath` do buildscript, como padrão da versão |
-
-Ou seja: o Flutter compara dois números de versão declarados e avisa quando diferem. Como o
-plugin não compila nada nativo, **nenhuma `.so` dele entra no APK** — as únicas vêm da engine
-do Flutter, que já cuida do próprio alinhamento.
-
-Fixar a 27 exigiria essa NDK instalada no ambiente de build, o que não dá para garantir no
-FlutLab. O APK que funciona no aparelho foi gerado **sem** o pin. O pin chegou a ser aplicado
-e foi revertido — histórico em [DECISOES.md §5](DECISOES.md).
-
-> Se um dia quiser silenciar mesmo assim, teste numa **branch separada** e builde no FlutLab
-> antes de mergear. Se a NDK 27 não estiver lá, o build quebra — e é justamente esse risco
-> que fez o pin ser revertido.
+Isso atende ao aviso emitido pelo `shared_preferences_android` no FlutLab e evita que a
+saída em vermelho pareça erro fatal quando o APK foi gerado corretamente. Se o ambiente não
+tiver essa NDK instalada, o build pode falhar antes de compilar; nesse caso, instale/ative a
+NDK 27 no ambiente ou, apenas como contingência, volte temporariamente para
+`ndkVersion = flutter.ndkVersion` e aceite o aviso documentado no histórico de
+[DECISOES.md §5](DECISOES.md).
 
 ### 4.1.1 A linha do tree-shaking, que aparece junto e assusta pelo mesmo motivo
 
@@ -216,7 +202,7 @@ O `pubspec.lock` versionado foi gerado no Flutter 3.32, o menor denominador comu
 
 | Restrição | Como aparece no código |
 |---|---|
-| Arquivo único, sem imports relativos | tudo em `lib/main.dart` |
+| Organização parcelada com `part` | `lib/main.dart` + `lib/src/aura_models.dart`, `lib/src/aura_store.dart`, `lib/src/aura_logic.dart` |
 | Sem `.withOpacity()` (depreciado) | `.withValues(alpha:)` em todo lugar |
 | Sem `CardTheme`/`CardThemeData` | `AuraCard` é `Container` + `BoxDecoration` |
 | Dependências enxutas | 4 pacotes |
