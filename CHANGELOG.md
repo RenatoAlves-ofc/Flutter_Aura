@@ -7,6 +7,47 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---
 
+## [1.6.3] — 2026-08-21
+
+Reposicionamento de copy: performance em vez de bem-estar emocional. Decisão completa em
+[`DECISOES.md` §25](docs/DECISOES.md).
+
+### Alterado
+
+- **Discurso do app** — de "bem-estar emocional" para "inteligência de performance pessoal".
+  O humor deixa de ser vendido como o produto e passa a ser tratado como o que sempre foi no
+  código: um sinal de entrada que prevê desempenho. **É reposicionamento de linguagem, não de
+  lógica** — nenhum cálculo, campo de dado ou limiar mudou.
+- **Dois títulos de insight**: "Seu humor prevê seu foco" → "Seu estado de entrada prevê seu
+  foco"; "Focar muda seu humor" → "Efeito colateral do foco".
+- **A ordem das seis descobertas** — `mood_delta`, o único insight estruturalmente sobre
+  humor e não sobre desempenho, passou de segundo para penúltimo.
+- **O corpo de dois insights** (`mood_duration`, `method`) trocou linguagem de sentimento por
+  linguagem de rendimento medido.
+- **Pitch do README, `pubspec.yaml` e roteiro de apresentação** — "como você está se
+  sentindo" virou "o seu estado de entrada".
+
+## [1.6.2] — 2026-08-21
+
+Só documentação. Documento de produto, que faltava inteiro.
+
+### Adicionado
+
+- **[`docs/PRODUTO.md`](docs/PRODUTO.md)**: problemática, público-alvo, catálogo completo de
+  funcionalidades e os códigos de cor. Duas seções **não existiam em lugar nenhum** do
+  repositório antes:
+  - **A problemática** — zero ocorrências na documentação inteira. Reconstruída a partir das
+    decisões registradas e da pesquisa de concorrência, com ressalva no topo pedindo
+    conferência contra a especificação original da atividade.
+  - **O público-alvo** — só aparecia em duas frases soltas dentro de outros assuntos
+    (`DECISOES.md` §3 e `APRESENTACAO.md`), nunca como seção. Agora tem definição, o que ela
+    decidiu no produto, e quem explicitamente **não** é o público.
+
+### Corrigido
+
+- **`RELATORIO-E2E.md` dizia "4 de 4 desbloqueadas"** em dois lugares, de quando havia quatro
+  descobertas. São seis desde a v1.5.0, e a aba abre em "5 de 6". Corrigido nos dois.
+
 ## [1.6.1] — 2026-08-21
 
 Só documentação. Segunda rodada de planejamento, com tudo verificado antes de planejar.

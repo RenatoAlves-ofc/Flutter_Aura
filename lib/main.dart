@@ -864,10 +864,13 @@ class Insight {
 List<Insight> buildInsights(List<StudySession> sessions) {
   return [
     _insightMoodVsDuration(sessions),
-    _insightMoodDelta(sessions),
     _insightWeekday(sessions),
     _insightMethod(sessions),
     _insightContext(sessions),
+    // Penúltimo de propósito: é o único insight estruturalmente sobre humor,
+    // não sobre desempenho — fica atrás dos que vendem rendimento medido.
+    // Ver DECISOES.md §25.
+    _insightMoodDelta(sessions),
     _insightDurationCeiling(sessions),
   ];
 }
@@ -945,14 +948,14 @@ int _moodBucket(int mood) {
 }
 
 const List<String> _bucketNames = [
-  'começa pra baixo (1-2)',
-  'começa neutro (3)',
-  'começa animado (4-5)',
+  'começa em baixa energia (1-2)',
+  'começa em energia neutra (3)',
+  'começa em alta energia (4-5)',
 ];
 
 Insight _insightMoodVsDuration(List<StudySession> sessions) {
   const int required = 5;
-  const String title = 'Seu humor prevê seu foco';
+  const String title = 'Seu estado de entrada prevê seu foco';
   const IconData icon = Icons.insights;
 
   final buckets = <int, List<int>>{};
@@ -991,8 +994,8 @@ Insight _insightMoodVsDuration(List<StudySession> sessions) {
     headline: '${fmt(diff)} min de diferença',
     body: 'Quando você ${_bucketNames[best]}, suas sessões duram em média '
         '${fmt(averages[best]!)} min. Quando ${_bucketNames[worst]}, caem para '
-        '${fmt(averages[worst]!)} min. São ${fmt(diff)} min de foco que dependem '
-        'de como você chega, não de força de vontade.',
+        '${fmt(averages[worst]!)} min. São ${fmt(diff)} min de rendimento que '
+        'variam conforme a condição em que você começa a sessão.',
     comparison: InsightComparison(
       highLabel: _bucketNames[best],
       highValue: averages[best]!,
@@ -1005,7 +1008,7 @@ Insight _insightMoodVsDuration(List<StudySession> sessions) {
 
 Insight _insightMoodDelta(List<StudySession> sessions) {
   const int required = 5;
-  const String title = 'Focar muda seu humor';
+  const String title = 'Efeito colateral do foco';
   const IconData icon = Icons.trending_up;
 
   if (sessions.length < required) {
@@ -1140,8 +1143,8 @@ Insight _insightMethod(List<StudySession> sessions) {
     requiredSessions: required,
     availableSessions: sessions.length,
     headline: methodById(best.key).name,
-    body: '${methodById(best.key).name} é o que te deixa melhor no fim: humor '
-        'final médio de ${fmt(avgMoodAfter(best.value))}/5 em '
+    body: '${methodById(best.key).name} é o que você mais sustenta: rendimento '
+        'médio de ${fmt(avgMoodAfter(best.value))}/5 em '
         '${fmt(avgDuration(best.value))} min por sessão. Já '
         '${methodById(worst.key).name} fecha em '
         '${fmt(avgMoodAfter(worst.value))}/5.',

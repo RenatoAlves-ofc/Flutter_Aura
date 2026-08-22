@@ -1,5 +1,5 @@
 name: aura
-description: "Aura - um Pomodoro que aprende com você. Cruza humor com desempenho de foco e devolve descobertas pessoais. Tudo local, sem login."
+description: "Aura - um Pomodoro que aprende com você. Cruza seu estado de entrada com o desempenho de foco e devolve descobertas pessoais. Tudo local, sem login."
 publish_to: 'none'
 
 version: 1.0.0+1

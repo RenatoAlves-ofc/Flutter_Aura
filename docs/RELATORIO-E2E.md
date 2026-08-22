@@ -38,7 +38,7 @@ ou o teste feito no aparelho.
 |---|---|---|---|
 | 1 | Escolher um método entre os 11 e rodar uma sessão completa | ✅ | Teste `métodos de foco são os 11 prometidos`; testes de interface `o app abre na aba Foco com o método padrão` e `trocar para Flowtime muda o cronômetro para contagem crescente`; print `01-foco.png` |
 | 2 | Humor registrado antes e depois da sessão | ✅ | Teste de interface `tocar em Iniciar pede o humor antes de rodar o cronômetro`, que verifica também que o botão Confirmar só libera após escolher; prints `02-humor.png` e `03-humor-sugestao.png` |
-| 3 | Ao menos 1 insight exibindo comparação real | ✅ | Os **4** insights abrem com o dataset de demonstração — o print `05-insights.png` mostra "4 de 4 desbloqueadas · 22 sessões registradas". Grupo de testes `motor de insights` (6 testes) cobre os limiares |
+| 3 | Ao menos 1 insight exibindo comparação real | ✅ | **5 das 6** descobertas abrem com o dataset de demonstração — o print `05-insights.png` mostra "5 de 6 desbloqueadas · 22 sessões registradas". A sexta ("Seu limite real", 30 sessões) nasce trancada de propósito. Grupo de testes `motor de insights` (6 testes) cobre os limiares |
 | 4 | Gráfico de correlação em `fl_chart` sem erro | ✅ | Teste de interface `a aba Insights renderiza os gráficos com o dataset demo`, que rola até cada gráfico e confirma `BarChart` e `LineChart` na árvore; print `06-graficos.png` |
 | 5 | Clima Pessoal mudando entre pelo menos 2 estados | ✅ | Grupo `clima pessoal` (4 testes) cobre os 4 estados; observado na prática: os prints mostram **Radiante** (dourado) antes de um ajuste no dataset e **Fluindo** (verde-azulado) depois |
 | 6 | Sequência não quebra ao faltar um dia | ✅ | Teste `faltar exatamente um dia com token guardado não quebra a sequência`, mais 7 outros no grupo `sequência com perdão` cobrindo teto de tokens, buraco grande e duas sessões no mesmo dia |
@@ -60,7 +60,7 @@ dois arquivos.
 | Sequência cresce, perdoa 1 dia e reinicia no resto | `applyActivity` — linha 580 | `faltar exatamente um dia com token guardado não quebra a sequência`, `faltar mais de um dia quebra mesmo com token` |
 | Sequência morre sozinha se o usuário sumir | `effectiveStreak` — 631 | `some quando o usuário passou dos dias de graça` |
 | Resumo nunca diverge das sessões | `streakFromSessions` — 646, `pointsFromSessions` — 658 | `reconstrói a sequência aplicando a mesma regra de dia a dia`, `os pontos acompanham as sessões` |
-| 4 insights, cada um com seu limiar | `buildInsights` — 690 | `tudo fica bloqueado sem dados`, `dia da semana exige 7 sessões`, +4 |
+| 6 descobertas, cada uma com seu limiar (5, 5, 7, 6, 8, 30) | `buildInsights` — 690 | `tudo fica bloqueado sem dados`, `dia da semana exige 7 sessões`, +4 |
 | Sugestão adaptativa não chuta | `suggestMethodForMood` — 940 | `não sugere com base numa única tentativa`, `nunca sugere Flowtime nem Personalizado`, +6 |
 | A aura reflete o agora, não a média | `resolveClimate` — 1049 | `a aura olha as sessões recentes, não a média histórica` |
 | Demonstração determinística e removível | `buildDemoSessions` — 1073 | `é determinístico, para a apresentação ser sempre igual`, `vem todo marcado como demonstração` |

@@ -2,9 +2,9 @@
 
 **Um Pomodoro que aprende com você.**
 
-Em vez de só contar minutos, o Aura cruza como você está se sentindo com quanto tempo você
+Em vez de só contar minutos, o Aura cruza o seu estado de entrada com quanto tempo você
 realmente consegue manter o foco — e devolve isso como descobertas pessoais, não como
-pontos genéricos. Sua aura muda com seu estado real. Tudo local, sem login, sem feed.
+pontos genéricos. Sua aura muda com seu desempenho real. Tudo local, sem login, sem feed.
 
 O diferencial não é o cronômetro: é o **motor de correlação entre humor, duração de foco e
 método utilizado**. Todo o resto do app existe para alimentar ou expor esse motor.
@@ -22,6 +22,7 @@ método utilizado**. Todo o resto do app existe para alimentar ou expor esse mot
 
 | Documento | Para quê |
 |---|---|
+| [**O produto**](docs/PRODUTO.md) | Problemática, público-alvo, todas as funcionalidades e os códigos de cor |
 | [**Checklist de entrega**](docs/ENTREGA.md) | O que falta até 24/08, com dono por item |
 | [Relatório ponta a ponta](docs/RELATORIO-E2E.md) | O que foi entregue, como foi verificado e quais defeitos apareceram |
 | [Arquitetura](docs/ARQUITETURA.md) | Como o código está organizado, com mapa do arquivo e diagramas |
@@ -130,7 +131,7 @@ flutter run
 Para rodar ou buildar o APK **no FlutLab**, veja [docs/FLUTLAB.md](docs/FLUTLAB.md) — inclui
 os dois avisos que são esperados e por que o APK precisa ser gerado como `arm64`.
 
-O app inteiro vive em **`lib/main.dart`** (5.059 linhas), sem imports relativos, por
+O app inteiro vive em **`lib/main.dart`** (5.062 linhas), sem imports relativos, por
 exigência do ambiente. O mapa navegável do arquivo está em
 [docs/ARQUITETURA.md](docs/ARQUITETURA.md).
 
