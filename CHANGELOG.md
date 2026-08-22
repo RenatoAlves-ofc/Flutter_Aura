@@ -7,6 +7,67 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---
 
+## [1.10.0] — 2026-08-22
+
+Passada completa de documentação. **Nada em `lib/` nem em `test/`** — o APK não precisa ser
+refeito por causa desta versão.
+
+O ponto de partida foi uma auditoria de tudo que a documentação afirma, conferida contra o
+código. Ela achou **nove afirmações falsas**, quase todas herdadas da 1.8.0 (renome das abas,
+reordenação das descobertas) e do refactor em `part`, que moveu símbolos sem que os documentos
+seguissem.
+
+### Corrigido
+
+- **"Seu limite real" era chamada de *quinta* descoberta em três documentos.** Ela é a
+  **sexta** desde que "Onde você rende mais" entrou. `README.md`, `RELATORIO-E2E.md` e
+  `MANUAL-DO-USUARIO.md`.
+- **O `README.md` ainda exigia a NDK 27**, revertida em 22/08 — e contradizia o
+  `FLUTLAB.md §4.1`, que manda o oposto: não fixar.
+- **O roadmap do `README.md` listava a frase do dia como melhoria futura.** Está implementada
+  desde a 1.6.0 ([`DECISOES.md` §24](docs/DECISOES.md)).
+- **O `PRODUTO.md` dizia que a aba "se chama Insights hoje"** e que a troca para Descobertas
+  "ainda não foi feita". Foi feita na 1.8.0.
+- **O `RELATORIO-E2E.md` citava o símbolo `kFocusMethods`, que não existe** — é `focusMethods`,
+  em `lib/src/aura_models.dart`.
+- **O `ARQUITETURA.md §10` dizia 75 + 25 testes.** São **74 + 26**.
+- **As 13 referências de linha do `PALETA-DE-CORES.md` estavam todas erradas.** O refactor em
+  `part` levou os símbolos para `lib/src/`, e cinco delas apontavam para linhas que nem existem
+  (`lib/main.dart:4402`, num arquivo de 3.434). Agora o documento cita **arquivo e símbolo** —
+  nome de símbolo sobrevive a refactor, número de linha não.
+- **`tela Resumo` em seis lugares**, de quando a aba tinha esse nome.
+- **O `README.md` não listava o `ROTEIRO-10MIN.md`** no índice da documentação.
+
+### Adicionado
+
+- **`LICENSE`** — MIT, © 2026 Renato Alves. O repositório é público e não tinha licença
+  nenhuma: sem ela, ninguém podia legalmente usar nem derivar o código. O `NOTICE.md` ganhou
+  um aviso separando as duas coisas — o Aura é MIT, o ferramental de terceiros em `.claude/`
+  é Apache-2.0.
+- **`CLAUDE.md`** — as convenções que o projeto já praticava e nunca tinha escrito: verificar
+  nos dois SDKs com `flutter clean` entre eles, `pump(Duration)` em vez de `pumpAndSettle` com
+  animação contínua, citar símbolo e não linha, não fixar a NDK, não commitar os arquivos
+  gerados de `ios/`. Cada regra existe porque a falta dela já custou caro aqui — inclusive os
+  dois PRs mergeados sem rodar a suíte, que deixaram a `main` vermelha a dois dias da entrega.
+
+### Alterado
+
+- **`ARQUITETURA.md §5`** agora lista as descobertas **na ordem em que aparecem na tela**, com
+  o nome da função de cada uma, e explica por que "Efeito colateral do foco" é a penúltima.
+- **`ARQUITETURA.md §1`** ganhou o mapa **classe → aba**: `InsightsPage` é a aba Descobertas e
+  `SummaryPage` é a Ficha. Procurar por "Descobertas" no código não achava a tela.
+- **`ARQUITETURA.md §10`** absorveu as convenções de teste que só existiam como comentário
+  dentro de `aura_app_test.dart`, incluindo a armadilha do `IndexedStack`/`TickerMode`.
+- **`tool/verifica_docs.sh` ganhou cinco conferências novas**, todas contra o código:
+  quantidade de descobertas (por extenso ou algarismo, em qualquer caixa), a posição de "Seu
+  limite real", os seis limiares, os rótulos antigos das abas, a contagem de métodos, e a
+  proibição de `arquivo.dart:NNN` na documentação viva. Passagens que registram o estado de
+  uma época levam o marcador `<!-- historico -->` e ficam de fora — apagar a história para
+  agradar o verificador seria pior do que o erro que ele procura.
+  **Cada conferência foi provada quebrando de propósito**; a primeira versão da contagem de
+  descobertas não pegava "Cinco" com maiúscula e foi refeita para comparar o número, em vez de
+  listar os valores errados um a um.
+
 ## [1.9.0] — 2026-08-22
 
 Preparação final para a apresentação de 24/08: o conserto de abertura que precisava entrar

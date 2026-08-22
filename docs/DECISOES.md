@@ -440,7 +440,7 @@ novo: `buildCharacterSheet` reaproveita `effectiveStreak`, `_moodBucket` e `meth
 Dois detalhes que decorrem da escolha:
 
 - **Sem sessões, a ficha diz isso** em vez de mostrar quatro barras zeradas. Barra zerada
-  mente sobre não haver dado — é o mesmo erro que a tela Resumo já cometeu uma vez (§9).
+  mente sobre não haver dado — é o mesmo erro que a aba Ficha já cometeu uma vez (§9).
 - **Cada atributo mostra o número real ao lado da barra.** A barra é leitura de relance; sem
   o número ela vira uma escala vaga, que é o problema de metade das fichas de RPG digitais.
   O valor satura em 100 e o número continua sendo dito por inteiro — há teste para isso.
@@ -450,7 +450,14 @@ eles são contagem e que o que evolui é a ficha.
 
 ---
 
-## 21. A quinta descoberta nasce bloqueada
+## 21. A quinta descoberta nasce bloqueada <!-- historico -->
+
+> **Esta seção é o registro da época, e os números dela envelheceram de propósito.** <!-- historico -->
+> Quando ela foi escrita havia **cinco** descobertas e "Seu limite real" era a quinta. Depois
+> entrou **"Onde você rende mais"** (§22), e hoje são **seis**: "Seu limite real" é a
+> **sexta**, e a aba abre em **"5 de 6 desbloqueadas"**. A decisão — nascer bloqueada, com 30
+> sessões — continua valendo exatamente como está descrita. O que mudou foi só a contagem em
+> volta dela.
 
 **Contexto.** Os quatro insights abrem com 5, 5, 7 e 6 sessões. O dataset de demonstração tem
 **22** — e havia um teste *garantindo* que os quatro abrissem, para nenhuma tela aparecer
@@ -461,7 +468,7 @@ trancado.** Nem um usuário novo, nem a plateia do dia da apresentação. A mec�
 desbloqueio — que a especificação chama de núcleo inegociável — estava construída, testada, e
 invisível.
 
-**Decisão.** Uma quinta descoberta, **"Seu limite real"**, exigindo **30 sessões**: acima de
+**Decisão.** Uma quinta descoberta, **"Seu limite real"**, exigindo **30 sessões**: acima de <!-- historico -->
 quantos minutos as sessões passam a terminar pior. Com as 22 da demonstração ela fica
 trancada mostrando *"Faltam 8 sessões para desbloquear"*.
 
@@ -472,7 +479,7 @@ sobre aquele dia que sobre a pessoa.
 
 **Consequência.** A aba Descobertas passou a abrir em **"4 de 5 desbloqueadas"**, com um cartão
 visivelmente trancado e um contador. O app ganhou um "próximo" sem que nada precisasse ser
-enfraquecido: a demonstração continua rica, com quatro descobertas abertas.
+enfraquecido: a demonstração continua rica, com quatro descobertas abertas. <!-- historico -->
 
 O teste que antes exigia "nenhuma trancada" foi reescrito para exigir **exatamente uma**, com
 o `id` e o número que falta. O que era garantia de tela cheia virou garantia de progressão
@@ -652,8 +659,8 @@ em tooltip — só o rótulo "Sua aura hoje" na aba Ficha. Criar um texto novo i
 "editar texto existente", e ficou registrado como pendência em aberto, não como feito.
 
 **Consequência.** Dois testes citavam a redação antiga por conteúdo
-(`test/aura_logic_test.dart:187-188`, checando `'começa animado'`/`'começa pra baixo'` no
-corpo de `mood_duration`) e foram atualizados para a nova redação — nenhum teste foi
+(no grupo que checa o corpo do insight `mood_duration`, em `test/aura_logic_test.dart` —
+as asserções liam `'começa animado'`/`'começa pra baixo'`) e foram atualizados para a nova redação — nenhum teste foi
 removido, e nenhum precisou ser criado, porque os `id`s dos insights não mudaram.
 
 **Atualização de 22/08 — a fundamentação chegou, e ela não reverteu esta decisão.** O autor

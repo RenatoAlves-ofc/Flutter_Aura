@@ -25,6 +25,25 @@ novos. Se o FlutLab usado na entrega rejeitar arquivos `part`, o caminho de cont
 concatenar esses três arquivos de volta abaixo dos imports de `main.dart`, mantendo a ordem
 modelos → store → lógica → UI.
 
+### Duas classes têm nome diferente do rótulo na tela
+
+Procurar por "Descobertas" ou "Ficha" no código **não acha a tela**. Os rótulos das abas
+mudaram na 1.8.0; os nomes das classes não:
+
+| Aba na tela | Classe em `lib/main.dart` |
+|---|---|
+| Foco | `FocusPage` |
+| Tarefas | `TaskListPage` |
+| **Descobertas** | **`InsightsPage`** ← nome antigo |
+| **Ficha** | **`SummaryPage`** ← nome antigo |
+| Sobre | `AboutPage` |
+
+**Ficou assim de propósito.** Renomear as duas classes seria mudança em `lib/`, e mudança em
+`lib/` obriga a refazer o APK e a rodar a verificação inteira de novo — a dois dias da
+apresentação, é custo sem nenhum ganho para quem assiste. O `Insight` como conceito de
+domínio também continua sendo `Insight` no código, e só a *palavra na interface* virou
+"descoberta". Está no roadmap como limpeza pós-entrega.
+
 ---
 
 ## 2. As quatro camadas
@@ -79,7 +98,7 @@ flowchart TD
 ```
 
 `_recordSession` ser o **único** ponto de entrada é o que garante isso. Quando o dataset de
-demonstração gravava sessões por fora desse caminho, a tela Resumo abria com "0 dias de
+demonstração gravava sessões por fora desse caminho, a aba Ficha abria com "0 dias de
 sequência" ao lado de "20 sessões totais" — o defeito está registrado em
 [`DECISOES.md`](DECISOES.md) §9.
 
@@ -102,7 +121,7 @@ _HomeShellState
 
 `_recordSession` é deliberadamente o **único** caminho por onde uma sessão entra: ele grava,
 credita os 10 pontos e atualiza a sequência. Espalhar isso seria a forma mais fácil de a
-tela Resumo voltar a ficar incoerente.
+aba Ficha voltar a ficar incoerente.
 
 ---
 
@@ -172,21 +191,34 @@ malformado deixa o app impossível de abrir para sempre.
 de dados; abaixo dele o card aparece bloqueado, mostrando quantas sessões faltam — o
 bloqueio é a própria mecânica, não um erro.
 
-| Insight | Cálculo | Mínimo |
-|---|---|---|
-| Humor prevê foco | duração média por faixa de `moodBefore` | 5 sessões, 2+ faixas |
-| Focar muda humor | média de `moodAfter - moodBefore` | 5 sessões |
-| Melhor dia | minutos totais por dia da semana | 7 sessões |
-| Método que sustenta | `moodAfter` médio por `methodId` | 6 sessões, 2+ métodos com 2+ sessões |
-| **Onde você rende mais** | duração e `moodAfter` médios por `contextId` | 8 sessões, 2+ contextos com 3+ sessões |
-| **Seu limite real** | `moodAfter` médio por faixa de duração | **30 sessões**, 3 faixas com 3+ sessões |
+A tabela abaixo está **na ordem em que os cartões aparecem na tela**, que é a ordem da lista
+dentro de `buildInsights` — não é ordem alfabética nem por limiar:
+
+| # | Título na tela | Função | Cálculo | Mínimo |
+|---|---|---|---|---|
+| 1 | Seu estado de entrada prevê seu foco | `_insightMoodVsDuration` | duração média por faixa de `moodBefore` | 5 sessões, 2+ faixas |
+| 2 | Seu melhor dia da semana | `_insightWeekday` | minutos totais por dia da semana | 7 sessões |
+| 3 | O método que mais te sustenta | `_insightMethod` | `moodAfter` médio por `methodId` | 6 sessões, 2+ métodos com 2+ sessões |
+| 4 | Onde você rende mais | `_insightContext` | duração e `moodAfter` médios por `contextId` | 8 sessões, 2+ contextos com 3+ sessões |
+| 5 | Efeito colateral do foco | `_insightMoodDelta` | média de `moodAfter - moodBefore` | 5 sessões |
+| 6 | **Seu limite real** | `_insightDurationCeiling` | `moodAfter` médio por faixa de duração | **30 sessões**, 3 faixas com 3+ sessões |
 
 Faixas de humor (`_moodBucket`): **1-2** baixo, **3** neutro, **4-5** alto.
 
-O quinto limiar é alto de propósito. Com as 22 sessões da demonstração ele **nasce
-bloqueado**, e é isso que faz a mecânica de desbloqueio finalmente aparecer na tela: antes
-dele os quatro primeiros abriam todos de saída, e ninguém — nem um usuário novo, nem a
-plateia de uma apresentação — via um cartão trancado. Ver [`DECISOES.md`](DECISOES.md) §21.
+**A posição 5 é deliberada.** "Efeito colateral do foco" é o único insight estruturalmente
+sobre *humor* e não sobre *desempenho*; ele fica atrás dos que vendem rendimento medido, pelo
+reposicionamento do [`DECISOES.md` §25](DECISOES.md). O comentário está no próprio
+`buildInsights`, para ninguém "arrumar" a ordem sem saber.
+
+**O limiar da sexta é alto de propósito.** Com as 22 sessões da demonstração ela **nasce
+bloqueada**, e é isso que faz a mecânica de desbloqueio aparecer na tela: sem ela todos
+abririam de saída, e ninguém — nem um usuário novo, nem a plateia de uma apresentação — veria
+um cartão trancado. Ver [`DECISOES.md`](DECISOES.md) §21.
+
+> **Cuidado ao contar.** "Seu limite real" já foi a **quinta** de cinco, e virou a **sexta**
+> quando "Onde você rende mais" entrou. Três documentos ficaram dizendo "quinta" depois disso.
+> O `tool/verifica_docs.sh` agora confere a quantidade, os seis limiares e a posição de "Seu
+> limite real" contra o código, para essa contagem não voltar a divergir.
 
 ### Ficha de personagem
 
@@ -234,7 +266,7 @@ usuário sumiu por vários dias, a sequência já está quebrada mesmo sem nenhu
 ter sido registrada.
 
 `streakFromSessions(sessions)` reconstrói o estado aplicando `applyActivity` dia a dia — é
-o que mantém a tela Resumo coerente quando o dataset de demonstração é ligado ou desligado.
+o que mantém a aba Ficha coerente quando o dataset de demonstração é ligado ou desligado.
 
 ### Clima pessoal
 
@@ -371,11 +403,47 @@ flutter test          # 100 testes
 
 | Arquivo | Testes | Foco |
 |---|---|---|
-| `test/aura_logic_test.dart` | 75 | lógica pura: sequência, insights, sugestão, clima, dataset, serialização, frase do dia |
-| `test/aura_app_test.dart` | 25 | interface: navegação, fluxo de humor, gráficos, animação, resiliência, tela de erro |
+| `test/aura_logic_test.dart` | 74 | lógica pura: sequência, insights, sugestão, clima, dataset, serialização, frase do dia |
+| `test/aura_app_test.dart` | 26 | interface: navegação, fluxo de humor, gráficos, animação, resiliência, tela de erro |
 
 Os testes de interface rodam num viewport de telefone (420×940) em vez do padrão 800×600 —
 foi assim que apareceu um estouro de layout que o padrão escondia.
+
+### `pump(Duration)` em vez de `pumpAndSettle`, e por quê
+
+Esta é a convenção mais fácil de quebrar sem perceber, então vale escrita fora do código.
+
+`pumpAndSettle` roda frames até **não sobrar animação nenhuma**. O halo que respira em volta
+do anel usa `repeat(reverse: true)` e **nunca termina** — então, com uma sessão rodando,
+`pumpAndSettle` espera para sempre e o teste morre com `pumpAndSettle timed out`.
+
+Onde houver sessão em andamento, o padrão é:
+
+```dart
+await tester.pump();                                   // processa o toque
+await tester.pump(const Duration(milliseconds: 400));  // avança o relógio um tanto fixo
+```
+
+**A armadilha que custou uma `main` vermelha.** Trocar `AnimatedSwitcher` por `IndexedStack`
+parecia não ter nada a ver com isso, e teve: `IndexedStack` envolve cada filho em
+`Visibility.maintain`, que tem `maintainSize: true` e por isso **nunca aplica `TickerMode`**.
+A aba Foco continua montada fora da tela **com o halo ainda respirando** — então até um
+`pumpAndSettle` depois de *sair* da aba Foco trava. O PR que fez essa troca foi mergeado sem
+rodar a suíte e deixou a `main` quebrada a dois dias da entrega.
+
+### Antes de dizer que está pronto
+
+Duas coisas, sempre, e nesta ordem:
+
+```bash
+flutter analyze && flutter test      # no 3.32.8 (o SDK do FlutLab)
+flutter clean                        # obrigatório entre SDKs — ver o aviso acima
+flutter analyze && flutter test      # no 3.47.0
+bash tool/verifica_docs.sh           # antes de commitar documentação
+```
+
+Rodar num SDK só já deixou passar defeito, e pular a suíte já quebrou a `main`. As duas
+versões existem porque o FlutLab usa a 3.32.8 e o desenvolvimento local usa a mais nova.
 
 `aura_app_test.dart` liga `debugDisableDailyLineNetwork = true` no `setUp` — sem isso, todo
 teste que navega até a aba Ficha dispararia uma requisição de rede de verdade. Ver §11.

@@ -3,6 +3,11 @@
 Este repositório redistribui material de terceiros. Este arquivo existe para cumprir a
 obrigação de atribuição desse material.
 
+> **Não confunda com a licença do Aura.** O código do próprio aplicativo — `lib/`, `test/`,
+> `android/`, `ios/` e a documentação — é **MIT**, e o texto está em
+> [`LICENSE`](LICENSE). O que este arquivo cobre é só o material de **outras pessoas** que
+> viaja junto no repositório.
+
 ---
 
 ## `.claude/` — agents, skills e commands
