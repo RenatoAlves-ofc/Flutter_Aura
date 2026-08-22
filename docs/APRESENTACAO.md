@@ -151,7 +151,7 @@ onboarding com quiz.
 ## 3. Se sobrar tempo (ou se perguntarem)
 
 **"Como você garantiu que funciona?"**
-101 testes automatizados, em dois SDKs diferentes. Mas testes não olham para a tela — a
+100 testes automatizados, em dois SDKs diferentes. Mas testes não olham para a tela — a
 interface foi conferida separadamente, servindo o build web num viewport de telefone. Foi
 essa conferência que achou a tela Resumo abrindo incoerente. Detalhes em
 [`RELATORIO-E2E.md`](RELATORIO-E2E.md).

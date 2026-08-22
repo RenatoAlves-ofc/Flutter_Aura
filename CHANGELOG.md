@@ -7,6 +7,44 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---
 
+## [1.7.0] — 2026-08-22
+
+Estabiliza a `main`, que estava vermelha, e fundamenta a problemática com as fontes
+científicas.
+
+### Corrigido
+
+- **A suíte estava quebrada na `main`.** O teste de regressão que veio com a troca para
+  `IndexedStack` (PR #20) falhava com **"pumpAndSettle timed out"**. A causa: `IndexedStack`
+  envolve cada filho em `Visibility.maintain`, que tem `maintainSize: true` e por isso
+  **nunca aplica `TickerMode`** — a aba Foco fica montada fora da tela com o halo ainda
+  respirando, e `pumpAndSettle` espera para sempre. Trocado por `pump(Duration)`, a convenção
+  que o próprio arquivo já usava. **100 testes verdes.**
+- **O pin da NDK foi revertido pela segunda vez.** Ele exige a NDK 27 instalada no ambiente
+  de build, e sem ela o build falha antes de compilar — risco real com o APK ainda por gerar
+  no FlutLab. Conferido no `~/.pub-cache`: `shared_preferences_android` **não tem uma linha
+  de código nativo** e **não declara `ndkVersion`**, então não existe `.so` dele para a NDK
+  proteger. O aviso é metadado. Registro completo em [`DECISOES.md` §5](docs/DECISOES.md).
+
+### Adicionado
+
+- **Chaves reais da Groq e da Gemini** em `lib/src/aura_logic.dart` — a frase do dia passa a
+  funcionar de verdade.
+- **Fundamentação científica da problemática** em [`PRODUTO.md`](docs/PRODUTO.md) §1 e §7,
+  com a **Attentional Control Theory** (Eysenck, Derakshan, Santos & Calvo, *Emotion*/APA)
+  como núcleo: ela explica o mecanismo — consumo de memória de trabalho, queda de inibição e
+  de flexibilidade cognitiva — que é exatamente a tese do app. Harvard (*On Edge*) e APA
+  (*Stress in America*) entram como contexto; *dark patterns* e aversão à perda fundamentam a
+  sequência com folga. **Nenhum percentual inventado.**
+- Nota em [`DECISOES.md` §25](docs/DECISOES.md): a fundamentação chegou e **não** reverteu o
+  reposicionamento para performance — a ACT é ciência cognitiva de desempenho, não clínica.
+
+### Removido
+
+- O teste `'sem chave configurada'`, que faria uma chamada de rede real durante
+  `flutter test` agora que as chaves existem. O comportamento continua coberto pelo teste de
+  `debugDisableDailyLineNetwork`.
+
 ## [1.6.3] — 2026-08-21
 
 Reposicionamento de copy: performance em vez de bem-estar emocional. Decisão completa em

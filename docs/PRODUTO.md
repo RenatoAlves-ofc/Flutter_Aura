@@ -4,26 +4,50 @@ Documento de produto: **qual problema o Aura resolve, para quem, o que ele faz**
 cores. Os outros documentos descrevem *como* o app foi construído; este descreve *por que ele
 existe*.
 
-> ### ⚠️ Uma ressalva de honestidade sobre as duas primeiras seções
->
-> A problemática e o público-alvo **não estavam escritos em lugar nenhum do repositório** —
-> foram reconstruídos a partir do que está registrado nas decisões de projeto e na pesquisa de
-> concorrência. O [`USO-DE-IA.md`](USO-DE-IA.md) diz explicitamente que quem definiu o
-> produto, o público-alvo e o diferencial foi **o autor, não a IA**.
->
-> **Confira estas duas seções contra a especificação original da atividade** antes de usar em
-> slide ou relatório. Se divergirem, o que vale é a especificação — me avise que eu corrijo.
-
 ---
 
 ## 1. A problemática
 
 **Aplicativos de foco contam minutos. Nenhum deles te conta sobre você.**
 
-Quatro problemas concretos, cada um observado na pesquisa de concorrência registrada no
-projeto:
+Quatro problemas concretos. O primeiro tem fundamentação científica; os outros três saem da
+pesquisa de concorrência e das decisões registradas no projeto.
 
-### 1.1 O cronômetro não devolve autoconhecimento
+> **Sobre o enquadramento.** O Aura trata o estado de entrada como **variável de desempenho
+> cognitivo**, não como sintoma clínico. Isso é deliberado e está registrado em
+> [`DECISOES.md` §25](DECISOES.md): o app não faz — e não deve fazer — afirmação de saúde
+> mental. As fontes abaixo são citadas nesse registro: ciência cognitiva de desempenho e
+> design comportamental.
+
+### 1.1 O estado de entrada consome a capacidade que o foco precisa
+
+Não é força de vontade, e não é impressão. A **Attentional Control Theory** — Eysenck,
+Derakshan, Santos e Calvo, publicada em *Emotion* (American Psychological Association) —
+descreve o mecanismo: um estado de entrada ruim **consome recursos da memória de trabalho**,
+o espaço mental temporário onde a informação é processada enquanto se estuda.
+
+O efeito atinge duas funções executivas que o estudo depende diretamente:
+
+| Função | O que ela faz | O que acontece sob pressão |
+|---|---|---|
+| **Inibição** | ignorar estímulos irrelevantes | cai — distrair-se fica mais fácil |
+| **Flexibilidade cognitiva** | alternar entre tarefas e estratégias | cai — destravar de um ponto fica mais caro |
+
+A consequência prática é a que o app mede: **a mesma pessoa precisa de esforço maior para o
+mesmo resultado, dependendo de como chegou.** A teoria separa *eficácia* (o resultado final)
+de *eficiência de processamento* (o custo para chegar lá) — e é a eficiência que despenca
+primeiro, muito antes de a nota cair.
+
+**É exatamente a tese do Aura.** O app cruza estado de entrada com duração sustentada porque
+essa relação é um mecanismo cognitivo documentado, não um palpite de produto.
+
+O contexto de por que isso importa neste público está em duas fontes: o relatório
+**On Edge — Understanding and Preventing Young Adults' Mental Health Challenges** (Making
+Caring Common, Harvard Graduate School of Education; Weissbourd, Batanova, McIntyre e Torres),
+sobre pressão por desempenho em jovens adultos, e a pesquisa anual **Stress in America** (APA),
+sobre estresse crônico na mesma faixa etária.
+
+### 1.2 O cronômetro não devolve autoconhecimento
 
 Um Pomodoro comum termina a sessão e mostra um número: *"25 minutos"*. Depois de três meses de
 uso, o usuário tem centenas desses números e **nenhuma conclusão** sobre o próprio foco. Ele
@@ -32,7 +56,7 @@ não sabe responder por que em alguns dias sustenta 50 minutos e em outros desis
 O dado que explicaria isso — **como a pessoa estava quando começou** — não é coletado por
 ninguém.
 
-### 1.2 A gamificação genérica premia abrir o app, não mudar de comportamento
+### 1.3 A gamificação genérica premia abrir o app, não mudar de comportamento
 
 Pontos, níveis, medalhas e XP sobem porque o usuário apareceu, não porque ele melhorou. Isso
 cria uma métrica que **parece progresso e não é**: a pessoa pode ter 4.000 pontos e continuar
@@ -41,13 +65,22 @@ sem saber o que funciona para ela.
 Registrado em [`DECISOES.md` §20](DECISOES.md) como o erro que os apps do nicho cometem — e a
 razão de o Aura ter recusado XP mesmo quando a pegada de RPG foi pedida.
 
-### 1.3 A sequência rígida pune exatamente quando a vida aperta
+### 1.4 A sequência rígida pune exatamente quando a vida aperta
 
 Streaks que zeram ao primeiro dia perdido punem o usuário **na semana de prova**, que é
-justamente quando ele mais precisa da ferramenta e menos consegue manter a rotina. Perder três
-semanas de esforço por um dia é a forma mais rápida de fazer alguém desinstalar.
+justamente quando ele mais precisa da ferramenta e menos consegue manter a rotina.
 
-### 1.4 Categorizar a sessão não responde a pergunta que importa
+O mecanismo tem nome na economia comportamental: **aversão à perda** — perder algo acumulado
+pesa mais do que ganhar o equivalente. A literatura de design comportamental e de *dark
+patterns* em UX descreve o efeito rebote disso em software de produtividade, às vezes chamado
+de **streak anxiety**: o que foi desenhado para engajar vira cobrança, a cobrança vira culpa,
+e a resposta do usuário é **esquiva** — abandonar a ferramenta inteira, e junto com ela a
+rotina que a ferramenta deveria sustentar.
+
+Perder três semanas de esforço por um dia exausto é a forma mais rápida de fazer alguém
+desinstalar. É por isso que o Aura tem folga acumulável em vez de streak que zera.
+
+### 1.5 Categorizar a sessão não responde a pergunta que importa
 
 Marcar a sessão como "estudo" ou "trabalho" já existe no mercado — o [Forest](https://forestapp.cc/)
 tem tags com analytics, o [Toggl Track](https://toggl.com/track/focused-work/) tem projetos e
@@ -265,3 +298,24 @@ Registrado para responder se perguntarem — nenhum destes é acidente:
 - **Não exporta relatório.** Os dados são para o usuário, dentro do app.
 - **Não tem notificação com o app fechado.** Exigiria pacote com código nativo, um risco
   documentado em [`FLUTLAB.md` §4.1](FLUTLAB.md).
+
+---
+
+## 7. Fontes
+
+O que fundamenta a problemática da §1. **Nenhum número foi inventado aqui**: as fontes são
+citadas pelo achado qualitativo que sustentam, não por percentuais que este documento não
+pode verificar — foi justamente a falta de rastreabilidade de estatísticas de ansiedade que
+motivou o reposicionamento registrado em [`DECISOES.md` §25](DECISOES.md).
+
+| Fonte | O que sustenta | Onde entra |
+|---|---|---|
+| **Anxiety and Cognitive Performance: Attentional Control Theory** — Eysenck, Derakshan, Santos & Calvo. *Emotion*, American Psychological Association | O mecanismo cognitivo: consumo de memória de trabalho, queda de inibição e de flexibilidade cognitiva, e a distinção entre eficácia e eficiência de processamento | **§1.1** — o núcleo científico da tese do app |
+| **On Edge: Understanding and Preventing Young Adults' Mental Health Challenges** — Making Caring Common, Harvard Graduate School of Education (Weissbourd, Batanova, McIntyre, Torres) | Pressão por conquista e desempenho em jovens adultos (18–25) | **§1.1** e **§2** — contexto do público-alvo |
+| **Stress in America** — American Psychological Association | Estresse crônico na mesma faixa etária, e o peso de estudo e trabalho nele | **§1.1** e **§2** — contexto |
+| Literatura de **economia comportamental** e de ***dark patterns* em UX** | Aversão à perda, *streak anxiety* e o comportamento de esquiva como efeito rebote de reforço negativo em software de produtividade | **§1.4** — por que a sequência do Aura tem folga em vez de zerar |
+
+**Uma delimitação que vale explicitar na apresentação:** as duas primeiras fontes tratam de
+saúde mental, mas o Aura **não** se apresenta como ferramenta de saúde mental — elas entram
+como contexto do problema, e o mecanismo que o app realmente usa é o cognitivo da primeira
+linha da tabela. A distinção está registrada em [`DECISOES.md` §25](DECISOES.md).

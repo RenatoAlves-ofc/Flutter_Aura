@@ -886,16 +886,13 @@ void main() {
           isNull);
     });
 
-    test('sem chave configurada nem chamada desligada, ainda devolve null '
-        'em vez de arriscar uma exceção', () async {
-      // As duas chaves (_kGroqApiKey e _kGeminiApiKey) ficam em branco até
-      // a chave real chegar — ver o comentário no topo da seção FRASE DO DIA
-      // em lib/main.dart. Isto não é teste de rede: com as duas em branco,
-      // fetchDailyLine nunca chega a montar uma requisição.
-      final resultado = await fetchDailyLine('qualquer prompt');
-      expect(resultado, isNull);
-    });
-
+    // Havia aqui um teste "sem chave configurada" que chamava fetchDailyLine
+    // com as duas chaves em branco. Deixou de fazer sentido quando as chaves
+    // reais entraram (DECISOES.md §24): as duas são `const`, não dá para
+    // zerá-las só no teste, e chamar fetchDailyLine sem travar a rede faria
+    // uma requisição de verdade durante `flutter test`. O teste abaixo cobre
+    // o mesmo comportamento — devolver null sem lançar — de forma
+    // determinística.
     test('debugDisableDailyLineNetwork força null sem tentar nada', () async {
       final antes = debugDisableDailyLineNetwork;
       debugDisableDailyLineNetwork = true;

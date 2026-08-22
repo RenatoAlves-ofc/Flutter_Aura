@@ -9,10 +9,19 @@ android {
     namespace = "com.example.aura"
     compileSdk = flutter.compileSdkVersion
 
-    // Mantém o build Android alinhado ao aviso emitido pelo plugin
-    // shared_preferences_android no FlutLab. O APK já compilava, mas fixar a NDK
-    // remove o ruído vermelho do build e deixa a exigência explícita.
-    ndkVersion = "27.0.12077973"
+    // NÃO fixe a NDK aqui. O aviso vermelho do FlutLab sobre a
+    // shared_preferences_android exigir a 27.0.12077973 é sobre metadado, não
+    // sobre compilação: o plugin não tem uma linha de código nativo (zero .c,
+    // .cpp, .h, .so, CMakeLists.txt) e não declara ndkVersion nenhuma no
+    // próprio build.gradle — conferido no ~/.pub-cache. Ou seja, não existe
+    // .so dele para a NDK proteger.
+    //
+    // Fixar a 27 troca um aviso cosmético por risco real: o ambiente de build
+    // passa a precisar daquela NDK instalada, o que não dá para garantir no
+    // FlutLab, e o build falha antes de compilar se ela não estiver lá. O APK
+    // que funciona no aparelho foi gerado SEM o pin. Histórico da ida e da
+    // volta em docs/DECISOES.md §5.
+    ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

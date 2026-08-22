@@ -124,7 +124,7 @@ e podem ser removidas na tela **Sobre**.
 ```bash
 flutter pub get
 flutter analyze     # sem issues
-flutter test        # 101 testes
+flutter test        # 100 testes
 flutter run
 ```
 
@@ -137,7 +137,7 @@ entrada, o shell e as telas, enquanto modelos, persistência e lógica pura vive
 Essa divisão reduz o arquivo principal sem mudar a API pública usada pelos testes. O mapa
 atualizado está em [docs/ARQUITETURA.md](docs/ARQUITETURA.md).
 
-Os 101 testes cobrem a lógica que não aparece na tela: a sequência com perdão, o motor de
+Os 100 testes cobrem a lógica que não aparece na tela: a sequência com perdão, o motor de
 insights e seus limiares, o clima pessoal, a serialização retrocompatível, a resiliência a
 dados corrompidos e o dataset de demonstração. Testes não olham para a tela — a interface
 foi conferida à parte, rodando o build web num viewport de telefone.

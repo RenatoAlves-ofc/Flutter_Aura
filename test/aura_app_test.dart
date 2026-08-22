@@ -91,7 +91,14 @@ void main() {
     expect(find.text('Pausar'), findsOneWidget);
 
     await tester.tap(find.text('Tarefas'));
-    await tester.pumpAndSettle();
+    // Mesmo motivo do comentário acima, e é justamente o que o `IndexedStack`
+    // mudou: a aba Foco **continua montada** fora da tela, com o halo ainda
+    // respirando. `IndexedStack` envolve cada filho em `Visibility.maintain`,
+    // que tem `maintainSize: true` e por isso nunca aplica `TickerMode` — o
+    // ticker do halo segue vivo mesmo com a aba escondida. Um `pumpAndSettle`
+    // aqui espera para sempre: falhava com "pumpAndSettle timed out".
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.text('Pausar'), findsNothing,
         reason: 'a aba Foco fica fora da tela quando Tarefas está selecionada');
