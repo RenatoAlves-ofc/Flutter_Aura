@@ -8,7 +8,7 @@ dados passam e onde ficam as regras. Para o *porquê* de cada escolha, veja
 
 ## 1. Arquivo único, e o que isso obriga
 
-Todo o app vive em **`lib/main.dart`** (5.059 linhas). Não é preferência de estilo: o
+Todo o app vive em **`lib/main.dart`** (5.062 linhas). Não é preferência de estilo: o
 FlutLab tem problemas com arquitetura multi-arquivo no navegador, então a especificação
 proibiu imports relativos.
 
@@ -17,7 +17,7 @@ marcadas com banners. A ordem importa: cada faixa só depende das anteriores.
 
 ### Mapa navegável
 
-Um arquivo de 5.059 linhas é intransitável sem mapa. As linhas abaixo são os banners de
+Um arquivo de 5.062 linhas é intransitável sem mapa. As linhas abaixo são os banners de
 seção — abra o arquivo e pule direto para a faixa que interessa.
 
 | Linha | Seção | Camada |

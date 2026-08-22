@@ -184,8 +184,8 @@ void main() {
       final insight =
           buildInsights(sessions).firstWhere((i) => i.id == 'mood_duration');
       expect(insight.unlocked, isTrue);
-      expect(insight.body, contains('começa animado'));
-      expect(insight.body, contains('começa pra baixo'));
+      expect(insight.body, contains('começa em alta energia'));
+      expect(insight.body, contains('começa em baixa energia'));
     });
 
     test('humor antes × depois reconhece melhora', () {

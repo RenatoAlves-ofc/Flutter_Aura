@@ -105,11 +105,11 @@ O coração do app. Seis descobertas, calculadas a partir das suas sessões:
 
 | Descoberta | O que responde | Libera com |
 |---|---|---|
-| **Seu humor prevê seu foco** | quanto tempo a mais você sustenta quando começa bem | 5 sessões |
-| **Focar muda seu humor** | se as sessões te deixam melhor do que te encontraram | 5 sessões |
+| **Seu estado de entrada prevê seu foco** | quanto tempo a mais você sustenta quando começa bem | 5 sessões |
 | **Seu melhor dia da semana** | em que dia você rende mais | 7 sessões |
 | **O método que mais te sustenta** | qual dos 11 funciona melhor para você | 6 sessões |
 | **Onde você rende mais** | qual tipo de trabalho te sustenta mais tempo | 8 sessões |
+| **Efeito colateral do foco** | se as sessões te deixam melhor do que te encontraram | 5 sessões |
 | **Seu limite real** | acima de quantos minutos você começa a render menos | 30 sessões |
 
 Cada uma aparece **bloqueada** até haver dados suficientes, mostrando quantas sessões

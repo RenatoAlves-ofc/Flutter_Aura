@@ -16,7 +16,7 @@ proíbe imports relativos.
 **Decisão.** Todo o app em `lib/main.dart`, com a separação feita por banners de seção em
 vez de por pastas.
 
-**Consequência.** 5.059 linhas em um arquivo. Para compensar, a lógica de negócio é
+**Consequência.** 5.062 linhas em um arquivo. Para compensar, a lógica de negócio é
 escrita como funções puras que não importam nada do Flutter, e é atacada diretamente pelos
 testes. A ordem das seções é significativa: cada uma só depende das anteriores.
 
@@ -358,7 +358,7 @@ inventar uma para preencher o formato seria pior do que não desenhar nada.
 
 ## 19. O arquivo único ficou — e por que a crítica a ele é procedente
 
-**Contexto.** `lib/main.dart` tem 5.059 linhas. Em qualquer avaliação de código isso é o
+**Contexto.** `lib/main.dart` tem 5.062 linhas. Em qualquer avaliação de código isso é o
 primeiro apontamento, e com razão: arquivo único é prática ruim.
 
 **A crítica está certa no geral.** Num projeto que continuasse, a divisão correta seria por
@@ -389,7 +389,7 @@ lib/
    longo de meses, com várias pessoas mexendo em paralelo e resolvendo conflitos de merge.
    Aqui é um autor e um prazo fechado.
 
-4. **O problema real que a crítica aponta já tem solução.** Navegar 5.059 linhas é ruim —
+4. **O problema real que a crítica aponta já tem solução.** Navegar 5.062 linhas é ruim —
    por isso existe o mapa de seções em [`ARQUITETURA.md`](ARQUITETURA.md) §1, com a linha de
    cada faixa e um `grep` que o reconstrói quando as linhas envelhecerem.
 
@@ -603,3 +603,54 @@ por pesquisa em 21/08/2026, porque os dois modelos que eu ia usar de memória (L
 Groq, Gemini 2.0 Flash) tinham sido descontinuados no mesmo ano, em junho. Se a chamada parar
 de funcionar um dia, comece verificando se o modelo mudou de novo antes de suspeitar de outra
 coisa.
+
+---
+
+## 25. Reposicionamento: performance em vez de bem-estar emocional
+
+**Contexto.** Na preparação da apresentação, as estatísticas de ansiedade que justificariam o
+app (48,5%/43,5% dos alunos) não tinham fonte rastreável, e até as alternativas confiáveis
+(ACHA-NCHA, JSIHS) puxariam a narrativa para saúde mental — fora do escopo da disciplina, e
+um território que abriria a apresentação a perguntas de validação clínica que o projeto não
+precisa responder.
+
+**Decisão.** Reposicionar o discurso de "bem-estar emocional" para **"inteligência de
+performance pessoal"**. O humor deixa de ser vendido como o produto e passa a ser tratado como
+o que sempre foi no código: **um sinal de entrada que prevê desempenho**.
+
+**É reposicionamento de linguagem, não de lógica.** Nenhum cálculo, campo do modelo de dados
+ou limiar de desbloqueio mudou — só os textos visíveis ao usuário. `moodBefore`/`moodAfter`
+continuam existindo e sendo usados exatamente como antes.
+
+**O que mudou:**
+
+- `_bucketNames`: "começa pra baixo/neutro/animado" → "começa em baixa/neutra/alta energia"
+- Título de `mood_duration`: "Seu humor prevê seu foco" → "Seu estado de entrada prevê seu
+  foco", e o fecho do corpo trocou "não de força de vontade" por "conforme a condição em que
+  você começa a sessão"
+- Título de `mood_delta`: "Focar muda seu humor" → **"Efeito colateral do foco"** — entre as
+  duas opções levantadas, esta foi a que mais reduz centralidade emocional, porque sinaliza
+  estruturalmente que a descoberta é secundária
+- Ordem de `buildInsights()`: `mood_delta` passou de segundo para penúltimo — é o único
+  insight estruturalmente sobre humor, não sobre desempenho, e agora fica atrás dos que
+  vendem rendimento medido
+- Corpo de `method`: "te deixa melhor no fim: humor final médio" → "é o que você mais
+  sustenta: rendimento médio"
+- Pitch do README, do `pubspec.yaml` e do roteiro de apresentação: "como você está se
+  sentindo" → "o seu estado de entrada"
+
+**O que ficou como estava, por já estar alinhado.** `_insightWeekday`, `_insightContext` e
+`_insightDurationCeiling` (título e corpo) já eram linguagem de desempenho — "dia mais
+produtivo", "você sustenta X min", "seu teto de duração". As cinco descrições de
+`AuraClimate` também: falam de "sessões terminando bem/mal", que é comportamento observado,
+não sentimento narrado.
+
+**O que não foi feito.** Um tooltip de "leitura de prontidão" para o Clima Pessoal foi
+cogitado, mas não existe hoje nenhum texto explicativo sobre o Clima Pessoal na tela Sobre ou
+em tooltip — só o rótulo "Sua aura hoje" na aba Resumo. Criar um texto novo iria além de
+"editar texto existente", e ficou registrado como pendência em aberto, não como feito.
+
+**Consequência.** Dois testes citavam a redação antiga por conteúdo
+(`test/aura_logic_test.dart:187-188`, checando `'começa animado'`/`'começa pra baixo'` no
+corpo de `mood_duration`) e foram atualizados para a nova redação — nenhum teste foi
+removido, e nenhum precisou ser criado, porque os `id`s dos insights não mudaram.

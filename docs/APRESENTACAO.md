@@ -7,14 +7,14 @@ de véspera.
 
 ## 1. Pitch de abertura (~30 segundos)
 
-> O Aura é um Pomodoro que aprende com você. Em vez de só contar minutos, ele cruza como
-> você está se sentindo com quanto tempo você realmente consegue manter o foco — e devolve
-> isso como descobertas pessoais, não como pontos genéricos. Sua aura muda com seu estado
-> real. Tudo local, sem login, sem feed.
+> O Aura é um Pomodoro que aprende com você. Em vez de só contar minutos, ele cruza o seu
+> estado de entrada com quanto tempo você realmente consegue manter o foco — e devolve
+> isso como descobertas pessoais, não como pontos genéricos. Sua aura muda com seu
+> desempenho real. Tudo local, sem login, sem feed.
 
 Se puder acrescentar uma frase, use esta: **o diferencial não é o cronômetro, é o motor de
-correlação.** Cronômetro tem em qualquer lugar; cruzar humor com desempenho e devolver um
-padrão pessoal é o que nenhum concorrente pesquisado entrega junto.
+correlação.** Cronômetro tem em qualquer lugar; cruzar o estado de entrada com o desempenho e
+devolver um padrão pessoal é o que nenhum concorrente pesquisado entrega junto.
 
 ---
 
@@ -83,8 +83,8 @@ seguir.
 Mostre **"5 de 6 desbloqueadas"** — e volte nesse número, ele importa. Leia **em voz alta**
 o primeiro card:
 
-> "Quando você começa animado, suas sessões duram em média X min. Quando começa pra baixo,
-> caem para Y min."
+> "Quando você começa em alta energia, suas sessões duram em média X min. Quando começa em
+> baixa energia, caem para Y min."
 
 > Fale: isso não é um ponto genérico, é uma frase sobre a pessoa. E cada descoberta fica
 > bloqueada até haver dados suficientes — uma conclusão tirada de duas sessões não seria uma
@@ -162,7 +162,7 @@ antes de descobrirmos que era o alvo de build: `arm` gera binário de 32 bits, e
 arm64 a engine nativa não carrega. O app morria antes de qualquer código Dart rodar — por
 isso nenhuma instrumentação em Dart conseguia capturar. Está em [`DECISOES.md`](DECISOES.md) §6.
 
-**"Por que 5.059 linhas num arquivo só?"**
+**"Por que 5.062 linhas num arquivo só?"**
 Restrição declarada do ambiente de entrega: a especificação da atividade proíbe imports
 relativos, porque o FlutLab tem problemas com arquitetura multi-arquivo no navegador. A
 mitigação foi separar por **camada dentro do arquivo**: a lógica de negócio é escrita como
