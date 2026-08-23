@@ -7,6 +7,26 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---
 
+## [1.11.0] — 2026-08-23
+
+Nada em `lib/` nem em `test/` — o APK não é afetado.
+
+### Corrigido
+
+- **`web/index.html` mostrava tela preta no preview hospedado do FlutLab**
+  (`https://preview.flutlab.io/<usuário>/aura/`). O `<base href>` usava o
+  placeholder padrão do Flutter (`$FLUTTER_BASE_HREF`, que vira `/` quando
+  ninguém passa `--base-href` no build), mas o FlutLab serve o app numa
+  **subpasta**. Com a base errada, todo recurso era pedido na raiz do domínio
+  — `flutter_bootstrap.js`, `favicon.png` e `manifest.json` voltavam 404, e o
+  Flutter nunca chegava a começar (tela preta sem nenhum erro *dele*, porque
+  o motor nunca chegou a rodar). Confirmado lendo o console do navegador do
+  usuário — os quatro 404 exatos, batendo com a hipótese.
+  Trocado para `<base href="./">` — caminho relativo, resolve a partir da
+  própria URL. Funciona igual na raiz (`flutter run -d chrome`, o preview
+  embutido do FlutLab) e em qualquer subpasta de hospedagem, sem depender de
+  ninguém passar `--base-href` certo.
+
 ## [1.10.0] — 2026-08-22
 
 Passada completa de documentação. **Nada em `lib/` nem em `test/`** — o APK não precisa ser
