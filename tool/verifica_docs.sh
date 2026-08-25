@@ -177,6 +177,23 @@ else
   ok "nenhum documento usa os rótulos antigos das abas"
 fi
 
+# "ainda não foi feita" sobre coisa que JÁ foi feita. O PRODUTO.md ficou dizendo
+# que a aba "se chama Resumo hoje" e que as barras do gráfico ainda eram
+# coloridas por humor — as duas trocas saíram na 1.8.0. A conferência de rótulo
+# acima não pegou porque o texto era `aba se chama **"Resumo"**`, com aspas e
+# negrito no meio do padrão.
+pendencia_falsa=$(grep -rn "ainda não foi feit[ao]\|ainda não existe" --include="*.md" . \
+                  | grep -v "^\./CHANGELOG.md:" | grep -v "^\./tool/" | grep -v "$HISTORICO" \
+                  | grep -iE "ficha|descobertas|resumo|insights|barra|gráfico" \
+                  | grep -v "humor final" || true)
+if [ -n "$pendencia_falsa" ]; then
+  while IFS= read -r l; do
+    aviso "$l  → confira: as trocas de aba e a cor das barras saíram na 1.8.0"
+  done <<< "$pendencia_falsa"
+else
+  ok "nenhum documento chama de pendente algo que já foi entregue"
+fi
+
 metodos=$(sed -n '/^const List<FocusMethod> focusMethods/,/^];/p' lib/src/aura_models.dart \
           | grep -c "FocusMethod(")
 metodo_errado=$(grep -rn "\(10\|12\|dez\|doze\) métodos" --include="*.md" . \

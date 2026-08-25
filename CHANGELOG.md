@@ -7,6 +7,38 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---
 
+## [1.12.0] — 2026-08-23
+
+Documento do projeto no Google Docs, e as duas afirmações falsas que teriam ido parar nele.
+
+### Corrigido
+
+- **`PRODUTO.md` §3.4 dizia que a aba "se chama Resumo hoje"** e que a troca para Ficha "ainda
+  não foi feita". Foi feita na **1.8.0** — `main.dart` traz `label: 'Ficha'`.
+- **`PRODUTO.md` §5 dizia que as barras do gráfico eram pintadas com as cores de humor** e que a
+  correção "ainda não foi feita". Também saiu na **1.8.0** — as barras usam `kBrandIndigo`. O
+  texto virou a explicação de *por que* elas são índigo, em vez de uma pendência que não existe.
+
+> As duas escaparam da auditoria da 1.10.0 porque a conferência de rótulo procura `aba Resumo`,
+> e o texto real era `aba se chama **"Resumo"**` — com aspas e negrito no meio do padrão.
+
+### Alterado
+
+- **`tool/verifica_docs.sh` ganhou a sexta conferência:** nenhum documento pode dizer *"ainda
+  não foi feita"* ou *"ainda não existe"* perto de `Ficha`, `Descobertas`, `Resumo`, `Insights`,
+  `barra` ou `gráfico` — as trocas que já aconteceram. A nota verdadeira sobre o gráfico de
+  humor final é excluída por nome, porque continua sendo uma pendência real. Provada quebrando
+  de propósito, como as cinco anteriores.
+
+### Fora do repositório
+
+- **Documento completo do projeto criado no Google Docs**, em dez seções: resumo executivo,
+  problemática com fontes, público-alvo, funcionalidades aba a aba, arquitetura e tecnologias,
+  paleta de cores, privacidade e uso de IA, verificação, o que ficou fora e as fontes. Todos os
+  números conferidos no código na hora de escrever, não copiados da documentação.
+  Sem capturas de tela de propósito — as de `docs/img/` mostram os rótulos antigos das abas
+  ([`ENTREGA.md` §3.3](docs/ENTREGA.md)).
+
 ## [1.11.0] — 2026-08-23
 
 Nada em `lib/` nem em `test/` — o APK não é afetado.

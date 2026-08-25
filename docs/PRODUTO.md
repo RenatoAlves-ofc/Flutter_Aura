@@ -182,9 +182,6 @@ mostra "faltam 8", que é como a mecânica de desbloqueio fica visível.
 
 ### 3.4 Aba Ficha
 
-> A aba se chama **"Resumo"** hoje. A troca para **"Ficha"** está decidida em
-> [`PLANO-V2.md` §8](PLANO-V2.md) e ainda não foi feita.
-
 | Funcionalidade | Detalhe |
 |---|---|
 | **Ficha de personagem** | Uma **classe** — Maratonista (50+ min), Ritmista (25–45), Sprinter (≤20), Explorador (Flowtime) — e **quatro atributos**, todos derivados das sessões reais |
@@ -278,9 +275,11 @@ Referência rápida das principais:
 | Média | laranja (`Colors.orange`) |
 | Baixa | verde (`Colors.green`) |
 
-> **Uma inconsistência conhecida:** as barras do gráfico "Humor inicial × duração" são
-> pintadas com as cores de humor acima, o que mistura verde e roxo na mesma tela. A correção
-> está planejada em [`PLANO-V2.md` §2](PLANO-V2.md) e ainda não foi feita.
+> **As barras do gráfico "Humor inicial × duração" são índigo**, não as cores de humor da
+> tabela acima. A altura da barra representa a **duração**; quem diz o estado de entrada é o
+> eixo, onde as faces seguem coloridas porque ali a cor *é* a informação. Pintar a barra por
+> humor codificava a mesma coisa duas vezes e punha verde ao lado de roxo — corrigido na
+> 1.8.0.
 
 ---
 
